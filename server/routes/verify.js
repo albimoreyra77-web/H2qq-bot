@@ -227,7 +227,9 @@ async function getNetworkInformation(request) {
   } catch (error) {
     console.error(
       "No se pudo obtener la información de red:",
-      error.message
+      error instanceof Error
+        ? error.message
+        : String(error)
     );
 
     return {
@@ -1371,6 +1373,23 @@ app.get(
     "/api/verify/:guildId/complete",
     async (request, response) => {
       try {
+console.log(
+  "POST /api/verify/:guildId/complete recibido",
+  {
+    guildId:
+      request.params.guildId,
+
+    userId:
+      request.session
+        ?.discordUser
+        ?.id ||
+      "Sin sesión",
+
+    time:
+      new Date().toISOString(),
+  }
+);
+
         const { guildId } =
           request.params;
 
@@ -1737,10 +1756,10 @@ if (
 */
 
 if (securityFailures.length > 0) {
-if (
-  security.notifySecurityFailure &&
-  config.logsChannelId
-) {
+  if (
+    security.notifySecurityFailure &&
+    config.logsChannelId
+  ) {
     const securityLogsChannel =
       guild.channels.cache.get(
         config.logsChannelId
@@ -1752,9 +1771,7 @@ if (
     ) {
       const failureEmbed =
         new EmbedBuilder()
-          .setColor(
-            "#ef4444"
-          )
+          .setColor("#ef4444")
           .setTitle(
             "🚨 Verificación bloqueada"
           )
@@ -1821,34 +1838,31 @@ if (
             }
           )
           .setThumbnail(
-            member.user
-              .displayAvatarURL({
-                extension: "png",
-                size: 256,
-              })
+            member.user.displayAvatarURL({
+              extension: "png",
+              size: 256,
+            })
           )
           .setFooter({
             text:
               "Nebula Security Center • Acceso rechazado",
           })
           .setTimestamp();
-if (
-  alternativeAccountMatch
-) {
-  failureEmbed.addFields({
-    name:
-      "Cuenta relacionada",
 
-    value:
-      [
-        `Usuario: \`${alternativeAccountMatch.username}\``,
-        `Discord ID: \`${alternativeAccountMatch.userId}\``,
-        `Último registro: \`${alternativeAccountMatch.verifiedAt}\``,
-      ].join("\n"),
+      if (alternativeAccountMatch) {
+        failureEmbed.addFields({
+          name:
+            "Cuenta relacionada",
 
-    inline: false,
-  });
-}
+          value: [
+            `Usuario: \`${alternativeAccountMatch.username}\``,
+            `Discord ID: \`${alternativeAccountMatch.userId}\``,
+            `Último registro: \`${alternativeAccountMatch.verifiedAt}\``,
+          ].join("\n"),
+
+          inline: false,
+        });
+      }
 
       await securityLogsChannel
         .send({
@@ -1862,20 +1876,18 @@ if (
             error
           );
         });
+    } else {
+      console.error(
+        "No se pudo enviar el bloqueo: el canal de logs no existe o no admite mensajes.",
+        {
+          guildId,
+          logsChannelId:
+            config.logsChannelId,
+        }
+      );
     }
-  
-} else {
-  console.error(
-    "No se pudo enviar el bloqueo: el canal de logs no existe o no admite mensajes.",
-    {
-      guildId,
-      logsChannelId:
-        config.logsChannelId,
-     }
-   );
   }
 
-}
   return response
     .status(403)
     .json({
@@ -1888,6 +1900,7 @@ if (
       reasons:
         securityFailures,
     });
+}
 
         if (
           !alreadyVerified &&
@@ -2051,26 +2064,69 @@ saveVerificationHistoryRecord({
             verifiedAt,
           },
         });
-      } catch (error) {
-        console.error(
-          "Error completando la verificación web:",
-          error
-        );
+} catch (error) {
+  const errorMessage =
+    error instanceof Error
+      ? error.message
+      : String(error);
 
-        return response
-          .status(500)
-          .json({
-            success: false,
-
-            message:
-              "No se pudo completar la verificación.",
-          });
-      }
-    }
+  console.error(
+    "=========================================="
   );
-  /* =========================================================
-     ENVIAR PANEL DE VERIFICACIÓN A DISCORD
-     ========================================================= */
+
+  console.error(
+    "ERROR COMPLETANDO VERIFICACIÓN WEB"
+  );
+
+  console.error(
+    "Mensaje:",
+    errorMessage
+  );
+
+  console.error(
+    "Stack:",
+    error instanceof Error
+      ? error.stack
+      : ""
+  );
+
+  console.error(
+    "Servidor:",
+    request.params.guildId
+  );
+
+  console.error(
+    "Usuario:",
+    request.session
+      ?.discordUser
+      ?.id ||
+      "Sin sesión"
+  );
+
+  console.error(
+    "=========================================="
+  );
+
+  return response
+    .status(500)
+    .json({
+      success: false,
+
+      message:
+        `Error interno: ${errorMessage}`,
+
+      errorCode:
+        error?.code ||
+        error?.name ||
+        "UNKNOWN_ERROR",
+
+    });
+}
+    }
+  );  
+/* =========================================================
+ ENVIAR PANEL DE VERIFICACIÓN A DISCORD
+========================================================= */
 
   app.post(
     "/api/servers/:guildId/verification/send",
