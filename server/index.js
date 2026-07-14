@@ -58,19 +58,26 @@ app.use(express.json());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+  secret:
+  process.env.SESSION_SECRET,
+
     resave: false,
     saveUninitialized: false,
 
     cookie: {
       httpOnly: true,
-      secure: false,
+
+      secure:
+        process.env.NODE_ENV ===
+        "production",
+
       sameSite: "lax",
-      maxAge: 1000 * 60 * 30,
+
+      maxAge:
+        1000 * 60 * 30,
     },
   })
 );
-
 
 app.use(
   "/verify-assets",
@@ -1694,7 +1701,7 @@ httpServer.listen(
 
 if (!process.env.DISCORD_TOKEN) {
   console.error(
-    "Falta DISCORD_TOKEN dentro del archivo .env"
+    "Falta DISCORD_TOKEN en las variables de entorno"
   );
 } else {
   client
@@ -1702,8 +1709,8 @@ if (!process.env.DISCORD_TOKEN) {
       process.env.DISCORD_TOKEN
     )
     .catch(error => {
-      c
-onsole.error(
+
+  console.error(
         "No se pudo conectar el bot con Discord:"
       );
 

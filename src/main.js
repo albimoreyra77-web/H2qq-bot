@@ -828,7 +828,11 @@ function buildPage(type) {
         ["CLIENT_ID","Pendiente"],
         ["CLIENT_SECRET","••••••••••••••••"],
         ["DATABASE_URL","Pendiente"],
-        ["REDIRECT_URI","http://localhost:3000/auth/discord/callback",true],
+[
+  "REDIRECT_URI",
+  `${window.location.origin}/auth/discord/callback`,
+  true
+],
         ["SESSION_SECRET","••••••••••••••••",true]
       ]);
     case "tokens":
@@ -907,7 +911,7 @@ document.querySelectorAll(".side-item").forEach(button => {
    CONEXIÓN DEL DASHBOARD CON LA API
    ========================================================= */
 
-const API_URL = "http://localhost:3000";
+const API_URL = window.location.origin;
 
 async function cargarDatosDashboard() {
   try {
@@ -1078,7 +1082,7 @@ cargarDatosDashboard();
    ACTUALIZACIÓN EN TIEMPO REAL CON SOCKET.IO
    ========================================================= */
 
-const socket = io("http://localhost:3000");
+const socket = io();
 
 socket.on("connect", () => {
   console.log("Dashboard conectado en tiempo real:", socket.id);
