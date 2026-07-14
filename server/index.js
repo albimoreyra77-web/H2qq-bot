@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -935,231 +936,373 @@ client.on(Events.GuildMemberAdd, async member => {
    BOTÓN DE VERIFICACIÓN
    ========================================================= */
 
-client.on(Events.InteractionCreate, async interaction => {
-  if (!interaction.isButton()) {
-    return;
-  }
-
-  if (
-    !interaction.customId.startsWith(
-      "nebula_verify:"
-    )
-  ) {
-    return;
-  }
-
-  try {
-    /*
-      Respondemos inmediatamente para evitar
-      que Discord muestre "Interacción fallida".
-    */
-    await interaction.deferReply({
-      ephemeral: true,
-    });
-
-    if (!interaction.guild) {
-      await interaction.editReply(
-        "❌ Esta verificación solo funciona dentro de un servidor."
-      );
-
+client.on(
+  Events.InteractionCreate,
+  async interaction => {
+    if (!interaction.isButton()) {
       return;
     }
-
-    const guildIdFromButton =
-      interaction.customId.split(":")[1];
 
     if (
-      !guildIdFromButton ||
-      guildIdFromButton !== interaction.guild.id
+      !interaction.customId.startsWith(
+        "nebula_verify:"
+      )
     ) {
-      await interaction.editReply(
-        "❌ Este botón no pertenece a este servidor."
-      );
-
       return;
     }
 
-    const config =
-      getVerifyConfig(interaction.guild.id);
+    try {
+      await interaction.deferReply({
+        ephemeral: true,
+      });
 
-    if (!config.enabled) {
-      await interaction.editReply(
-        "❌ El sistema de verificación está desactivado."
-      );
+      if (!interaction.guild) {
+        await interaction.editReply({
+          content:
+            "❌ Esta verificación solo funciona dentro de un servidor.",
+        });
 
-      return;
-    }
+        return;
+      }
 
-    if (!config.verifiedRoleId) {
-      await interaction.editReply(
-        "❌ No hay ningún rol configurado."
-      );
+      const guildIdFromButton =
+        interaction.customId
+          .split(":")[1];
 
-      return;
-    }
+      if (
+        !guildIdFromButton ||
+        guildIdFromButton !==
+          interaction.guild.id
+      ) {
+        await interaction.editReply({
+          content:
+            "❌ Este botón no pertenece a este servidor.",
+        });
 
-    const member =
-      await interaction.guild.members.fetch(
-        interaction.user.id
-      );
+        return;
+      }
 
-    const role =
-      interaction.guild.roles.cache.get(
-        config.verifiedRoleId
-      );
-
-    if (!role) {
-      await interaction.editReply(
-        "❌ El rol configurado ya no existe."
-      );
-
-      return;
-    }
-
-    if (member.roles.cache.has(role.id)) {
-      await interaction.editReply(
-        `✅ Ya estás verificado y tenés el rol **${role.name}**.`
-      );
-
-      return;
-    }
-
-    if (!role.editable) {
-      await interaction.editReply(
-        "❌ No puedo entregar ese rol. Colocá el rol del bot por encima del rol de verificación."
-      );
-
-      return;
-    }
-
-    await member.roles.add(
-      role,
-      "Usuario verificado mediante Nebula"
-    );
-
-    await interaction.editReply(
-      `✅ Verificación completada. Recibiste el rol **${role.name}**.`
-    );
-
-    /*
-      Enviar registro al canal de logs.
-    */
-
-    if (config.logsChannelId) {
-      const logsChannel =
-        interaction.guild.channels.cache.get(
-          config.logsChannelId
+      const config =
+        getVerifyConfig(
+          interaction.guild.id
         );
 
-      if (logsChannel?.isTextBased()) {
-        const accountCreatedTimestamp =
-          Math.floor(
-            interaction.user.createdTimestamp / 1000
+      if (!config.enabled) {
+        await interaction.editReply({
+          content:
+            "❌ El sistema de verificación está desactivado.",
+        });
+
+        return;
+      }
+
+      if (!config.verifiedRoleId) {
+        await interaction.editReply({
+          content:
+            "❌ No hay ningún rol configurado.",
+        });
+
+        return;
+      }
+
+      const member =
+        await interaction.guild.members
+          .fetch(
+            interaction.user.id
           );
 
-        const joinedTimestamp =
-          member.joinedTimestamp
-            ? Math.floor(
-                member.joinedTimestamp / 1000
-              )
-            : null;
+      const role =
+        interaction.guild.roles.cache
+          .get(
+            config.verifiedRoleId
+          );
 
-        const verifiedTimestamp =
-          Math.floor(Date.now() / 1000);
+      if (!role) {
+        await interaction.editReply({
+          content:
+            "❌ El rol configurado ya no existe.",
+        });
 
-        const logEmbed =
-          new EmbedBuilder()
-            .setColor("#22c55e")
-            .setTitle(
-              "🛡️ Usuario verificado"
+        return;
+      }
+
+      if (
+        member.roles.cache.has(
+          role.id
+        ) &&
+        config.security
+          ?.allowReverification ===
+          false
+      ) {
+        await interaction.editReply({
+          content:
+            `✅ Ya estás verificado y tenés el rol **${role.name}**.`,
+        });
+
+        return;
+      }
+
+      /*
+        Generamos un token aleatorio para
+        identificar al usuario sin OAuth
+        y sin depender de cookies.
+      */
+
+      const verificationToken =
+        crypto
+          .randomBytes(48)
+          .toString("hex");
+
+      const createdAt =
+        Date.now();
+
+      const expiresAt =
+        createdAt +
+        VERIFICATION_TICKET_DURATION;
+
+      /*
+        Eliminamos tokens anteriores de este
+        usuario para este mismo servidor.
+      */
+
+      for (
+        const [
+          savedToken,
+          savedTicket,
+        ] of verificationTickets.entries()
+      ) {
+        if (
+          String(
+            savedTicket?.guildId
+          ) ===
+            String(
+              interaction.guild.id
+            ) &&
+          String(
+            savedTicket?.userId
+          ) ===
+            String(
+              interaction.user.id
             )
-            .setThumbnail(
-              interaction.user.displayAvatarURL({
+        ) {
+          verificationTickets.delete(
+            savedToken
+          );
+        }
+      }
+
+      const verificationTicket = {
+        token:
+          verificationToken,
+
+        guildId:
+          interaction.guild.id,
+
+        guildName:
+          interaction.guild.name,
+
+        guildIcon:
+          interaction.guild.iconURL({
+            extension: "png",
+            size: 256,
+          }),
+
+        userId:
+          interaction.user.id,
+
+        username:
+          interaction.user.username,
+
+        globalName:
+          interaction.user.globalName ||
+          interaction.user.username,
+
+        displayName:
+          member.displayName ||
+          interaction.user.globalName ||
+          interaction.user.username,
+
+        avatar:
+          interaction.user
+            .displayAvatarURL({
+              extension: "png",
+              size: 256,
+            }),
+
+        createdAt,
+
+        createdAtIso:
+          new Date(
+            createdAt
+          ).toISOString(),
+
+        expiresAt,
+
+        expiresAtIso:
+          new Date(
+            expiresAt
+          ).toISOString(),
+
+        source:
+          "discord_interaction",
+
+        used:
+          false,
+      };
+
+      verificationTickets.set(
+        verificationToken,
+        verificationTicket
+      );
+
+      const baseUrl =
+        String(
+          process.env.PUBLIC_URL ||
+          "http://localhost:3000"
+        ).replace(
+          /\/+$/,
+          ""
+        );
+
+      const verificationUrl =
+        `${baseUrl}/verify/` +
+        `${encodeURIComponent(
+          interaction.guild.id
+        )}` +
+        `?verificationToken=` +
+        encodeURIComponent(
+          verificationToken
+        );
+
+      const continueButton =
+        new ButtonBuilder()
+          .setLabel(
+            "Continuar verificación"
+          )
+          .setEmoji("🛡️")
+          .setStyle(
+            ButtonStyle.Link
+          )
+          .setURL(
+            verificationUrl
+          );
+
+      const row =
+        new ActionRowBuilder()
+          .addComponents(
+            continueButton
+          );
+
+      const verificationEmbed =
+        new EmbedBuilder()
+          .setColor(
+            config.embedColor ||
+            "#8b5cf6"
+          )
+          .setTitle(
+            "🛡️ Verificación preparada"
+          )
+          .setDescription(
+            [
+              `Hola **${member.displayName}**.`,
+              "",
+              "Tu enlace privado está listo.",
+              "Presioná el botón de abajo para continuar.",
+              "",
+              "El enlace es personal, temporal y solo puede utilizarse una vez.",
+            ].join("\n")
+          )
+          .setThumbnail(
+            interaction.user
+              .displayAvatarURL({
                 extension: "png",
                 size: 256,
               })
-            )
-            .addFields(
-              {
-                name: "Usuario",
-                value:
-                  `${interaction.user.username}\n` +
-                  `<@${interaction.user.id}>`,
-                inline: true,
-              },
-              {
-                name: "Discord ID",
-                value: interaction.user.id,
-                inline: true,
-              },
-              {
-                name: "Rol entregado",
-                value: `<@&${role.id}>`,
-                inline: true,
-              },
-              {
-                name: "Cuenta creada",
-                value:
-                  `<t:${accountCreatedTimestamp}:F>\n` +
-                  `<t:${accountCreatedTimestamp}:R>`,
-                inline: false,
-              },
-              {
-                name: "Ingresó al servidor",
-                value: joinedTimestamp
-                  ? `<t:${joinedTimestamp}:F>\n<t:${joinedTimestamp}:R>`
-                  : "No disponible",
-                inline: false,
-              },
-              {
-                name: "Verificado",
-                value:
-                  `<t:${verifiedTimestamp}:F>\n` +
-                  `<t:${verifiedTimestamp}:R>`,
-                inline: false,
-              }
-            )
-            .setFooter({
-              text:
-                "Nebula Security Center • Verificación completada",
-            })
-            .setTimestamp();
+          )
+          .addFields({
+            name:
+              "Servidor",
 
-        await logsChannel.send({
-          embeds: [logEmbed],
-        });
+            value:
+              interaction.guild.name,
+
+            inline:
+              true,
+          })
+          .setFooter({
+            text:
+              "Nebula Security Center • No compartas este enlace",
+          })
+          .setTimestamp();
+
+      await interaction.editReply({
+        embeds: [
+          verificationEmbed,
+        ],
+
+        components: [
+          row,
+        ],
+      });
+
+      console.log(
+        "Enlace privado de verificación generado:",
+        {
+          guildId:
+            interaction.guild.id,
+
+          userId:
+            interaction.user.id,
+
+          expiresAt:
+            verificationTicket
+              .expiresAtIso,
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Error generando enlace privado de verificación:",
+        error
+      );
+
+      const message =
+        "❌ No se pudo preparar la verificación. Volvé a intentarlo.";
+
+      if (
+        interaction.deferred ||
+        interaction.replied
+      ) {
+        await interaction
+          .editReply({
+            content:
+              message,
+
+            embeds:
+              [],
+
+            components:
+              [],
+          })
+          .catch(
+            () => {}
+          );
+      } else {
+        await interaction
+          .reply({
+            content:
+              message,
+
+            ephemeral:
+              true,
+          })
+          .catch(
+            () => {}
+          );
       }
     }
-
-    console.log(
-      `Usuario verificado: ${interaction.user.tag} en ${interaction.guild.name}`
-    );
-  } catch (error) {
-    console.error(
-      "Error procesando la verificación:",
-      error
-    );
-
-    const errorMessage =
-      "❌ No pude completar la verificación. Revisá mis permisos y la posición de los roles.";
-
-    if (
-      interaction.deferred ||
-      interaction.replied
-    ) {
-      await interaction
-        .editReply(errorMessage)
-        .catch(() => {});
-    } else {
-      await interaction
-        .reply({
-          content: errorMessage,
-          ephemeral: true,
-        })
-        .catch(() => {});
-    }
   }
-});
+);
+
 /* =========================================================
    FRONTEND COMPILADO CON VITE
    ========================================================= */

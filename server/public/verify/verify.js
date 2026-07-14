@@ -78,6 +78,79 @@ let currentVerificationToken =
     verificationTokenStorageKey
   ) || "";
 
+/*
+  Lee el token privado enviado por el botón
+  de interacción de Discord.
+*/
+
+function importVerificationTokenFromUrl() {
+  const currentUrl =
+    new URL(
+      window.location.href
+    );
+
+  const urlToken =
+    String(
+      currentUrl.searchParams.get(
+        "verificationToken"
+      ) ||
+      ""
+    ).trim();
+
+  if (!urlToken) {
+    return false;
+  }
+
+  if (
+    !/^[a-f0-9]{96}$/i.test(
+      urlToken
+    )
+  ) {
+    currentUrl.searchParams.delete(
+      "verificationToken"
+    );
+
+    window.history.replaceState(
+      {},
+      document.title,
+      `${currentUrl.pathname}${
+        currentUrl.search
+      }${currentUrl.hash}`
+    );
+
+    throw new Error(
+      "El enlace privado de verificación no es válido."
+    );
+  }
+
+  currentVerificationToken =
+    urlToken;
+
+  sessionStorage.setItem(
+    verificationTokenStorageKey,
+    currentVerificationToken
+  );
+
+  /*
+    Sacamos el token de la barra de direcciones
+    para que no quede visible ni se copie por error.
+  */
+
+  currentUrl.searchParams.delete(
+    "verificationToken"
+  );
+
+  window.history.replaceState(
+    {},
+    document.title,
+    `${currentUrl.pathname}${
+      currentUrl.search
+    }${currentUrl.hash}`
+  );
+
+  return true;
+}
+
 /* =========================================================
    FONDO ESPACIAL
    ========================================================= */
@@ -448,13 +521,14 @@ function showLoginRequired() {
       "Avatar de Discord";
   }
 
-  setButtonState({
-    disabled: false,
-    icon: "↗",
-    text:
-      "INICIAR SESIÓN CON DISCORD",
-  });
-}
+setButtonState({
+  disabled: true,
+  icon: "!",
+  text:
+    "VOLVÉ A DISCORD",
+});
+
+ }
 
 function getBrowserInformation() {
   const userAgent =
@@ -741,6 +815,28 @@ async function getTokenSession() {
    ========================================================= */
 
 async function loadVerificationPage() {
+  try {
+    importVerificationTokenFromUrl();
+  } catch (error) {
+    console.error(
+      "Error leyendo el enlace privado:",
+      error
+    );
+
+    setStatus(
+      error.message ||
+      "El enlace privado no es válido.",
+      "error"
+    );
+
+    if (completeButton) {
+      completeButton.disabled =
+        true;
+    }
+
+    return;
+  }
+
   if (!guildId) {
     setStatus(
       "No se encontró el ID del servidor.",
@@ -767,7 +863,8 @@ async function loadVerificationPage() {
           guildId
         )}/page-data`,
         {
-          method: "GET",
+          method:
+            "GET",
 
           headers: {
             Accept:
@@ -811,111 +908,92 @@ async function loadVerificationPage() {
       pageData.serverName
     );
 
-  /*
-  Si existe un authCode en la URL,
-  primero lo intercambiamos.
-*/
+    const exchangedUser =
+      await exchangeTemporaryAuthCode();
 
-const exchangedUser =
-  await exchangeTemporaryAuthCode();
+    if (exchangedUser) {
+      showAuthenticatedUser(
+        exchangedUser
+      );
 
-if (exchangedUser) {
-  showAuthenticatedUser(
-    exchangedUser
-  );
+      applyPreviewAppearance(
+        pageData.webAppearance ||
+        {}
+      );
 
-  applyPreviewAppearance(
-    pageData.webAppearance ||
-    {}
-  );
+      setStatus("");
 
-  setStatus("");
+      console.log(
+        "Autenticación temporal completada:",
+        exchangedUser
+      );
 
-  console.log(
-    "Autenticación temporal completada:",
-    exchangedUser
-  );
+      return;
+    }
 
-  return;
-}
+    const {
+      response:
+        tokenSessionResponse,
 
-/*
-  Primero intentamos recuperar al usuario
-  usando el token independiente de cookies.
-*/
+      result:
+        tokenSessionResult,
+    } =
+      await getTokenSession();
 
-const {
-  response:
-    tokenSessionResponse,
+    if (
+      tokenSessionResponse?.ok &&
+      tokenSessionResult?.success &&
+      tokenSessionResult?.authenticated
+    ) {
+      showAuthenticatedUser(
+        tokenSessionResult.data
+      );
+    } else {
+      const {
+        response:
+          sessionResponse,
 
-  result:
-    tokenSessionResult,
-} =
-  await getTokenSession();
+        result:
+          sessionResult,
+      } =
+        await getDiscordSession();
 
-if (
-  tokenSessionResponse?.ok &&
-  tokenSessionResult?.success &&
-  tokenSessionResult?.authenticated
-) {
-  showAuthenticatedUser(
-    tokenSessionResult.data
-  );
-} else {
-  /*
-    Compatibilidad con sesiones anteriores
-    en PC y navegadores donde la cookie funciona.
-  */
+      if (
+        sessionResponse.ok &&
+        sessionResult.success &&
+        sessionResult.authenticated
+      ) {
+        showAuthenticatedUser(
+          sessionResult.data
+        );
+      } else {
+        showLoginRequired();
+      }
+    }
 
-  const {
-    response:
-      sessionResponse,
-
-    result:
-      sessionResult,
-  } =
-    await getDiscordSession();
-
-  if (
-    sessionResponse.ok &&
-    sessionResult.success &&
-    sessionResult.authenticated
-  ) {
-    showAuthenticatedUser(
-      sessionResult.data
+    applyPreviewAppearance(
+      pageData.webAppearance ||
+      {}
     );
-  } else {
-    showLoginRequired();
-  }
-}
 
-/*
-  Aplicamos la apariencia después de construir
-  el botón y los datos del usuario.
-*/
+    setStatus("");
 
-applyPreviewAppearance(
-  pageData.webAppearance ||
-  {}
-);
+    console.log(
+      "Datos reales de verificación:",
+      {
+        server:
+          pageData,
 
-setStatus("");
+        authenticated:
+          pageIsAuthenticated,
 
-
-console.log(
-  "Datos reales de verificación:",
-  {
-    server: pageData,
-    authenticated:
-      pageIsAuthenticated,
-    tokenAvailable:
-      Boolean(
-        currentVerificationToken
-      ),
-  }
-);
-
-     } catch (error) {
+        tokenAvailable:
+          Boolean(
+            currentVerificationToken
+          ),
+      }
+    );
+  } catch (error) {
     console.error(
       "Error cargando la página:",
       error
@@ -2017,27 +2095,21 @@ completeButton?.addEventListener(
       lo enviamos directamente a OAuth2.
     */
 
-    if (!pageIsAuthenticated) {
-      setButtonState({
-        disabled: true,
-        icon: "…",
-        text:
-          "ABRIENDO DISCORD",
-        loading: true,
-      });
+   if (!pageIsAuthenticated) {
+  setStatus(
+    "El enlace privado venció o no es válido. Volvé a Discord y presioná nuevamente Verificar.",
+    "error"
+  );
 
-      setStatus(
-        "Redirigiendo a Discord...",
-        "loading"
-      );
+  setButtonState({
+    disabled: true,
+    icon: "!",
+    text:
+      "ENLACE VENCIDO",
+  });
 
-      window.location.href =
-        `/auth/discord?guildId=${encodeURIComponent(
-          guildId
-        )}`;
-
-      return;
-    }
+  return;
+}
 
     verificationInProgress =
       true;
