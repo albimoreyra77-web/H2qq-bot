@@ -16,7 +16,10 @@ const __dirname = path.dirname(__filename);
 
 
 import {
+  ActionRowBuilder,
   ActivityType,
+  ButtonBuilder,
+  ButtonStyle,
   ChannelType,
   Client,
   EmbedBuilder,
