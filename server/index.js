@@ -222,22 +222,47 @@ function loadVerifyConfig(guildId) {
     fs.readFileSync(file, "utf8")
   );
 }
-
 function getVerifyConfig(guildId) {
+  const defaults =
+    getDefaultVerifyConfig();
+
   try {
-    return (
-      loadVerifyConfig(guildId) ||
-      getDefaultVerifyConfig()
-    );
+    const savedConfig =
+      loadVerifyConfig(guildId);
+
+    if (!savedConfig) {
+      return defaults;
+    }
+
+    return {
+      ...defaults,
+      ...savedConfig,
+
+      logOptions: {
+        ...defaults.logOptions,
+        ...(savedConfig.logOptions || {}),
+      },
+
+      webAppearance: {
+        ...defaults.webAppearance,
+        ...(savedConfig.webAppearance || {}),
+      },
+
+      security: {
+        ...defaults.security,
+        ...(savedConfig.security || {}),
+      },
+    };
   } catch (error) {
     console.error(
       `No se pudo leer la verificación de ${guildId}:`,
       error
     );
 
-    return getDefaultVerifyConfig();
+    return defaults;
   }
 }
+
 /* =========================================================
    FUNCIONES AUXILIARES
    ========================================================= */
@@ -399,11 +424,53 @@ function getDefaultVerifyConfig() {
 
     embedColor: "#8b5cf6",
 
-    buttonText: "Verificarme",
-    buttonEmoji: "✅",
-    buttonStyle: "primary",
+  buttonText:
+  "Verificar con Discord",
 
-    reactionEmoji: "✅",
+buttonEmoji:
+  "✅",
+
+buttonStyle:
+  "primary",
+
+reactionEmoji:
+  "✅",
+
+/* TEXTOS DEL EMBED */
+
+embedFieldName:
+  "📌 Servidor",
+
+embedFieldValue:
+  "{server}",
+
+embedFooterText:
+  "Nebula Security • Todos los derechos reservados",
+
+/* IMÁGENES DEL EMBED */
+
+embedThumbnailUrl:
+  "",
+
+embedImageUrl:
+  "",
+
+/* ELEMENTOS VISIBLES */
+
+showBotAvatar:
+  true,
+
+showServerIcon:
+  true,
+
+showCustomThumbnail:
+  false,
+
+showEmbedImage:
+  false,
+
+showTimestamp:
+  true,
 
     /* =====================================================
        PERSONALIZACIÓN DEL LOG
@@ -476,24 +543,96 @@ function getDefaultVerifyConfig() {
     /* =====================================================
        APARIENCIA DE LA WEB
        ===================================================== */
+webAppearance: {
+  /* INFORMACIÓN PRINCIPAL */
 
-    webAppearance: {
-      pageName:
-        "Trade Room Verification",
+  pageName:
+    "Trade Room Verification",
 
-      primaryColor:
-        "#8b5cf6",
+  pageDescription:
+    "Completá la verificación para acceder al servidor.",
 
-      animationsEnabled: true,
-      spaceBackground: true,
+  logoUrl: "",
+  backgroundUrl: "",
 
-      particleCount: 100,
-      glowIntensity: 80,
+  /* COLORES */
 
-      verificationSound: false,
-    },
+  primaryColor:
+    "#8b5cf6",
 
-    /* =====================================================
+  secondaryColor:
+    "#6d28d9",
+
+  buttonColor:
+    "#7c3aed",
+
+  textColor:
+    "#ffffff",
+
+  cardColor:
+    "#0f0f1a",
+
+  /* FONDO */
+
+  backgroundType:
+    "space",
+
+  backgroundSolidColor:
+    "#05050a",
+
+  gradientStart:
+    "#05050a",
+
+  gradientEnd:
+    "#160c2b",
+
+  spaceBackground: true,
+
+  /* ANIMACIONES */
+
+  animationsEnabled: true,
+
+  particlesEnabled: true,
+  glowEnabled: true,
+  fadeEnabled: true,
+  hoverEnabled: true,
+  cursorGlowEnabled: false,
+  buttonAnimationEnabled: true,
+  logoAnimationEnabled: true,
+
+  particleCount: 100,
+  glowIntensity: 80,
+
+  /* TARJETA */
+
+  cardBlur: 18,
+  cardOpacity: 88,
+  cardRadius: 24,
+  cardShadow: 80,
+
+  /* BOTÓN */
+
+  verifyButtonText:
+    "Verificar con Discord",
+
+  verifyButtonIcon:
+    "discord",
+
+  verifyButtonSize:
+    "large",
+
+  verifyButtonRadius: 14,
+
+  /* SONIDOS */
+
+  verificationSound: false,
+  errorSound: false,
+  openingSound: false,
+
+  soundVolume: 50,
+},
+
+     /* =====================================================
        SEGURIDAD
        ===================================================== */
 

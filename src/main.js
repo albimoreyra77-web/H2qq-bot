@@ -1658,21 +1658,28 @@ async function abrirConfiguracionVerificacion(servidor) {
   `;
 
   try {
-    const [
-      channelsResponse,
-      serverResponse,
-      configResponse,
-    ] = await Promise.all([
-      fetch(
-        `${API_URL}/api/servers/${servidor.id}/text-channels`
-      ),
-      fetch(
-        `${API_URL}/api/servers/${servidor.id}`
-      ),
-      fetch(
-        `${API_URL}/api/servers/${servidor.id}/verification`
-      ),
-    ]);
+  const [
+  channelsResponse,
+  serverResponse,
+  configResponse,
+  botInfoResponse,
+] = await Promise.all([
+  fetch(
+    `${API_URL}/api/servers/${servidor.id}/text-channels`
+  ),
+
+  fetch(
+    `${API_URL}/api/servers/${servidor.id}`
+  ),
+
+  fetch(
+    `${API_URL}/api/servers/${servidor.id}/verification`
+  ),
+
+  fetch(
+    `${API_URL}/api/bot/public-info`
+  ),
+]);
 
     const channelsResult =
       await channelsResponse.json();
@@ -1682,6 +1689,9 @@ async function abrirConfiguracionVerificacion(servidor) {
 
     const configResult =
       await configResponse.json();
+
+  const botInfoResult =
+       await botInfoResponse.json();
 
     if (
       !channelsResponse.ok ||
@@ -1713,12 +1723,16 @@ async function abrirConfiguracionVerificacion(servidor) {
       );
     }
 
-    mostrarConfiguracionVerificacion(
-      servidor,
-      channelsResult.data,
-      serverResult.data.roles,
-      configResult.data
-    );
+mostrarConfiguracionVerificacion(
+  servidor,
+  channelsResult.data,
+  serverResult.data.roles,
+  configResult.data,
+  botInfoResult.success
+    ? botInfoResult.data
+    : {}
+);
+
   } catch (error) {
     console.error(
       "Error cargando verificación:",
@@ -1752,12 +1766,70 @@ async function abrirConfiguracionVerificacion(servidor) {
       });
   }
 }
+function appearanceColorControl(
+  id,
+  label,
+  value
+) {
+  return `
+    <label class="welcome-field">
+      <span>${label}</span>
+
+      <div class="welcome-color-row">
+        <input
+          id="${id}"
+          type="color"
+          value="${value}"
+        >
+
+        <input
+          id="${id}Text"
+          value="${value}"
+          maxlength="7"
+        >
+      </div>
+    </label>
+  `;
+}
+
+function appearanceRangeControl(
+  id,
+  label,
+  value,
+  min,
+  max,
+  suffix = ""
+) {
+  return `
+    <label class="appearance-range-control">
+      <div>
+        <span>${label}</span>
+
+        <strong id="${id}Value">
+          ${value}${suffix}
+        </strong>
+      </div>
+
+      <input
+        id="${id}"
+        type="range"
+        min="${min}"
+        max="${max}"
+        value="${value}"
+        data-suffix="${suffix}"
+      >
+    </label>
+  `;
+}
+
 function mostrarConfiguracionVerificacion(
   servidor,
   channels,
   roles,
-  config
+  config,
+  botInfo = {}
 ) {
+
   const currentLogOptions = {
     avatar: true,
     username: true,
@@ -1795,16 +1867,81 @@ function mostrarConfiguracionVerificacion(
     ...(config.logOptions || {}),
   };
 
-  const currentAppearance = {
-    pageName: "Trade Room Verification",
-    primaryColor: "#8b5cf6",
-    animationsEnabled: true,
-    spaceBackground: true,
-    particleCount: 100,
-    glowIntensity: 80,
-    verificationSound: false,
-    ...(config.webAppearance || {}),
-  };
+const currentAppearance = {
+  pageName:
+    "Trade Room Verification",
+
+  pageDescription:
+    "Completá la verificación para acceder al servidor.",
+
+  logoUrl: "",
+  backgroundUrl: "",
+
+  primaryColor:
+    "#8b5cf6",
+
+  secondaryColor:
+    "#6d28d9",
+
+  buttonColor:
+    "#7c3aed",
+
+  textColor:
+    "#ffffff",
+
+  cardColor:
+    "#0f0f1a",
+
+  backgroundType:
+    "space",
+
+  backgroundSolidColor:
+    "#05050a",
+
+  gradientStart:
+    "#05050a",
+
+  gradientEnd:
+    "#160c2b",
+
+  spaceBackground: true,
+
+  animationsEnabled: true,
+  particlesEnabled: true,
+  glowEnabled: true,
+  fadeEnabled: true,
+  hoverEnabled: true,
+  cursorGlowEnabled: false,
+  buttonAnimationEnabled: true,
+  logoAnimationEnabled: true,
+
+  particleCount: 100,
+  glowIntensity: 80,
+
+  cardBlur: 18,
+  cardOpacity: 88,
+  cardRadius: 24,
+  cardShadow: 80,
+
+  verifyButtonText:
+    "Verificar con Discord",
+
+  verifyButtonIcon:
+    "discord",
+
+  verifyButtonSize:
+    "large",
+
+  verifyButtonRadius: 14,
+
+  verificationSound: false,
+  errorSound: false,
+  openingSound: false,
+
+  soundVolume: 50,
+
+  ...(config.webAppearance || {}),
+};
 
   const currentSecurity = {
     detectVpn: false,
@@ -2115,172 +2252,491 @@ function mostrarConfiguracionVerificacion(
           </article>
         </section>
 
-        <!-- PANEL -->
+             <!-- PANEL -->
 
-        <section
-          class="verify-tab-panel"
-          data-verify-panel="panel"
-        >
-          <div class="verify-two-columns">
+<section
+  class="verify-tab-panel"
+  data-verify-panel="panel"
+>
+  <div class="verify-panel-editor-layout">
 
-            <article class="section-panel">
-              <div class="section-panel-head">
-                <div>
-                  <span>PANEL DE DISCORD</span>
-                  <h3>Contenido del embed</h3>
-                </div>
-              </div>
+    <!-- CONTROLES -->
 
-              <label class="welcome-field">
-                <span>TÍTULO DEL EMBED</span>
+    <div class="verify-panel-controls">
 
-                <input
-                  id="verifyEmbedTitle"
-                  maxlength="256"
-                  value="${escapeHtmlAttribute(
-                    config.embedTitle || ""
-                  )}"
-                >
-              </label>
+      <article class="section-panel">
 
-              <label class="welcome-field">
-                <span>DESCRIPCIÓN</span>
+        <div class="section-panel-head">
+          <div>
+            <span>PANEL DE DISCORD</span>
+            <h3>
+              Configuración del embed
+            </h3>
+          </div>
+        </div>
 
-                <textarea
-                  id="verifyEmbedDescription"
-                  rows="6"
-                  maxlength="4000"
-                >${escapeHtml(
-                  config.embedDescription || ""
-                )}</textarea>
-              </label>
+        <label class="welcome-field">
+          <span>TÍTULO DEL EMBED</span>
 
-              <label class="welcome-field">
-                <span>COLOR DEL EMBED</span>
+          <input
+            id="verifyEmbedTitle"
+            maxlength="256"
+            value="${escapeHtmlAttribute(
+              config.embedTitle ||
+              "🔒 Verificación requerida"
+            )}"
+          >
+        </label>
 
-                <div class="welcome-color-row">
-                  <input
-                    id="verifyEmbedColor"
-                    type="color"
-                    value="${
-                      config.embedColor ||
-                      "#8b5cf6"
-                    }"
-                  >
+        <label class="welcome-field">
+          <span>DESCRIPCIÓN</span>
 
-                  <input
-                    id="verifyEmbedColorText"
-                    value="${
-                      config.embedColor ||
-                      "#8b5cf6"
-                    }"
-                    maxlength="7"
-                  >
-                </div>
-              </label>
+          <textarea
+            id="verifyEmbedDescription"
+            rows="5"
+            maxlength="4000"
+          >${escapeHtml(
+            config.embedDescription ||
+            "Para obtener acceso a **{server}**, debés verificar tu cuenta de Discord."
+          )}</textarea>
+        </label>
 
-              <div class="verify-form-grid">
-                <label class="welcome-field">
-                  <span>TEXTO DEL BOTÓN</span>
+        <label class="welcome-field">
+          <span>COLOR DEL EMBED</span>
 
-                  <input
-                    id="verifyButtonText"
-                    maxlength="80"
-                    value="${escapeHtmlAttribute(
-                      config.buttonText ||
-                      "Verificarme"
-                    )}"
-                  >
-                </label>
+          <div class="welcome-color-row">
+            <input
+              id="verifyEmbedColor"
+              type="color"
+              value="${
+                config.embedColor ||
+                "#8b5cf6"
+              }"
+            >
 
-                <label class="welcome-field">
-                  <span>EMOJI</span>
+            <input
+              id="verifyEmbedColorText"
+              maxlength="7"
+              value="${
+                config.embedColor ||
+                "#8b5cf6"
+              }"
+            >
+          </div>
+        </label>
 
-                  <input
-                    id="verifyButtonEmoji"
-                    maxlength="100"
-                    value="${escapeHtmlAttribute(
-                      config.buttonEmoji || "✅"
-                    )}"
-                  >
-                </label>
-              </div>
+        <div class="verify-form-grid">
 
-              <label class="welcome-field">
-                <span>EMOJI DE REACCIÓN</span>
+          <label class="welcome-field">
+            <span>TEXTO DEL BOTÓN</span>
 
-                <input
-                  id="verifyReactionEmoji"
-                  maxlength="100"
-                  value="${escapeHtmlAttribute(
-                    config.reactionEmoji || "✅"
-                  )}"
-                >
-              </label>
-            </article>
+            <input
+              id="verifyButtonText"
+              maxlength="80"
+              value="${escapeHtmlAttribute(
+                config.buttonText ||
+                "Verificar con Discord"
+              )}"
+            >
+          </label>
 
-            <article class="section-panel">
-              <div class="section-panel-head">
-                <div>
-                  <span>VISTA PREVIA</span>
-                  <h3>Discord</h3>
-                </div>
-              </div>
+          <label class="welcome-field">
+            <span>EMOJI DEL BOTÓN</span>
 
-              <div class="verify-discord-preview">
-                <div class="verify-preview-author">
-                  <div>N</div>
+            <input
+              id="verifyButtonEmoji"
+              maxlength="100"
+              value="${escapeHtmlAttribute(
+                config.buttonEmoji ||
+                "✅"
+              )}"
+            >
+          </label>
 
-                  <span>
-                    <strong>Nebula Bot</strong>
-                    <small>BOT</small>
-                  </span>
-                </div>
+        </div>
+
+        <div class="verify-form-grid">
+
+          <label class="welcome-field">
+            <span>NOMBRE DEL CAMPO</span>
+
+            <input
+              id="verifyEmbedFieldName"
+              maxlength="256"
+              value="${escapeHtmlAttribute(
+                config.embedFieldName ||
+                "📌 Servidor"
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>VALOR DEL CAMPO</span>
+
+            <input
+              id="verifyEmbedFieldValue"
+              maxlength="1024"
+              value="${escapeHtmlAttribute(
+                config.embedFieldValue ||
+                "{server}"
+              )}"
+            >
+          </label>
+
+        </div>
+
+        <label class="welcome-field">
+          <span>TEXTO DEL PIE</span>
+
+          <input
+            id="verifyEmbedFooterText"
+            maxlength="2048"
+            value="${escapeHtmlAttribute(
+              config.embedFooterText ||
+              "Nebula Security • Todos los derechos reservados"
+            )}"
+          >
+        </label>
+
+        <label class="welcome-field">
+          <span>EMOJI DE REACCIÓN</span>
+
+          <input
+            id="verifyReactionEmoji"
+            maxlength="100"
+            value="${escapeHtmlAttribute(
+              config.reactionEmoji ||
+              "✅"
+            )}"
+          >
+        </label>
+
+      </article>
+
+      <article class="section-panel">
+
+        <div class="section-panel-head">
+          <div>
+            <span>IMÁGENES Y ELEMENTOS</span>
+            <h3>Contenido visual</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${createToggle(
+            "verifyShowBotAvatar",
+            "Mostrar avatar del bot",
+            "Usa la foto de perfil real del bot.",
+            config.showBotAvatar !== false
+          )}
+
+          ${createToggle(
+            "verifyShowServerIcon",
+            "Mostrar icono del servidor",
+            "Usa el icono del servidor como miniatura.",
+            config.showServerIcon !== false
+          )}
+
+          ${createToggle(
+            "verifyShowCustomThumbnail",
+            "Miniatura personalizada",
+            "Muestra una imagen pequeña en el embed.",
+            Boolean(
+              config.showCustomThumbnail
+            )
+          )}
+
+          ${createToggle(
+            "verifyShowEmbedImage",
+            "Imagen grande",
+            "Muestra una imagen en la parte inferior.",
+            Boolean(
+              config.showEmbedImage
+            )
+          )}
+
+          ${createToggle(
+            "verifyShowTimestamp",
+            "Mostrar fecha y hora",
+            "Agrega el timestamp real de Discord.",
+            config.showTimestamp !== false
+          )}
+
+        </div>
+
+        <label class="welcome-field">
+          <span>URL DE LA MINIATURA</span>
+
+          <input
+            id="verifyEmbedThumbnailUrl"
+            maxlength="1000"
+            placeholder="https://..."
+            value="${escapeHtmlAttribute(
+              config.embedThumbnailUrl ||
+              ""
+            )}"
+          >
+        </label>
+
+        <label class="welcome-field">
+          <span>URL DE LA IMAGEN GRANDE</span>
+
+          <input
+            id="verifyEmbedImageUrl"
+            maxlength="1000"
+            placeholder="https://..."
+            value="${escapeHtmlAttribute(
+              config.embedImageUrl ||
+              ""
+            )}"
+          >
+        </label>
+
+      </article>
+
+      <article class="section-panel verify-panel-variables">
+
+        <div class="section-panel-head">
+          <div>
+            <span>VARIABLES DISPONIBLES</span>
+            <h3>Textos dinámicos</h3>
+          </div>
+        </div>
+
+        <div class="verify-variable-list">
+          <code>{server}</code>
+          <span>Nombre del servidor</span>
+
+          <code>{date}</code>
+          <span>Fecha actual</span>
+
+          <code>{time}</code>
+          <span>Hora actual</span>
+        </div>
+
+      </article>
+
+    </div>
+
+    <!-- VISTA PREVIA -->
+
+    <aside class="verify-discord-preview-column">
+
+      <article class="section-panel verify-discord-preview-panel">
+
+        <div class="section-panel-head">
+          <div>
+            <span>VISTA PREVIA</span>
+            <h3>Así se verá en Discord</h3>
+          </div>
+        </div>
+
+        <div class="discord-message-preview">
+
+          <div
+            id="verifyPreviewAuthor"
+            class="discord-message-author"
+          >
+            <img
+              id="verifyPreviewBotAvatar"
+              src="${escapeHtmlAttribute(
+                botInfo.avatar ||
+                "https://cdn.discordapp.com/embed/avatars/0.png"
+              )}"
+              alt="Avatar del bot"
+            >
+
+            <div>
+              <strong id="verifyPreviewBotName">
+                ${escapeHtml(
+                  botInfo.displayName ||
+                  botInfo.username ||
+                  "Nebula Bot"
+                )}
+              </strong>
+
+              <span>BOT</span>
+
+              <small>
+                Hoy a las
+                ${new Date().toLocaleTimeString(
+                  "es-AR",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )}
+              </small>
+            </div>
+          </div>
+
+          <div
+            id="verifyPreviewEmbed"
+            class="discord-embed-preview"
+            style="
+              --preview-embed-color:
+              ${
+                config.embedColor ||
+                "#8b5cf6"
+              };
+            "
+          >
+
+            <div class="discord-embed-body">
+
+              <div class="discord-embed-content">
+
+                <h3 id="verifyPreviewTitle">
+                  ${escapeHtml(
+                    config.embedTitle ||
+                    "🔒 Verificación requerida"
+                  )}
+                </h3>
+
+                <p id="verifyPreviewDescription">
+                  ${escapeHtml(
+                    (
+                      config.embedDescription ||
+                      "Para obtener acceso a **{server}**, debés verificar tu cuenta de Discord."
+                    )
+                      .replaceAll(
+                        "{server}",
+                        servidor.name
+                      )
+                      .replaceAll("**", "")
+                  )}
+                </p>
 
                 <div
-                  id="verifyPreviewEmbed"
-                  class="verify-preview-embed"
+                  id="verifyPreviewField"
+                  class="discord-embed-field"
                 >
-                  <strong id="verifyPreviewTitle">
+                  <strong id="verifyPreviewFieldName">
                     ${escapeHtml(
-                      config.embedTitle ||
-                      "Verificación del servidor"
+                      config.embedFieldName ||
+                      "📌 Servidor"
                     )}
                   </strong>
 
-                  <p id="verifyPreviewDescription">
+                  <span id="verifyPreviewFieldValue">
                     ${escapeHtml(
-                      config.embedDescription || ""
+                      (
+                        config.embedFieldValue ||
+                        "{server}"
+                      ).replaceAll(
+                        "{server}",
+                        servidor.name
+                      )
                     )}
-                  </p>
-
-                  <small>
-                    ${escapeHtml(servidor.name)}
-                  </small>
+                  </span>
                 </div>
 
                 <button
                   id="verifyPreviewButton"
                   type="button"
                 >
-                  <span id="verifyPreviewEmoji">
+                  <span id="verifyPreviewButtonEmoji">
                     ${escapeHtml(
-                      config.buttonEmoji || "✅"
+                      config.buttonEmoji ||
+                      "✅"
                     )}
                   </span>
 
-                  <span id="verifyPreviewButtonText">
+                  <strong id="verifyPreviewButtonText">
                     ${escapeHtml(
                       config.buttonText ||
-                      "Verificarme"
+                      "Verificar con Discord"
                     )}
-                  </span>
+                  </strong>
                 </button>
+
               </div>
-            </article>
+
+              <img
+                id="verifyPreviewThumbnail"
+                class="discord-embed-thumbnail"
+                src="${escapeHtmlAttribute(
+                  config.showCustomThumbnail &&
+                  config.embedThumbnailUrl
+                    ? config.embedThumbnailUrl
+                    : servidor.icon ||
+                      servidor.iconURL ||
+                      ""
+                )}"
+                alt="Miniatura"
+              >
+
+            </div>
+
+            <img
+              id="verifyPreviewImage"
+              class="discord-embed-large-image"
+              src="${escapeHtmlAttribute(
+                config.embedImageUrl ||
+                ""
+              )}"
+              alt="Imagen del embed"
+              ${
+                config.showEmbedImage &&
+                config.embedImageUrl
+                  ? ""
+                  : 'style="display:none"'
+              }
+            >
+
+            <div class="discord-embed-footer">
+
+              <img
+                id="verifyPreviewFooterAvatar"
+                src="${escapeHtmlAttribute(
+                  botInfo.avatar ||
+                  "https://cdn.discordapp.com/embed/avatars/0.png"
+                )}"
+                alt=""
+              >
+
+              <span id="verifyPreviewFooterText">
+                ${escapeHtml(
+                  config.embedFooterText ||
+                  "Nebula Security • Todos los derechos reservados"
+                )}
+              </span>
+
+              <small
+                id="verifyPreviewTimestamp"
+                ${
+                  config.showTimestamp === false
+                    ? 'style="display:none"'
+                    : ""
+                }
+              >
+                • Hoy a las
+                ${new Date().toLocaleTimeString(
+                  "es-AR",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )}
+              </small>
+
+            </div>
 
           </div>
-        </section>
+
+        </div>
+
+        <p class="discord-preview-help">
+          Los cambios se muestran en tiempo real.
+        </p>
+
+      </article>
+
+    </aside>
+
+  </div>
+</section>
 
         <!-- LOGS -->
 
@@ -2545,104 +3001,563 @@ function mostrarConfiguracionVerificacion(
 
         <!-- APARIENCIA -->
 
-        <section
-          class="verify-tab-panel"
-          data-verify-panel="appearance"
-        >
-          <article class="section-panel">
-            <div class="section-panel-head">
-              <div>
-                <span>WEB DE VERIFICACIÓN</span>
-                <h3>Apariencia</h3>
-              </div>
-            </div>
+   <section
+  class="verify-tab-panel"
+  data-verify-panel="appearance"
+>
+  <div class="appearance-editor-layout">
 
-            <label class="welcome-field">
-              <span>NOMBRE DE LA PÁGINA</span>
+    <div class="appearance-editor-controls">
 
-              <input
-                id="verifyPageName"
-                value="${escapeHtmlAttribute(
-                  currentAppearance.pageName
-                )}"
+      <!-- IDENTIDAD -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>IDENTIDAD</span>
+            <h3>Información de la página</h3>
+          </div>
+        </div>
+
+        <div class="appearance-form-grid">
+          <label class="welcome-field appearance-wide">
+            <span>NOMBRE DE LA PÁGINA</span>
+
+            <input
+              id="verifyPageName"
+              maxlength="100"
+              value="${escapeHtmlAttribute(
+                currentAppearance.pageName
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field appearance-wide">
+            <span>DESCRIPCIÓN</span>
+
+            <textarea
+              id="verifyPageDescription"
+              maxlength="300"
+              rows="3"
+            >${escapeHtml(
+              currentAppearance.pageDescription
+            )}</textarea>
+          </label>
+
+          <label class="welcome-field">
+            <span>URL DEL LOGO</span>
+
+            <input
+              id="verifyLogoUrl"
+              maxlength="1000"
+              placeholder="https://..."
+              value="${escapeHtmlAttribute(
+                currentAppearance.logoUrl
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>URL DEL FONDO</span>
+
+            <input
+              id="verifyBackgroundUrl"
+              maxlength="1000"
+              placeholder="https://..."
+              value="${escapeHtmlAttribute(
+                currentAppearance.backgroundUrl
+              )}"
+            >
+          </label>
+        </div>
+      </article>
+
+      <!-- COLORES -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>PALETA</span>
+            <h3>Colores de la página</h3>
+          </div>
+        </div>
+
+        <div class="appearance-colors-grid">
+
+          ${appearanceColorControl(
+            "verifyPrimaryColor",
+            "COLOR PRINCIPAL",
+            currentAppearance.primaryColor
+          )}
+
+          ${appearanceColorControl(
+            "verifySecondaryColor",
+            "COLOR SECUNDARIO",
+            currentAppearance.secondaryColor
+          )}
+
+          ${appearanceColorControl(
+            "verifyButtonColor",
+            "COLOR DEL BOTÓN",
+            currentAppearance.buttonColor
+          )}
+
+          ${appearanceColorControl(
+            "verifyTextColor",
+            "COLOR DEL TEXTO",
+            currentAppearance.textColor
+          )}
+
+          ${appearanceColorControl(
+            "verifyCardColor",
+            "COLOR DE LA TARJETA",
+            currentAppearance.cardColor
+          )}
+
+          ${appearanceColorControl(
+            "verifyBackgroundSolidColor",
+            "COLOR DEL FONDO",
+            currentAppearance.backgroundSolidColor
+          )}
+
+          ${appearanceColorControl(
+            "verifyGradientStart",
+            "INICIO DEL DEGRADADO",
+            currentAppearance.gradientStart
+          )}
+
+          ${appearanceColorControl(
+            "verifyGradientEnd",
+            "FINAL DEL DEGRADADO",
+            currentAppearance.gradientEnd
+          )}
+
+        </div>
+      </article>
+
+      <!-- FONDO -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>FONDO</span>
+            <h3>Diseño del escenario</h3>
+          </div>
+        </div>
+
+        <label class="welcome-field">
+          <span>TIPO DE FONDO</span>
+
+          <select id="verifyBackgroundType">
+            <option
+              value="space"
+              ${
+                currentAppearance.backgroundType === "space"
+                  ? "selected"
+                  : ""
+              }
+            >
+              Espacial
+            </option>
+
+            <option
+              value="gradient"
+              ${
+                currentAppearance.backgroundType === "gradient"
+                  ? "selected"
+                  : ""
+              }
+            >
+              Degradado
+            </option>
+
+            <option
+              value="image"
+              ${
+                currentAppearance.backgroundType === "image"
+                  ? "selected"
+                  : ""
+              }
+            >
+              Imagen
+            </option>
+
+            <option
+              value="video"
+              ${
+                currentAppearance.backgroundType === "video"
+                  ? "selected"
+                  : ""
+              }
+            >
+              Video
+            </option>
+
+            <option
+              value="solid"
+              ${
+                currentAppearance.backgroundType === "solid"
+                  ? "selected"
+                  : ""
+              }
+            >
+              Color sólido
+            </option>
+          </select>
+        </label>
+
+        <div class="verify-options-grid">
+          ${createToggle(
+            "verifySpaceBackground",
+            "Fondo espacial",
+            "Muestra estrellas y partículas.",
+            currentAppearance.spaceBackground
+          )}
+
+          ${createToggle(
+            "verifyParticlesEnabled",
+            "Partículas",
+            "Activa partículas animadas.",
+            currentAppearance.particlesEnabled
+          )}
+        </div>
+
+        <div class="appearance-range-grid">
+          ${appearanceRangeControl(
+            "verifyParticleCount",
+            "CANTIDAD DE PARTÍCULAS",
+            currentAppearance.particleCount,
+            0,
+            300
+          )}
+
+          ${appearanceRangeControl(
+            "verifyGlowIntensity",
+            "INTENSIDAD DEL BRILLO",
+            currentAppearance.glowIntensity,
+            0,
+            100
+          )}
+        </div>
+      </article>
+
+      <!-- ANIMACIONES -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>EFECTOS</span>
+            <h3>Animaciones</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${createToggle(
+            "verifyAnimationsEnabled",
+            "Animaciones generales",
+            "Activa todos los efectos visuales.",
+            currentAppearance.animationsEnabled
+          )}
+
+          ${createToggle(
+            "verifyGlowEnabled",
+            "Efecto glow",
+            "Agrega brillo alrededor de los elementos.",
+            currentAppearance.glowEnabled
+          )}
+
+          ${createToggle(
+            "verifyFadeEnabled",
+            "Entrada suave",
+            "Los elementos aparecen con un efecto fade.",
+            currentAppearance.fadeEnabled
+          )}
+
+          ${createToggle(
+            "verifyHoverEnabled",
+            "Efectos hover",
+            "Los elementos reaccionan al pasar el cursor.",
+            currentAppearance.hoverEnabled
+          )}
+
+          ${createToggle(
+            "verifyCursorGlowEnabled",
+            "Cursor luminoso",
+            "Agrega un resplandor alrededor del cursor.",
+            currentAppearance.cursorGlowEnabled
+          )}
+
+          ${createToggle(
+            "verifyButtonAnimationEnabled",
+            "Animación del botón",
+            "Anima el botón principal.",
+            currentAppearance.buttonAnimationEnabled
+          )}
+
+          ${createToggle(
+            "verifyLogoAnimationEnabled",
+            "Animación del logo",
+            "Agrega movimiento suave al logo.",
+            currentAppearance.logoAnimationEnabled
+          )}
+
+        </div>
+      </article>
+
+      <!-- TARJETA -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>CONTENEDOR</span>
+            <h3>Tarjeta principal</h3>
+          </div>
+        </div>
+
+        <div class="appearance-range-grid">
+
+          ${appearanceRangeControl(
+            "verifyCardBlur",
+            "DESENFOQUE",
+            currentAppearance.cardBlur,
+            0,
+            50,
+            "px"
+          )}
+
+          ${appearanceRangeControl(
+            "verifyCardOpacity",
+            "OPACIDAD",
+            currentAppearance.cardOpacity,
+            10,
+            100,
+            "%"
+          )}
+
+          ${appearanceRangeControl(
+            "verifyCardRadius",
+            "BORDES REDONDEADOS",
+            currentAppearance.cardRadius,
+            0,
+            50,
+            "px"
+          )}
+
+          ${appearanceRangeControl(
+            "verifyCardShadow",
+            "INTENSIDAD DE SOMBRA",
+            currentAppearance.cardShadow,
+            0,
+            100,
+            "%"
+          )}
+
+        </div>
+      </article>
+
+      <!-- BOTÓN -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>ACCIÓN PRINCIPAL</span>
+            <h3>Botón de verificación</h3>
+          </div>
+        </div>
+
+        <div class="appearance-form-grid">
+
+          <label class="welcome-field appearance-wide">
+            <span>TEXTO DEL BOTÓN</span>
+
+            <input
+              id="verifyAppearanceButtonText"
+              maxlength="80"
+              value="${escapeHtmlAttribute(
+                currentAppearance.verifyButtonText
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>ICONO</span>
+
+            <select id="verifyButtonIcon">
+              <option
+                value="discord"
+                ${
+                  currentAppearance.verifyButtonIcon === "discord"
+                    ? "selected"
+                    : ""
+                }
               >
-            </label>
+                Discord
+              </option>
 
-            <label class="welcome-field">
-              <span>COLOR PRINCIPAL</span>
+              <option
+                value="shield"
+                ${
+                  currentAppearance.verifyButtonIcon === "shield"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Escudo
+              </option>
 
-              <div class="welcome-color-row">
-                <input
-                  id="verifyPrimaryColor"
-                  type="color"
-                  value="${
-                    currentAppearance.primaryColor
-                  }"
-                >
+              <option
+                value="check"
+                ${
+                  currentAppearance.verifyButtonIcon === "check"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Verificado
+              </option>
 
-                <input
-                  id="verifyPrimaryColorText"
-                  value="${
-                    currentAppearance.primaryColor
-                  }"
-                  maxlength="7"
-                >
-              </div>
-            </label>
+              <option
+                value="none"
+                ${
+                  currentAppearance.verifyButtonIcon === "none"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Sin icono
+              </option>
+            </select>
+          </label>
 
-            ${createToggle(
-              "verifyAnimationsEnabled",
-              "Animaciones",
-              "Activa los efectos de movimiento.",
-              currentAppearance.animationsEnabled
-            )}
+          <label class="welcome-field">
+            <span>TAMAÑO</span>
 
-            ${createToggle(
-              "verifySpaceBackground",
-              "Fondo espacial",
-              "Muestra partículas y estrellas.",
-              currentAppearance.spaceBackground
-            )}
+            <select id="verifyButtonSize">
+              <option
+                value="small"
+                ${
+                  currentAppearance.verifyButtonSize === "small"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Pequeño
+              </option>
 
-            ${createToggle(
-              "verifyVerificationSound",
-              "Sonido al verificar",
-              "Reproduce un sonido al finalizar.",
-              currentAppearance.verificationSound
-            )}
+              <option
+                value="medium"
+                ${
+                  currentAppearance.verifyButtonSize === "medium"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Mediano
+              </option>
 
-            <div class="verify-form-grid">
-              <label class="welcome-field">
-                <span>CANTIDAD DE PARTÍCULAS</span>
+              <option
+                value="large"
+                ${
+                  currentAppearance.verifyButtonSize === "large"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Grande
+              </option>
+            </select>
+          </label>
 
-                <input
-                  id="verifyParticleCount"
-                  type="number"
-                  min="20"
-                  max="250"
-                  value="${
-                    currentAppearance.particleCount
-                  }"
-                >
-              </label>
+        </div>
 
-              <label class="welcome-field">
-                <span>INTENSIDAD DEL BRILLO</span>
+        <div class="appearance-range-grid">
+          ${appearanceRangeControl(
+            "verifyButtonRadius",
+            "BORDES DEL BOTÓN",
+            currentAppearance.verifyButtonRadius,
+            0,
+            40,
+            "px"
+          )}
+        </div>
+      </article>
 
-                <input
-                  id="verifyGlowIntensity"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value="${
-                    currentAppearance.glowIntensity
-                  }"
-                >
-              </label>
-            </div>
+      <!-- SONIDOS -->
+
+      <article class="section-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>AUDIO</span>
+            <h3>Sonidos</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${createToggle(
+            "verifyOpeningSound",
+            "Sonido al abrir",
+            "Reproduce un sonido cuando carga la página.",
+            currentAppearance.openingSound
+          )}
+
+          ${createToggle(
+            "verifyVerificationSound",
+            "Sonido al verificar",
+            "Reproduce un sonido cuando la verificación termina.",
+            currentAppearance.verificationSound
+          )}
+
+          ${createToggle(
+            "verifyErrorSound",
+            "Sonido de error",
+            "Reproduce un sonido cuando ocurre un problema.",
+            currentAppearance.errorSound
+          )}
+
+        </div>
+
+        <div class="appearance-range-grid">
+          ${appearanceRangeControl(
+            "verifySoundVolume",
+            "VOLUMEN",
+            currentAppearance.soundVolume,
+            0,
+            100,
+            "%"
+          )}
+        </div>
+      </article>
+
+    </div>
+
+    <!-- VISTA PREVIA -->
+
+    <aside class="appearance-preview-column">
+      <article class="section-panel appearance-preview-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>VISTA PREVIA</span>
+            <h3>Verificación web</h3>
+          </div>
+        </div>
+
+<div class="real-verification-preview">
+  <iframe
+    id="verifyAppearanceFrame"
+    class="real-verification-preview-frame"
+    src="/verify/${encodeURIComponent(
+      servidor.id
+    )}?preview=1"
+    title="Vista previa real de la verificación"
+  ></iframe>
+</div>
           </article>
-        </section>
+    </aside>
 
+  </div>
+</section>
         <!-- SEGURIDAD -->
 
         <section
@@ -2798,6 +3713,304 @@ function mostrarConfiguracionVerificacion(
     return options;
   };
 
+const replacePanelVariables = value => {
+  const now = new Date();
+
+  return String(value || "")
+    .replaceAll(
+      "{server}",
+      servidor.name
+    )
+    .replaceAll(
+      "{date}",
+      now.toLocaleDateString(
+        "es-AR"
+      )
+    )
+    .replaceAll(
+      "{time}",
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
+    )
+    .replaceAll("**", "");
+};
+
+const updateDiscordPanelPreview = () => {
+  const title =
+    getElement("verifyEmbedTitle");
+
+  const description =
+    getElement(
+      "verifyEmbedDescription"
+    );
+
+  const color =
+    getElement("verifyEmbedColor");
+
+  const buttonText =
+    getElement("verifyButtonText");
+
+  const buttonEmoji =
+    getElement("verifyButtonEmoji");
+
+  const fieldName =
+    getElement(
+      "verifyEmbedFieldName"
+    );
+
+  const fieldValue =
+    getElement(
+      "verifyEmbedFieldValue"
+    );
+
+  const footerText =
+    getElement(
+      "verifyEmbedFooterText"
+    );
+
+  const thumbnailUrl =
+    getElement(
+      "verifyEmbedThumbnailUrl"
+    );
+
+  const imageUrl =
+    getElement(
+      "verifyEmbedImageUrl"
+    );
+
+  const previewEmbed =
+    getElement(
+      "verifyPreviewEmbed"
+    );
+
+  /*
+    Si todavía no se construyó la vista
+    previa, salimos sin romper la página.
+  */
+
+  if (!previewEmbed) {
+    return;
+  }
+
+  const previewTitle =
+    getElement(
+      "verifyPreviewTitle"
+    );
+
+  const previewDescription =
+    getElement(
+      "verifyPreviewDescription"
+    );
+
+  const previewFieldName =
+    getElement(
+      "verifyPreviewFieldName"
+    );
+
+  const previewFieldValue =
+    getElement(
+      "verifyPreviewFieldValue"
+    );
+
+  const previewButtonText =
+    getElement(
+      "verifyPreviewButtonText"
+    );
+
+  const previewButtonEmoji =
+    getElement(
+      "verifyPreviewButtonEmoji"
+    );
+
+  const previewFooterText =
+    getElement(
+      "verifyPreviewFooterText"
+    );
+
+  const previewAuthor =
+    getElement(
+      "verifyPreviewAuthor"
+    );
+
+  const previewThumbnail =
+    getElement(
+      "verifyPreviewThumbnail"
+    );
+
+  const previewLargeImage =
+    getElement(
+      "verifyPreviewImage"
+    );
+
+  const previewTimestamp =
+    getElement(
+      "verifyPreviewTimestamp"
+    );
+
+  /*
+    TEXTOS
+  */
+
+  if (previewTitle) {
+    previewTitle.textContent =
+      replacePanelVariables(
+        title?.value ||
+        "🔒 Verificación requerida"
+      );
+  }
+
+  if (previewDescription) {
+    previewDescription.textContent =
+      replacePanelVariables(
+        description?.value ||
+        "Presioná el botón para verificarte."
+      );
+  }
+
+  if (previewFieldName) {
+    previewFieldName.textContent =
+      replacePanelVariables(
+        fieldName?.value ||
+        "📌 Servidor"
+      );
+  }
+
+  if (previewFieldValue) {
+    previewFieldValue.textContent =
+      replacePanelVariables(
+        fieldValue?.value ||
+        "{server}"
+      );
+  }
+
+  if (previewButtonText) {
+    previewButtonText.textContent =
+      buttonText?.value ||
+      "Verificar con Discord";
+  }
+
+  if (previewButtonEmoji) {
+    previewButtonEmoji.textContent =
+      buttonEmoji?.value || "";
+  }
+
+  if (previewFooterText) {
+    previewFooterText.textContent =
+      replacePanelVariables(
+        footerText?.value ||
+        "Nebula Security"
+      );
+  }
+
+  /*
+    COLOR DEL EMBED
+  */
+
+  previewEmbed.style.setProperty(
+    "--preview-embed-color",
+    color?.value ||
+    "#8b5cf6"
+  );
+
+  /*
+    AVATAR DEL BOT
+  */
+
+  if (previewAuthor) {
+    previewAuthor.style.display =
+      getElement(
+        "verifyShowBotAvatar"
+      )?.checked
+        ? "flex"
+        : "none";
+  }
+
+  /*
+    MINIATURA
+  */
+
+  if (previewThumbnail) {
+    const showCustomThumbnail =
+      Boolean(
+        getElement(
+          "verifyShowCustomThumbnail"
+        )?.checked
+      );
+
+    const showServerIcon =
+      Boolean(
+        getElement(
+          "verifyShowServerIcon"
+        )?.checked
+      );
+
+    if (
+      showCustomThumbnail &&
+      thumbnailUrl?.value
+    ) {
+      previewThumbnail.src =
+        thumbnailUrl.value;
+
+      previewThumbnail.style.display =
+        "block";
+    } else if (
+      showServerIcon &&
+      previewThumbnail.src
+    ) {
+      previewThumbnail.style.display =
+        "block";
+    } else {
+      previewThumbnail.style.display =
+        "none";
+    }
+  }
+
+  /*
+    IMAGEN GRANDE
+  */
+
+  if (previewLargeImage) {
+    const showLargeImage =
+      Boolean(
+        getElement(
+          "verifyShowEmbedImage"
+        )?.checked
+      );
+
+    if (
+      showLargeImage &&
+      imageUrl?.value
+    ) {
+      previewLargeImage.src =
+        imageUrl.value;
+
+      previewLargeImage.style.display =
+        "block";
+    } else {
+      previewLargeImage.style.display =
+        "none";
+    }
+  }
+
+  /*
+    FECHA Y HORA
+  */
+
+  if (previewTimestamp) {
+    previewTimestamp.style.display =
+      getElement(
+        "verifyShowTimestamp"
+      )?.checked
+        ? "inline"
+        : "none";
+  }
+};
+
   const buildPayload = () => ({
     enabled:
       getElement("verifyEnabled").checked,
@@ -2834,6 +4047,56 @@ function mostrarConfiguracionVerificacion(
     reactionEmoji:
       getElement("verifyReactionEmoji").value,
 
+embedFieldName:
+  getElement(
+    "verifyEmbedFieldName"
+  ).value,
+
+embedFieldValue:
+  getElement(
+    "verifyEmbedFieldValue"
+  ).value,
+
+embedFooterText:
+  getElement(
+    "verifyEmbedFooterText"
+  ).value,
+
+embedThumbnailUrl:
+  getElement(
+    "verifyEmbedThumbnailUrl"
+  ).value,
+
+embedImageUrl:
+  getElement(
+    "verifyEmbedImageUrl"
+  ).value,
+
+showBotAvatar:
+  getElement(
+    "verifyShowBotAvatar"
+  ).checked,
+
+showServerIcon:
+  getElement(
+    "verifyShowServerIcon"
+  ).checked,
+
+showCustomThumbnail:
+  getElement(
+    "verifyShowCustomThumbnail"
+  ).checked,
+
+showEmbedImage:
+  getElement(
+    "verifyShowEmbedImage"
+  ).checked,
+
+showTimestamp:
+  getElement(
+    "verifyShowTimestamp"
+  ).checked,
+
     logEmbedTitle:
       getElement("verifyLogTitle").value,
 
@@ -2848,44 +4111,8 @@ function mostrarConfiguracionVerificacion(
     logOptions:
       getLogOptions(),
 
-    webAppearance: {
-      pageName:
-        getElement("verifyPageName").value,
-
-      primaryColor:
-        getElement(
-          "verifyPrimaryColor"
-        ).value,
-
-      animationsEnabled:
-        getElement(
-          "verifyAnimationsEnabled"
-        ).checked,
-
-      spaceBackground:
-        getElement(
-          "verifySpaceBackground"
-        ).checked,
-
-      particleCount:
-        Number(
-          getElement(
-            "verifyParticleCount"
-          ).value
-        ),
-
-      glowIntensity:
-        Number(
-          getElement(
-            "verifyGlowIntensity"
-          ).value
-        ),
-
-      verificationSound:
-        getElement(
-          "verifyVerificationSound"
-        ).checked,
-    },
+webAppearance:
+  obtenerAparienciaDesdeFormulario(),
 
     security: {
       detectVpn:
@@ -2937,6 +4164,81 @@ function mostrarConfiguracionVerificacion(
         ).checked,
     },
   });
+
+const panelPreviewInputIds = [
+  "verifyEmbedTitle",
+  "verifyEmbedDescription",
+  "verifyEmbedColor",
+  "verifyEmbedColorText",
+  "verifyButtonText",
+  "verifyButtonEmoji",
+  "verifyEmbedFieldName",
+  "verifyEmbedFieldValue",
+  "verifyEmbedFooterText",
+  "verifyEmbedThumbnailUrl",
+  "verifyEmbedImageUrl",
+  "verifyShowBotAvatar",
+  "verifyShowServerIcon",
+  "verifyShowCustomThumbnail",
+  "verifyShowEmbedImage",
+  "verifyShowTimestamp",
+];
+
+panelPreviewInputIds.forEach(id => {
+  const element =
+    getElement(id);
+
+  if (!element) {
+    return;
+  }
+
+  const eventName =
+    element.type === "checkbox"
+      ? "change"
+      : "input";
+
+  element.addEventListener(
+    eventName,
+    updateDiscordPanelPreview
+  );
+});
+
+getElement("verifyEmbedColor")
+  ?.addEventListener(
+    "input",
+    event => {
+      getElement(
+        "verifyEmbedColorText"
+      ).value =
+        event.target.value;
+
+      updateDiscordPanelPreview();
+    }
+  );
+
+getElement("verifyEmbedColorText")
+  ?.addEventListener(
+    "input",
+    event => {
+      const value =
+        event.target.value.trim();
+
+      if (
+        /^#[0-9a-f]{6}$/i.test(
+          value
+        )
+      ) {
+        getElement(
+          "verifyEmbedColor"
+        ).value =
+          value;
+
+        updateDiscordPanelPreview();
+      }
+    }
+  );
+
+updateDiscordPanelPreview();
 
   getElement("backToServerPanel")
     ?.addEventListener("click", () => {
@@ -3041,55 +4343,491 @@ function mostrarConfiguracionVerificacion(
     "verifyLogColor",
     "verifyLogColorText"
   );
+function obtenerAparienciaDesdeFormulario() {
+  return {
+    pageName:
+      document.getElementById(
+        "verifyPageName"
+      )?.value.trim() || "",
 
-  syncColors(
-    "verifyPrimaryColor",
-    "verifyPrimaryColorText"
+    pageDescription:
+      document.getElementById(
+        "verifyPageDescription"
+      )?.value.trim() || "",
+
+    logoUrl:
+      document.getElementById(
+        "verifyLogoUrl"
+      )?.value.trim() || "",
+
+    backgroundUrl:
+      document.getElementById(
+        "verifyBackgroundUrl"
+      )?.value.trim() || "",
+
+    primaryColor:
+      document.getElementById(
+        "verifyPrimaryColorText"
+      )?.value || "#8b5cf6",
+
+    secondaryColor:
+      document.getElementById(
+        "verifySecondaryColorText"
+      )?.value || "#6d28d9",
+
+    buttonColor:
+      document.getElementById(
+        "verifyButtonColorText"
+      )?.value || "#7c3aed",
+
+    textColor:
+      document.getElementById(
+        "verifyTextColorText"
+      )?.value || "#ffffff",
+
+    cardColor:
+      document.getElementById(
+        "verifyCardColorText"
+      )?.value || "#0f0f1a",
+
+    backgroundSolidColor:
+      document.getElementById(
+        "verifyBackgroundSolidColorText"
+      )?.value || "#05050a",
+
+    gradientStart:
+      document.getElementById(
+        "verifyGradientStartText"
+      )?.value || "#05050a",
+
+    gradientEnd:
+      document.getElementById(
+        "verifyGradientEndText"
+      )?.value || "#160c2b",
+
+    backgroundType:
+      document.getElementById(
+        "verifyBackgroundType"
+      )?.value || "space",
+
+    spaceBackground:
+      Boolean(
+        document.getElementById(
+          "verifySpaceBackground"
+        )?.checked
+      ),
+
+    animationsEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyAnimationsEnabled"
+        )?.checked
+      ),
+
+    particlesEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyParticlesEnabled"
+        )?.checked
+      ),
+
+    glowEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyGlowEnabled"
+        )?.checked
+      ),
+
+    fadeEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyFadeEnabled"
+        )?.checked
+      ),
+
+    hoverEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyHoverEnabled"
+        )?.checked
+      ),
+
+    cursorGlowEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyCursorGlowEnabled"
+        )?.checked
+      ),
+
+    buttonAnimationEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyButtonAnimationEnabled"
+        )?.checked
+      ),
+
+    logoAnimationEnabled:
+      Boolean(
+        document.getElementById(
+          "verifyLogoAnimationEnabled"
+        )?.checked
+      ),
+
+    particleCount:
+      Number(
+        document.getElementById(
+          "verifyParticleCount"
+        )?.value || 100
+      ),
+
+    glowIntensity:
+      Number(
+        document.getElementById(
+          "verifyGlowIntensity"
+        )?.value || 80
+      ),
+
+    cardBlur:
+      Number(
+        document.getElementById(
+          "verifyCardBlur"
+        )?.value || 18
+      ),
+
+    cardOpacity:
+      Number(
+        document.getElementById(
+          "verifyCardOpacity"
+        )?.value || 88
+      ),
+
+    cardRadius:
+      Number(
+        document.getElementById(
+          "verifyCardRadius"
+        )?.value || 24
+      ),
+
+    cardShadow:
+      Number(
+        document.getElementById(
+          "verifyCardShadow"
+        )?.value || 80
+      ),
+
+    verifyButtonText:
+      document.getElementById(
+        "verifyAppearanceButtonText"
+      )?.value.trim() ||
+      "Verificar con Discord",
+
+    verifyButtonIcon:
+      document.getElementById(
+        "verifyButtonIcon"
+      )?.value || "discord",
+
+    verifyButtonSize:
+      document.getElementById(
+        "verifyButtonSize"
+      )?.value || "large",
+
+    verifyButtonRadius:
+      Number(
+        document.getElementById(
+          "verifyButtonRadius"
+        )?.value || 14
+      ),
+
+    verificationSound:
+      Boolean(
+        document.getElementById(
+          "verifyVerificationSound"
+        )?.checked
+      ),
+
+    errorSound:
+      Boolean(
+        document.getElementById(
+          "verifyErrorSound"
+        )?.checked
+      ),
+
+    openingSound:
+      Boolean(
+        document.getElementById(
+          "verifyOpeningSound"
+        )?.checked
+      ),
+
+    soundVolume:
+      Number(
+        document.getElementById(
+          "verifySoundVolume"
+        )?.value || 50
+      ),
+  };
+}
+
+function actualizarVistaPreviaApariencia() {
+  const appearance =
+    obtenerAparienciaDesdeFormulario();
+
+  const previewFrame =
+    document.getElementById(
+      "verifyAppearanceFrame"
+    );
+
+  if (!previewFrame?.contentWindow) {
+    return;
+  }
+
+  previewFrame.contentWindow.postMessage(
+    {
+      type:
+        "nebula-appearance-preview",
+
+      appearance,
+    },
+    window.location.origin
+  );
+}
+
+function hexToRgba(
+  hex,
+  alpha = 1
+) {
+  const normalized =
+    String(hex || "")
+      .replace("#", "");
+
+  if (
+    !/^[0-9a-f]{6}$/i.test(
+      normalized
+    )
+  ) {
+    return `rgba(15,15,26,${alpha})`;
+  }
+
+  const number =
+    parseInt(normalized, 16);
+
+  const red =
+    (number >> 16) & 255;
+
+  const green =
+    (number >> 8) & 255;
+
+  const blue =
+    number & 255;
+
+  return `rgba(
+    ${red},
+    ${green},
+    ${blue},
+    ${alpha}
+  )`;
+}
+const verificationPreviewFrame =
+  document.getElementById(
+    "verifyAppearanceFrame"
   );
 
-  const updatePreview = () => {
-    getElement(
-      "verifyPreviewTitle"
-    ).textContent =
-      getElement("verifyEmbedTitle").value;
-
-    getElement(
-      "verifyPreviewDescription"
-    ).textContent =
-      getElement(
-        "verifyEmbedDescription"
-      ).value;
-
-    getElement(
-      "verifyPreviewEmoji"
-    ).textContent =
-      getElement("verifyButtonEmoji").value;
-
-    getElement(
-      "verifyPreviewButtonText"
-    ).textContent =
-      getElement("verifyButtonText").value;
-
-    getElement(
-      "verifyPreviewEmbed"
-    ).style.borderLeftColor =
-      getElement("verifyEmbedColor").value;
-  };
-
-  [
-    "verifyEmbedTitle",
-    "verifyEmbedDescription",
-    "verifyButtonEmoji",
-    "verifyButtonText",
-    "verifyEmbedColor",
-  ].forEach(id => {
-    getElement(id)?.addEventListener(
-      "input",
-      updatePreview
+verificationPreviewFrame?.addEventListener(
+  "load",
+  () => {
+    setTimeout(
+      actualizarVistaPreviaApariencia,
+      150
     );
+  }
+);
+
+const appearanceInputIds = [
+  "verifyPageName",
+  "verifyPageDescription",
+  "verifyLogoUrl",
+  "verifyBackgroundUrl",
+
+  "verifyPrimaryColor",
+  "verifyPrimaryColorText",
+
+  "verifySecondaryColor",
+  "verifySecondaryColorText",
+
+  "verifyButtonColor",
+  "verifyButtonColorText",
+
+  "verifyTextColor",
+  "verifyTextColorText",
+
+  "verifyCardColor",
+  "verifyCardColorText",
+
+  "verifyBackgroundSolidColor",
+  "verifyBackgroundSolidColorText",
+
+  "verifyGradientStart",
+  "verifyGradientStartText",
+
+  "verifyGradientEnd",
+  "verifyGradientEndText",
+
+  "verifyBackgroundType",
+
+  "verifySpaceBackground",
+  "verifyParticlesEnabled",
+  "verifyAnimationsEnabled",
+  "verifyGlowEnabled",
+  "verifyFadeEnabled",
+  "verifyHoverEnabled",
+  "verifyCursorGlowEnabled",
+  "verifyButtonAnimationEnabled",
+  "verifyLogoAnimationEnabled",
+
+  "verifyParticleCount",
+  "verifyGlowIntensity",
+
+  "verifyCardBlur",
+  "verifyCardOpacity",
+  "verifyCardRadius",
+  "verifyCardShadow",
+
+  "verifyAppearanceButtonText",
+  "verifyButtonIcon",
+  "verifyButtonSize",
+  "verifyButtonRadius",
+
+  "verifyOpeningSound",
+  "verifyVerificationSound",
+  "verifyErrorSound",
+  "verifySoundVolume",
+];
+
+appearanceInputIds.forEach(id => {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    return;
+  }
+
+  const eventName =
+    element.type === "checkbox" ||
+    element.tagName === "SELECT"
+      ? "change"
+      : "input";
+
+  element.addEventListener(
+    eventName,
+    actualizarVistaPreviaApariencia
+  );
+});
+const appearanceColorPairs = [
+  [
+    "verifyPrimaryColor",
+    "verifyPrimaryColorText",
+  ],
+  [
+    "verifySecondaryColor",
+    "verifySecondaryColorText",
+  ],
+  [
+    "verifyButtonColor",
+    "verifyButtonColorText",
+  ],
+  [
+    "verifyTextColor",
+    "verifyTextColorText",
+  ],
+  [
+    "verifyCardColor",
+    "verifyCardColorText",
+  ],
+  [
+    "verifyBackgroundSolidColor",
+    "verifyBackgroundSolidColorText",
+  ],
+  [
+    "verifyGradientStart",
+    "verifyGradientStartText",
+  ],
+  [
+    "verifyGradientEnd",
+    "verifyGradientEndText",
+  ],
+];
+
+appearanceColorPairs.forEach(
+  ([pickerId, textId]) => {
+    const picker =
+      document.getElementById(
+        pickerId
+      );
+
+    const text =
+      document.getElementById(
+        textId
+      );
+
+    picker?.addEventListener(
+      "input",
+      () => {
+        text.value =
+          picker.value;
+
+        actualizarVistaPreviaApariencia();
+      }
+    );
+
+    text?.addEventListener(
+      "input",
+      () => {
+        const value =
+          text.value.trim();
+
+        if (
+          /^#[0-9a-f]{6}$/i.test(
+            value
+          )
+        ) {
+          picker.value = value;
+
+          actualizarVistaPreviaApariencia();
+        }
+      }
+    );
+  }
+);
+document
+  .querySelectorAll(
+    ".appearance-range-control input[type='range']"
+  )
+  .forEach(range => {
+    const valueElement =
+      document.getElementById(
+        `${range.id}Value`
+      );
+
+    const updateRangeValue = () => {
+      if (valueElement) {
+        valueElement.textContent =
+          `${range.value}${
+            range.dataset.suffix || ""
+          }`;
+      }
+
+      actualizarVistaPreviaApariencia();
+    };
+
+    range.addEventListener(
+      "input",
+      updateRangeValue
+    );
+
+    updateRangeValue();
   });
 
-  updatePreview();
+actualizarVistaPreviaApariencia();
 
   getElement("saveVerification")
     ?.addEventListener(
@@ -3975,6 +5713,7 @@ function replacePreviewVariables(text, servidor) {
 
 function escapeHtml(text) {
   return String(text)
+
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");

@@ -1773,3 +1773,21 @@ button {
     transition: none;
   }
 }
+/* Apariencia controlada desde el dashboard */
+
+.preview-animations-disabled *,
+.preview-animations-disabled *::before,
+.preview-animations-disabled *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.preview-hover-disabled
+#completeVerification:hover:not(:disabled) {
+  transform: none !important;
+}
+
+.preview-hover-disabled
+.verification-card:hover {
+  transform: none !important;
+}

@@ -64,6 +64,7 @@ let stars = [];
 let animationFrameId = null;
 let pageIsAuthenticated = false;
 let verificationInProgress = false;
+let currentPreviewAppearance = {};
 
 /* =========================================================
    FONDO ESPACIAL
@@ -189,8 +190,12 @@ function animateSpace() {
       Math.PI * 2
     );
 
-    context.fillStyle =
-      `rgba(168, 85, 247, ${alpha})`;
+context.fillStyle =
+  hexToRgba(
+    currentPreviewAppearance.primaryColor ||
+      "#a855f7",
+    alpha
+  );
 
     context.fill();
   }
@@ -630,19 +635,29 @@ async function loadVerificationPage() {
     } =
       await getDiscordSession();
 
-    if (
-      sessionResponse.ok &&
-      sessionResult.success &&
-      sessionResult.authenticated
-    ) {
-      showAuthenticatedUser(
-        sessionResult.data
-      );
-    } else {
-      showLoginRequired();
-    }
+if (
+  sessionResponse.ok &&
+  sessionResult.success &&
+  sessionResult.authenticated
+) {
+  showAuthenticatedUser(
+    sessionResult.data
+  );
+} else {
+  showLoginRequired();
+}
 
-    setStatus("");
+/*
+  Aplicamos la apariencia después de construir
+  el botón y los datos del usuario.
+*/
+
+applyPreviewAppearance(
+  pageData.webAppearance ||
+  {}
+);
+
+setStatus("");
 
     console.log(
       "Datos reales de verificación:",
@@ -814,6 +829,486 @@ function updateProcessingScreen({
 /* =========================================================
    PANTALLA DE ÉXITO
    ========================================================= */
+let automaticCloseInterval = null;
+
+function startAutomaticCloseTimer(
+  seconds = 20
+) {
+  /*
+    Detenemos un temporizador anterior.
+  */
+
+  if (automaticCloseInterval) {
+    clearInterval(
+      automaticCloseInterval
+    );
+
+    automaticCloseInterval =
+      null;
+  }
+
+  /*
+    Eliminamos avisos anteriores.
+  */
+
+  document
+    .getElementById(
+      "automaticCloseNotice"
+    )
+    ?.remove();
+
+  document
+    .getElementById(
+      "automaticCloseBottomNotice"
+    )
+    ?.remove();
+
+  /*
+    CREAMOS SOLAMENTE
+    EL TEMPORIZADOR SUPERIOR.
+  */
+
+  const timerNotice =
+    document.createElement("aside");
+
+  timerNotice.id =
+    "automaticCloseNotice";
+
+  timerNotice.innerHTML = `
+    <div class="automatic-mini-icon">
+      ◷
+    </div>
+
+    <div class="automatic-mini-content">
+      <span>
+        Cierre automático
+      </span>
+
+      <strong id="automaticCloseTimer">
+        00:${String(
+          seconds
+        ).padStart(2, "0")}
+      </strong>
+    </div>
+
+    <div class="automatic-mini-progress">
+      <span
+        id="automaticCloseProgressBar"
+      ></span>
+    </div>
+  `;
+
+  document.body.appendChild(
+    timerNotice
+  );
+
+  /*
+    ESTILOS DEL TEMPORIZADOR.
+  */
+
+  document
+    .getElementById(
+      "automaticCloseStyles"
+    )
+    ?.remove();
+
+  const style =
+    document.createElement("style");
+
+  style.id =
+    "automaticCloseStyles";
+
+  style.textContent = `
+    #automaticCloseNotice {
+      position: fixed;
+      top: 28px;
+      right: 32px;
+
+      width: 175px;
+      min-height: 72px;
+
+      padding:
+        12px
+        14px
+        17px;
+
+      z-index: 99999;
+
+      display: grid;
+
+      grid-template-columns:
+        36px 1fr;
+
+      align-items: center;
+
+      gap: 10px;
+
+      overflow: hidden;
+
+      color: #ffffff;
+
+      border:
+        1px solid
+        rgba(
+          168,
+          85,
+          247,
+          0.48
+        );
+
+      border-radius: 14px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(
+            13,
+            16,
+            48,
+            0.94
+          ),
+          rgba(
+            7,
+            9,
+            28,
+            0.96
+          )
+        );
+
+      box-shadow:
+        0 14px 38px
+        rgba(
+          0,
+          0,
+          0,
+          0.42
+        ),
+        0 0 18px
+        rgba(
+          139,
+          92,
+          246,
+          0.11
+        );
+
+      backdrop-filter:
+        blur(14px);
+
+      -webkit-backdrop-filter:
+        blur(14px);
+
+      animation:
+        automaticMiniEnter
+        0.35s
+        ease
+        both;
+    }
+
+    .automatic-mini-icon {
+      width: 34px;
+      height: 34px;
+
+      display: grid;
+      place-items: center;
+
+      border:
+        2px solid
+        var(
+          --purple,
+          #a855f7
+        );
+
+      border-radius: 50%;
+
+      color:
+        var(
+          --purple-light,
+          #c084fc
+        );
+
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .automatic-mini-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .automatic-mini-content span {
+      color: #d8daea;
+
+      font-size: 10px;
+      font-weight: 800;
+
+      letter-spacing: 0.2px;
+    }
+
+    #automaticCloseTimer {
+      color:
+        var(
+          --purple-light,
+          #c084fc
+        );
+
+      font-size: 20px;
+      line-height: 1;
+
+      letter-spacing: 0.5px;
+
+      font-variant-numeric:
+        tabular-nums;
+    }
+
+    .automatic-mini-progress {
+      position: absolute;
+
+      right: 13px;
+      bottom: 8px;
+      left: 13px;
+
+      height: 3px;
+
+      overflow: hidden;
+
+      border-radius: 999px;
+
+      background:
+        rgba(
+          255,
+          255,
+          255,
+          0.09
+        );
+    }
+
+    #automaticCloseProgressBar {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      border-radius: inherit;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(
+            --purple-dark,
+            #6d28d9
+          ),
+          var(
+            --purple,
+            #a855f7
+          )
+        );
+
+      transition:
+        width
+        1s
+        linear;
+    }
+
+    #automaticCloseNotice.is-ending {
+      border-color:
+        rgba(
+          244,
+          63,
+          94,
+          0.68
+        );
+    }
+
+    #automaticCloseNotice.is-ending
+    #automaticCloseTimer {
+      color: #fb7185;
+    }
+
+    #automaticCloseNotice.is-ending
+    .automatic-mini-icon {
+      color: #fb7185;
+      border-color: #fb7185;
+    }
+
+    #automaticCloseNotice.is-ending
+    #automaticCloseProgressBar {
+      background:
+        linear-gradient(
+          90deg,
+          #be123c,
+          #fb7185
+        );
+    }
+
+    @keyframes automaticMiniEnter {
+      from {
+        opacity: 0;
+
+        transform:
+          translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+
+        transform:
+          translateX(0);
+      }
+    }
+
+    @media (
+      max-width: 900px
+    ) {
+      #automaticCloseNotice {
+        top: 12px;
+        right: 12px;
+
+        width: 155px;
+      }
+    }
+  `;
+
+  document.head.appendChild(
+    style
+  );
+
+  const timerElement =
+    document.getElementById(
+      "automaticCloseTimer"
+    );
+
+  const progressBar =
+    document.getElementById(
+      "automaticCloseProgressBar"
+    );
+
+  const totalSeconds =
+    Math.max(
+      1,
+      Number(seconds) || 20
+    );
+
+  let remainingSeconds =
+    totalSeconds;
+
+  /*
+    ACCIÓN FINAL.
+  */
+
+  function closeVerificationPage() {
+    /*
+      Primero reemplazamos todo el contenido.
+      Así no quedan visibles los datos.
+    */
+
+    document.body.innerHTML = "";
+
+    document.body.style.margin =
+      "0";
+
+    document.body.style.background =
+      "#000000";
+
+    document.title =
+      "Verificación completada";
+
+    /*
+      Intento normal de cierre.
+      Funciona cuando la pestaña fue abierta
+      mediante JavaScript.
+    */
+
+    try {
+      window.open(
+        "",
+        "_self"
+      );
+
+      window.close();
+    } catch (error) {
+      console.warn(
+        "El navegador bloqueó el cierre:",
+        error
+      );
+    }
+
+    /*
+      Si el navegador no permite cerrar
+      una pestaña abierta manualmente,
+      la enviamos a una página vacía.
+    */
+
+    setTimeout(
+      () => {
+        if (!window.closed) {
+          window.location.replace(
+            "about:blank"
+          );
+        }
+      },
+      150
+    );
+  }
+
+  function updateAutomaticTimer() {
+    if (timerElement) {
+      timerElement.textContent =
+        `00:${String(
+          remainingSeconds
+        ).padStart(2, "0")}`;
+    }
+
+    if (progressBar) {
+      const percentage =
+        Math.max(
+          0,
+          (
+            remainingSeconds /
+            totalSeconds
+          ) * 100
+        );
+
+      progressBar.style.width =
+        `${percentage}%`;
+    }
+
+    timerNotice.classList.toggle(
+      "is-ending",
+      remainingSeconds <= 5
+    );
+
+    if (
+      remainingSeconds <= 0
+    ) {
+      clearInterval(
+        automaticCloseInterval
+      );
+
+      automaticCloseInterval =
+        null;
+
+      closeVerificationPage();
+
+      return;
+    }
+
+    remainingSeconds -= 1;
+  }
+
+  /*
+    Mostramos inmediatamente
+    el tiempo inicial.
+  */
+
+  updateAutomaticTimer();
+
+  automaticCloseInterval =
+    setInterval(
+      updateAutomaticTimer,
+      1000
+    );
+}
 
 function showVerificationSuccess(
   verificationData
@@ -1065,12 +1560,16 @@ function showVerificationSuccess(
         <span class="discord-button-arrow">
           ↗
         </span>
+
       </a>
 
     </div>
   `;
+
+  startAutomaticCloseTimer(20);
 }
-/* =========================================================
+
+   /* =========================================================
    PANTALLA DE ERROR
    ========================================================= */
 
@@ -1360,7 +1859,623 @@ completeButton?.addEventListener(
     }
   }
 );
+/* =========================================================
+   APARIENCIA EN TIEMPO REAL
+   ========================================================= */
 
+function hexToRgba(
+  hex,
+  alpha = 1
+) {
+  const value =
+    String(hex || "")
+      .replace("#", "")
+      .trim();
+
+  if (!/^[0-9a-f]{6}$/i.test(value)) {
+    return `rgba(139, 92, 246, ${alpha})`;
+  }
+
+  const number =
+    Number.parseInt(value, 16);
+
+  const red =
+    (number >> 16) & 255;
+
+  const green =
+    (number >> 8) & 255;
+
+  const blue =
+    number & 255;
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function rebuildPreviewStars(
+  amount
+) {
+  const safeAmount =
+    Math.min(
+      300,
+      Math.max(
+        0,
+        Number(amount) || 0
+      )
+    );
+
+  stars = Array.from(
+    { length: safeAmount },
+    () => ({
+      x:
+        Math.random() *
+        window.innerWidth,
+
+      y:
+        Math.random() *
+        window.innerHeight,
+
+      radius:
+        Math.random() *
+          1.4 +
+        0.25,
+
+      alpha:
+        Math.random() *
+          0.55 +
+        0.08,
+
+      speed:
+        Math.random() *
+          0.12 +
+        0.025,
+
+      pulse:
+        Math.random() *
+        Math.PI *
+        2,
+    })
+  );
+}
+
+function applyPreviewAppearance(
+  appearance = {}
+) {
+  currentPreviewAppearance = {
+    ...currentPreviewAppearance,
+    ...appearance,
+  };
+
+  const settings =
+    currentPreviewAppearance;
+
+  const root =
+    document.documentElement;
+
+  const body =
+    document.body;
+
+  const card =
+    document.querySelector(
+      ".verification-card"
+    );
+
+  const profileRing =
+    document.querySelector(
+      ".profile-ring"
+    );
+
+const pageGlows =
+  document.querySelectorAll(
+    ".page-glow"
+  );
+
+const brandTitle =
+  document.querySelector(
+    ".brand-copy h1"
+  );
+
+const brandDescription =
+  document.querySelector(
+    ".brand-copy p"
+  );
+
+const brandShield =
+  document.querySelector(
+    ".brand-shield"
+  );
+
+const primaryColor =
+  settings.primaryColor ||
+  "#8b5cf6";
+
+  const secondaryColor =
+    settings.secondaryColor ||
+    "#6d28d9";
+
+  const buttonColor =
+    settings.buttonColor ||
+    "#7c3aed";
+
+  const textColor =
+    settings.textColor ||
+    "#ffffff";
+
+  const cardColor =
+    settings.cardColor ||
+    "#0f0f1a";
+
+  /*
+    COLORES GENERALES
+  */
+
+  root.style.setProperty(
+    "--purple",
+    primaryColor
+  );
+
+  root.style.setProperty(
+    "--purple-light",
+    primaryColor
+  );
+
+  root.style.setProperty(
+    "--purple-dark",
+    secondaryColor
+  );
+
+  root.style.setProperty(
+    "--text",
+    textColor
+  );
+/*
+  NOMBRE, DESCRIPCIÓN Y LOGO
+*/
+
+if (
+  brandTitle &&
+  settings.pageName
+) {
+  brandTitle.textContent =
+    settings.pageName;
+}
+
+if (
+  brandDescription &&
+  settings.pageDescription
+) {
+  brandDescription.textContent =
+    settings.pageDescription;
+}
+
+if (brandShield) {
+  if (settings.logoUrl) {
+    brandShield.innerHTML = `
+      <img
+        src="${escapeHtmlAttribute(
+          settings.logoUrl
+        )}"
+        alt="Logo"
+        style="
+          width:100%;
+          height:100%;
+          display:block;
+          object-fit:cover;
+          border-radius:inherit;
+        "
+      >
+    `;
+  } else {
+    brandShield.innerHTML =
+      "<span>✓</span>";
+  }
+}
+
+  /*
+    FONDO
+  */
+
+  const backgroundType =
+    settings.backgroundType ||
+    "space";
+
+  if (
+    backgroundType === "image" &&
+    settings.backgroundUrl
+  ) {
+    body.style.background = `
+      linear-gradient(
+        rgba(0, 0, 0, 0.35),
+        rgba(0, 0, 0, 0.72)
+      ),
+      url("${settings.backgroundUrl}")
+      center / cover fixed
+    `;
+  } else if (
+    backgroundType === "gradient"
+  ) {
+    body.style.background = `
+      linear-gradient(
+        135deg,
+        ${
+          settings.gradientStart ||
+          "#05050a"
+        },
+        ${
+          settings.gradientEnd ||
+          "#160c2b"
+        }
+      )
+    `;
+  } else if (
+    backgroundType === "solid"
+  ) {
+    body.style.background =
+      settings.backgroundSolidColor ||
+      "#05050a";
+  } else {
+    body.style.background = `
+      radial-gradient(
+        circle at 50% 25%,
+        ${hexToRgba(
+          primaryColor,
+          0.18
+        )},
+        transparent 42%
+      ),
+      ${
+        settings.backgroundSolidColor ||
+        "#05050a"
+      }
+    `;
+  }
+
+  /*
+    TARJETA PRINCIPAL
+  */
+
+  if (card) {
+    const opacity =
+      Math.min(
+        100,
+        Math.max(
+          10,
+          Number(
+            settings.cardOpacity ??
+            88
+          )
+        )
+      ) / 100;
+
+    const blur =
+      Math.min(
+        50,
+        Math.max(
+          0,
+          Number(
+            settings.cardBlur ??
+            18
+          )
+        )
+      );
+
+    const radius =
+      Math.min(
+        50,
+        Math.max(
+          0,
+          Number(
+            settings.cardRadius ??
+            24
+          )
+        )
+      );
+
+    const shadow =
+      Math.min(
+        100,
+        Math.max(
+          0,
+          Number(
+            settings.cardShadow ??
+            80
+          )
+        )
+      );
+
+    const glowIntensity =
+      Math.min(
+        100,
+        Math.max(
+          0,
+          Number(
+            settings.glowIntensity ??
+            80
+          )
+        )
+      );
+
+    card.style.background =
+      hexToRgba(
+        cardColor,
+        opacity
+      );
+
+    card.style.color =
+      textColor;
+
+    card.style.backdropFilter =
+      `blur(${blur}px)`;
+
+    card.style.webkitBackdropFilter =
+      `blur(${blur}px)`;
+
+    card.style.borderRadius =
+      `${radius}px`;
+
+    card.style.borderColor =
+      hexToRgba(
+        primaryColor,
+        0.4
+      );
+
+    card.style.boxShadow =
+      settings.glowEnabled === false
+        ? `
+          0 30px 90px
+          rgba(
+            0,
+            0,
+            0,
+            ${shadow / 125}
+          )
+        `
+        : `
+          0 30px 90px
+          rgba(
+            0,
+            0,
+            0,
+            ${shadow / 125}
+          ),
+          0 0
+          ${glowIntensity / 2}px
+          ${hexToRgba(
+            primaryColor,
+            glowIntensity / 300
+          )}
+        `;
+  }
+
+  /*
+    BOTÓN
+  */
+
+  if (completeButton) {
+    completeButton.style.background = `
+      linear-gradient(
+        110deg,
+        ${secondaryColor},
+        ${buttonColor} 50%,
+        ${primaryColor}
+      )
+    `;
+
+    completeButton.style.color =
+      textColor;
+
+    completeButton.style.borderColor =
+      primaryColor;
+
+    completeButton.style.borderRadius =
+      `${
+        Number(
+          settings.verifyButtonRadius ??
+          14
+        )
+      }px`;
+
+    const sizes = {
+      small: {
+        height: "48px",
+        fontSize: "13px",
+      },
+
+      medium: {
+        height: "56px",
+        fontSize: "15px",
+      },
+
+      large: {
+        height: "64px",
+        fontSize: "18px",
+      },
+    };
+
+    const selectedSize =
+      sizes[
+        settings.verifyButtonSize
+      ] ||
+      sizes.large;
+
+    completeButton.style.minHeight =
+      selectedSize.height;
+
+    completeButton.style.fontSize =
+      selectedSize.fontSize;
+
+    if (
+      settings.verifyButtonText
+    ) {
+      const icons = {
+        discord: "◈",
+        shield: "🛡",
+        check: "✓",
+        none: "",
+      };
+
+      const icon =
+        icons[
+          settings.verifyButtonIcon
+        ] ?? "◈";
+
+completeButton.innerHTML = `
+  <span class="button-shield">
+    ${icon}
+  </span>
+
+  <span class="button-copy">
+    ${escapeVerificationText(
+      settings.verifyButtonText
+    )}
+  </span>
+
+  <span
+    class="button-arrow"
+    aria-hidden="true"
+  >
+    ›
+  </span>
+`;
+     }
+
+    completeButton.style.animation =
+      settings.buttonAnimationEnabled ===
+      false
+        ? "none"
+        : "";
+  }
+
+  /*
+    ANILLO DEL AVATAR
+  */
+
+  if (profileRing) {
+    profileRing.style.background = `
+      conic-gradient(
+        from 0deg,
+        ${secondaryColor},
+        ${primaryColor},
+        ${buttonColor},
+        ${secondaryColor}
+      )
+    `;
+
+    profileRing.style.boxShadow =
+      settings.glowEnabled === false
+        ? "none"
+        : `
+          0 0
+          ${
+            Number(
+              settings.glowIntensity ??
+              80
+            ) / 2
+          }px
+          ${hexToRgba(
+            primaryColor,
+            0.45
+          )}
+        `;
+
+    profileRing.style.animation =
+      settings.logoAnimationEnabled ===
+      false
+        ? "none"
+        : "";
+  }
+
+  /*
+    PARTÍCULAS
+  */
+
+  if (canvas) {
+    const particlesVisible =
+      settings.spaceBackground !==
+        false &&
+      settings.particlesEnabled !==
+        false;
+
+    canvas.style.display =
+      particlesVisible
+        ? "block"
+        : "none";
+
+    if (particlesVisible) {
+      rebuildPreviewStars(
+        settings.particleCount ??
+        100
+      );
+    }
+  }
+
+  /*
+    BRILLOS DE FONDO
+  */
+
+  pageGlows.forEach(
+    glow => {
+      glow.style.background =
+        primaryColor;
+
+      glow.style.opacity =
+        settings.glowEnabled === false
+          ? "0"
+          : String(
+              Math.min(
+                0.5,
+                Number(
+                  settings.glowIntensity ??
+                  80
+                ) / 300
+              )
+            );
+    }
+  );
+
+  /*
+    ANIMACIONES GENERALES
+  */
+
+  document.body.classList.toggle(
+    "preview-animations-disabled",
+    settings.animationsEnabled ===
+      false
+  );
+
+  document.body.classList.toggle(
+    "preview-hover-disabled",
+    settings.hoverEnabled ===
+      false
+  );
+}
+
+/*
+  RECIBIR LOS CAMBIOS DEL DASHBOARD
+*/
+
+window.addEventListener(
+  "message",
+  event => {
+    if (
+      event.origin !==
+      window.location.origin
+    ) {
+      return;
+    }
+
+    if (
+      event.data?.type !==
+      "nebula-appearance-preview"
+    ) {
+      return;
+    }
+
+    applyPreviewAppearance(
+      event.data.appearance ||
+      {}
+    );
+  }
+);
 /* =========================================================
    INICIAR PÁGINA
    ========================================================= */

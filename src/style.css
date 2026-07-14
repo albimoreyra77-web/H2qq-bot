@@ -2496,3 +2496,785 @@ input:checked
     0 2px 8px rgba(0, 0, 0, 0.42),
     0 0 10px rgba(255, 255, 255, 0.5);
 }
+/* =========================================================
+   EDITOR COMPLETO DE APARIENCIA
+   ========================================================= */
+
+.appearance-editor-layout {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(360px, 460px);
+
+  gap: 18px;
+
+  align-items: start;
+
+  overflow: visible;
+}
+
+.appearance-editor-controls {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.appearance-preview-column {
+  min-width: 0;
+
+  position: sticky;
+  top: 78px;
+
+  align-self: start;
+  height: fit-content;
+
+  z-index: 10;
+}
+
+.appearance-form-grid,
+.appearance-colors-grid,
+.appearance-range-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.appearance-wide {
+  grid-column: 1 / -1;
+}
+
+.appearance-range-control {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid
+    rgba(139, 92, 246, 0.16);
+  border-radius: 14px;
+  background:
+    rgba(255, 255, 255, 0.015);
+}
+
+.appearance-range-control > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.appearance-range-control span {
+  color: #8d8aa1;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.appearance-range-control strong {
+  color: #b68cff;
+  font-size: 12px;
+}
+
+.appearance-range-control input {
+  width: 100%;
+  accent-color: #8b5cf6;
+}
+
+.appearance-preview-panel {
+  overflow: hidden;
+
+  max-height: calc(100vh - 95px);
+
+  display: flex;
+  flex-direction: column;
+}
+
+.appearance-preview {
+
+  --appearance-primary: #8b5cf6;
+  --appearance-secondary: #6d28d9;
+
+  min-height: 620px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 30px 18px;
+  border: 1px solid
+    rgba(139, 92, 246, 0.25);
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(139, 92, 246, 0.3),
+      transparent 45%
+    ),
+    #05050a;
+}
+
+.appearance-preview::before,
+.appearance-preview::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.appearance-preview::before {
+  width: 220px;
+  height: 220px;
+  top: -80px;
+  right: -80px;
+  background:
+    var(--appearance-primary);
+  opacity: 0.2;
+}
+
+.appearance-preview::after {
+  width: 180px;
+  height: 180px;
+  bottom: -70px;
+  left: -70px;
+  background:
+    var(--appearance-secondary);
+  opacity: 0.18;
+}
+
+.appearance-preview-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.7)
+        0 1px,
+      transparent 1.5px
+    );
+  background-size:
+    48px 48px;
+}
+
+.appearance-preview-card {
+  width: min(100%, 380px);
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 34px 26px;
+  border:
+    1px solid
+    color-mix(
+      in srgb,
+      var(--appearance-primary) 30%,
+      transparent
+    );
+  background:
+    rgba(15, 15, 26, 0.88);
+  backdrop-filter:
+    blur(18px);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 80px
+    rgba(0, 0, 0, 0.64);
+  text-align: center;
+}
+
+.appearance-preview-logo {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--appearance-primary),
+      var(--appearance-secondary)
+    );
+  color: white;
+  font-size: 32px;
+  font-weight: 900;
+  box-shadow:
+    0 0 34px
+    color-mix(
+      in srgb,
+      var(--appearance-primary) 45%,
+      transparent
+    );
+}
+
+.appearance-preview-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.appearance-preview-card > span {
+  color:
+    var(--appearance-primary);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+}
+
+.appearance-preview-card h2 {
+  margin: 6px 0 0;
+  font-size: clamp(
+    22px,
+    4vw,
+    30px
+  );
+  line-height: 1.1;
+}
+
+.appearance-preview-card p {
+  max-width: 310px;
+  margin: 0;
+  color: #b3afc2;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.appearance-preview-card button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 11px;
+  margin-top: 10px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      135deg,
+      var(--appearance-primary),
+      var(--appearance-secondary)
+    );
+  color: white;
+  box-shadow:
+    0 14px 36px
+    color-mix(
+      in srgb,
+      var(--appearance-primary) 36%,
+      transparent
+    );
+}
+
+.appearance-preview-card small {
+  color: #6f6b80;
+  font-size: 9px;
+}
+
+.preview-glow-enabled
+.appearance-preview-card {
+  box-shadow:
+    0 24px 80px
+    rgba(0, 0, 0, 0.62),
+    0 0 40px
+    color-mix(
+      in srgb,
+      var(--appearance-primary) 20%,
+      transparent
+    );
+}
+
+.preview-logo-animated {
+  animation:
+    appearanceLogoFloat
+    3s ease-in-out infinite;
+}
+
+.preview-button-animated {
+  animation:
+    appearanceButtonPulse
+    2.4s ease-in-out infinite;
+}
+
+.preview-animations-disabled *,
+.preview-animations-disabled *::before,
+.preview-animations-disabled *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@keyframes appearanceLogoFloat {
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(-7px);
+  }
+}
+
+@keyframes appearanceButtonPulse {
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(-2px);
+  }
+}
+
+@media (
+  max-width: 1150px
+) {
+  .appearance-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .appearance-preview-column {
+    position: static;
+  }
+}
+
+@media (
+  max-width: 720px
+) {
+  .appearance-form-grid,
+  .appearance-colors-grid,
+  .appearance-range-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   VISTA PREVIA STICKY — CONFIGURACIÓN DEFINITIVA
+   ========================================================= */
+
+/*
+  Los contenedores padres deben permitir que
+  position: sticky funcione correctamente.
+*/
+
+.verification-config-page {
+  overflow-x: clip !important;
+  overflow-y: visible !important;
+}
+
+.verify-tab-content,
+.verify-tab-panel,
+.verify-tab-panel.active,
+.appearance-editor-layout {
+  overflow: visible !important;
+}
+
+/*
+  La animación de entrada de la pestaña usa transform.
+  Un padre con transform puede interferir con sticky.
+*/
+
+.verify-tab-panel[data-verify-panel="appearance"],
+.verify-tab-panel[data-verify-panel="appearance"].active {
+  transform: none !important;
+}
+
+/*
+  Estructura de dos columnas:
+  controles a la izquierda y vista previa a la derecha.
+*/
+
+.appearance-editor-layout {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(340px, 430px);
+
+  gap: 18px;
+  align-items: start;
+
+  overflow: visible !important;
+}
+
+/*
+  Esta es la columna que acompaña el desplazamiento.
+*/
+
+.appearance-preview-column {
+  min-width: 0;
+
+  position: sticky !important;
+  top: 136px !important;
+
+  align-self: start !important;
+  height: fit-content !important;
+
+  z-index: 20;
+}
+
+/*
+  Ajustamos el tamaño para que la vista previa
+  entre completa dentro de la pantalla.
+*/
+
+.appearance-preview-panel {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  max-height: calc(100vh - 150px);
+
+  overflow: hidden;
+}
+
+.appearance-preview {
+  min-height: 450px;
+  height: calc(100vh - 225px);
+  max-height: 640px;
+
+  overflow: hidden;
+}
+
+/*
+  En computadoras mantenemos las dos columnas.
+*/
+
+@media (min-width: 901px) and (max-width: 1150px) {
+  .appearance-editor-layout {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(300px, 360px);
+  }
+
+  .appearance-preview-column {
+    position: sticky !important;
+    top: 136px !important;
+  }
+
+  .appearance-preview {
+    min-height: 420px;
+  }
+}
+
+/*
+  En celular o ventana muy angosta la vista previa
+  pasa abajo, porque no hay espacio para dos columnas.
+*/
+
+@media (max-width: 900px) {
+  .appearance-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .appearance-preview-column {
+    position: static !important;
+    top: auto !important;
+  }
+
+  .appearance-preview-panel {
+    max-height: none;
+  }
+
+  .appearance-preview {
+    min-height: 470px;
+    height: auto;
+    max-height: none;
+  }
+}
+/* =========================================================
+   VISTA PREVIA REAL DE VERIFICACIÓN — CORREGIDA
+   ========================================================= */
+
+.real-verification-preview {
+  position: relative;
+
+  width: 100%;
+  height: 610px;
+
+  overflow: hidden;
+
+  border: 1px solid
+    rgba(139, 92, 246, 0.3);
+
+  border-radius: 18px;
+
+  background: #05050a;
+}
+
+.real-verification-preview-frame {
+  position: absolute;
+
+  top: 0;
+  left: 50%;
+
+  width: 720px;
+  height: 920px;
+
+  border: 0;
+
+  transform:
+    translateX(-50%)
+    scale(0.56);
+
+  transform-origin:
+    top center;
+
+  background: #05050a;
+}
+
+@media (min-width: 901px) and (max-width: 1150px) {
+  .real-verification-preview {
+    height: 560px;
+  }
+
+  .real-verification-preview-frame {
+    width: 680px;
+    height: 900px;
+
+    transform:
+      translateX(-50%)
+      scale(0.5);
+  }
+}
+
+@media (max-width: 900px) {
+  .real-verification-preview {
+    height: 600px;
+  }
+
+  .real-verification-preview-frame {
+    width: 720px;
+    height: 920px;
+
+    transform:
+      translateX(-50%)
+      scale(0.55);
+  }
+}
+/* =========================================================
+   EDITOR DEL PANEL DE VERIFICACIÓN
+   ========================================================= */
+
+.verify-panel-editor-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(380px, 0.85fr);
+  gap: 18px;
+  align-items: start;
+  overflow: visible;
+}
+
+.verify-panel-controls {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.verify-discord-preview-column {
+  min-width: 0;
+  position: sticky;
+  top: 136px;
+  align-self: start;
+}
+
+.verify-discord-preview-panel {
+  overflow: hidden;
+}
+
+.discord-message-preview {
+  padding: 18px;
+  border: 1px solid
+    rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  background: #313338;
+}
+
+.discord-message-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.discord-message-author img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.discord-message-author > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.discord-message-author strong {
+  color: #f2f3f5;
+  font-size: 14px;
+}
+
+.discord-message-author span {
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #5865f2;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.discord-message-author small {
+  color: #949ba4;
+  font-size: 11px;
+}
+
+.discord-embed-preview {
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  border-radius: 4px;
+  background: #2b2d31;
+}
+
+.discord-embed-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background:
+    var(
+      --preview-embed-color,
+      #8b5cf6
+    );
+}
+
+.discord-embed-body {
+  display: flex;
+  gap: 14px;
+}
+
+.discord-embed-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.discord-embed-content h3 {
+  margin: 0 0 10px;
+  color: #f2f3f5;
+  font-size: 17px;
+}
+
+.discord-embed-content p {
+  margin: 0 0 14px;
+  color: #dbdee1;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.discord-embed-field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.discord-embed-field strong {
+  color: #f2f3f5;
+  font-size: 13px;
+}
+
+.discord-embed-field span {
+  color: #dbdee1;
+  font-size: 13px;
+}
+
+.discord-embed-thumbnail {
+  width: 84px;
+  height: 84px;
+  flex: 0 0 84px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+#verifyPreviewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 4px;
+  background: #5865f2;
+  color: white;
+}
+
+.discord-embed-large-image {
+  width: 100%;
+  max-height: 260px;
+  margin-top: 14px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.discord-embed-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: #b5bac1;
+  font-size: 10px;
+}
+
+.discord-embed-footer img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.discord-preview-help {
+  margin: 12px 0 0;
+  color: #77798a;
+  font-size: 11px;
+}
+
+.verify-variable-list {
+  display: grid;
+  grid-template-columns:
+    auto 1fr;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.verify-variable-list code {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background:
+    rgba(139, 92, 246, 0.13);
+  color: #c4a7ff;
+}
+
+.verify-variable-list span {
+  color: #9290a3;
+  font-size: 12px;
+}
+
+@media (max-width: 1050px) {
+  .verify-panel-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .verify-discord-preview-column {
+    position: static;
+  }
+}

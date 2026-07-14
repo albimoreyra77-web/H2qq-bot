@@ -1,5 +1,9 @@
 import axios from "axios";
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -792,6 +796,251 @@ if (options.fullIp) {
   return fields.slice(0, 25);
 }
 /* =========================================================
+   HISTORIAL DE VERIFICACIONES
+   ========================================================= */
+
+const currentFilePath =
+  fileURLToPath(import.meta.url);
+
+const currentDirectory =
+  path.dirname(currentFilePath);
+
+const verificationHistoryPath =
+  path.join(
+    currentDirectory,
+    "..",
+    "data",
+    "verification-history.json"
+  );
+
+function ensureVerificationHistoryFile() {
+  const historyDirectory =
+    path.dirname(
+      verificationHistoryPath
+    );
+
+  if (
+    !fs.existsSync(
+      historyDirectory
+    )
+  ) {
+    fs.mkdirSync(
+      historyDirectory,
+      {
+        recursive: true,
+      }
+    );
+  }
+
+  if (
+    !fs.existsSync(
+      verificationHistoryPath
+    )
+  ) {
+    fs.writeFileSync(
+      verificationHistoryPath,
+      JSON.stringify(
+        {
+          records: [],
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+  }
+}
+
+function readVerificationHistory() {
+  try {
+    ensureVerificationHistoryFile();
+
+    const rawContent =
+      fs.readFileSync(
+        verificationHistoryPath,
+        "utf8"
+      );
+
+    const parsedContent =
+      JSON.parse(rawContent);
+
+    return {
+      records:
+        Array.isArray(
+          parsedContent.records
+        )
+          ? parsedContent.records
+          : [],
+    };
+  } catch (error) {
+    console.error(
+      "No se pudo leer el historial de verificaciones:",
+      error
+    );
+
+    return {
+      records: [],
+    };
+  }
+}
+
+function writeVerificationHistory(
+  history
+) {
+  try {
+    ensureVerificationHistoryFile();
+
+    fs.writeFileSync(
+      verificationHistoryPath,
+      JSON.stringify(
+        history,
+        null,
+        2
+      ),
+      "utf8"
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo guardar el historial de verificaciones:",
+      error
+    );
+  }
+}
+
+function findAlternativeAccount({
+  guildId,
+  userId,
+  ip,
+}) {
+  const normalizedIp =
+    normalizeIp(ip);
+
+  if (
+    !normalizedIp ||
+    isLocalOrPrivateIp(
+      normalizedIp
+    ) ||
+    normalizedIp ===
+      "Localhost"
+  ) {
+    return null;
+  }
+
+  const history =
+    readVerificationHistory();
+
+  return (
+    history.records.find(
+      record =>
+        String(record.guildId) ===
+          String(guildId) &&
+        String(record.userId) !==
+          String(userId) &&
+        normalizeIp(record.ip) ===
+          normalizedIp
+    ) || null
+  );
+}
+
+function saveVerificationHistoryRecord({
+  guild,
+  member,
+  networkData,
+}) {
+  const ip =
+    normalizeIp(
+      networkData.ip
+    );
+
+  if (
+    !ip ||
+    ip === "Localhost" ||
+    isLocalOrPrivateIp(ip)
+  ) {
+    return;
+  }
+
+  const history =
+    readVerificationHistory();
+
+  const existingIndex =
+    history.records.findIndex(
+      record =>
+        String(record.guildId) ===
+          String(guild.id) &&
+        String(record.userId) ===
+          String(member.id)
+    );
+
+  const record = {
+    guildId:
+      guild.id,
+
+    guildName:
+      guild.name,
+
+    userId:
+      member.id,
+
+    username:
+      member.user.username,
+
+    displayName:
+      member.displayName ||
+      member.user.globalName ||
+      member.user.username,
+
+    ip,
+
+    maskedIp:
+      networkData.maskedIp ||
+      maskIp(ip),
+
+    country:
+      networkData.country ||
+      "",
+
+    city:
+      networkData.city ||
+      "",
+
+    verifiedAt:
+      new Date().toISOString(),
+  };
+
+  if (
+    existingIndex >= 0
+  ) {
+    history.records[
+      existingIndex
+    ] = record;
+  } else {
+    history.records.push(
+      record
+    );
+  }
+
+  /*
+    Conservamos como máximo
+    10.000 registros.
+  */
+
+  if (
+    history.records.length >
+    10000
+  ) {
+    history.records =
+      history.records.slice(
+        -10000
+      );
+  }
+
+  writeVerificationHistory(
+    history
+  );
+}
+
+/* =========================================================
    REGISTRO DE RUTAS
    ========================================================= */
 
@@ -802,6 +1051,68 @@ export function registerVerifyRoutes({
   getVerifyConfig,
   saveVerifyConfig,
 }) {
+/* =========================================================
+   INFORMACIÓN PÚBLICA DEL BOT
+   ========================================================= */
+
+app.get(
+  "/api/bot/public-info",
+  (request, response) => {
+    try {
+      if (!client.user) {
+        return response
+          .status(503)
+          .json({
+            success: false,
+
+            message:
+              "El bot todavía no está conectado.",
+          });
+      }
+
+      const avatar =
+        client.user.displayAvatarURL({
+          extension: "png",
+          size: 256,
+        });
+
+      return response.json({
+        success: true,
+
+        data: {
+          id:
+            client.user.id,
+
+          username:
+            client.user.username,
+
+          displayName:
+            client.user.globalName ||
+            client.user.username,
+
+          avatar,
+
+          bot:
+            true,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error obteniendo información pública del bot:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+
+          message:
+            "No se pudo cargar la información del bot.",
+        });
+    }
+  }
+);
  /* =========================================================
    DATOS PÚBLICOS DE LA WEB DE VERIFICACIÓN
    ========================================================= */
@@ -1185,6 +1496,9 @@ app.get(
             });
         }
 
+const security =
+  config.security || {};
+
 const needsNetworkInformation =
   Boolean(
     config.logOptions?.country ||
@@ -1196,8 +1510,13 @@ const needsNetworkInformation =
     config.logOptions?.vpn ||
     config.logOptions?.proxy ||
     config.logOptions?.hosting ||
-    config.logOptions?.fullIp
-  );
+    config.logOptions?.fullIp ||
+
+security.detectVpn ||
+security.detectProxy ||
+security.detectTor ||
+security.detectAltAccounts
+ );
 
 const networkData =
   needsNetworkInformation
@@ -1253,10 +1572,322 @@ const networkData =
             });
         }
 
-        const alreadyVerified =
-          member.roles.cache.has(
-            role.id
+      const alreadyVerified =
+  member.roles.cache.has(
+    role.id
+  );
+
+/* ===================================================
+   COMPROBACIONES DE SEGURIDAD
+   =================================================== */
+
+const securityFailures = [];
+
+/*
+  IMPEDIR REVERIFICACIÓN
+*/
+
+if (
+  alreadyVerified &&
+  security.allowReverification === false
+) {
+  securityFailures.push(
+    "La cuenta ya se encuentra verificada."
+  );
+}
+
+/*
+  EDAD MÍNIMA DE LA CUENTA
+*/
+
+if (
+  security.minimumAccountAgeEnabled
+) {
+  const minimumDays =
+    Math.max(
+      0,
+      Number(
+        security.minimumAccountAgeDays ||
+        0
+      )
+    );
+
+  const accountAgeMilliseconds =
+    Date.now() -
+    member.user.createdTimestamp;
+
+  const accountAgeDays =
+    Math.floor(
+      accountAgeMilliseconds /
+      86400000
+    );
+
+  if (
+    accountAgeDays < minimumDays
+  ) {
+    securityFailures.push(
+      `La cuenta debe tener al menos ${minimumDays} días de antigüedad. Actualmente tiene ${accountAgeDays} días.`
+    );
+  }
+}
+
+/*
+  BLOQUEAR CUENTAS SIN AVATAR PROPIO
+*/
+
+if (
+  security.blockWithoutAvatar &&
+  !member.user.avatar
+) {
+  securityFailures.push(
+    "La cuenta debe tener una foto de perfil personalizada."
+  );
+}
+
+/*
+  BLOQUEAR CUENTAS SIN BANNER
+*/
+
+if (security.blockWithoutBanner) {
+
+ const fullUser =
+  await member.user
+    .fetch(true)
+    .catch(
+      () => member.user
+    );
+
+  if (!fullUser.banner) {
+    securityFailures.push(
+      "La cuenta debe tener un banner configurado."
+    );
+  }
+}
+
+/*
+  DETECCIÓN DE VPN
+*/
+
+if (
+  security.detectVpn &&
+  networkData.vpn === true
+) {
+  securityFailures.push(
+    "Se detectó una conexión mediante VPN."
+  );
+}
+
+/*
+  DETECCIÓN DE PROXY
+*/
+
+if (
+  security.detectProxy &&
+  networkData.proxy === true
+) {
+  securityFailures.push(
+    "Se detectó una conexión mediante proxy."
+  );
+}
+
+/*
+  DETECCIÓN DE TOR
+*/
+
+if (
+  security.detectTor &&
+  networkData.tor === true
+) {
+  securityFailures.push(
+    "Se detectó una conexión mediante la red Tor."
+  );
+}
+/*
+  DETECCIÓN DE MULTICUENTAS
+*/
+
+let alternativeAccountMatch =
+  null;
+
+if (
+  security.detectAltAccounts
+) {
+  alternativeAccountMatch =
+    findAlternativeAccount({
+      guildId:
+        guild.id,
+
+      userId:
+        member.id,
+
+      ip:
+        networkData.ip,
+    });
+
+  if (
+    alternativeAccountMatch
+  ) {
+    securityFailures.push(
+      `Esta conexión ya fue utilizada por otra cuenta: ${alternativeAccountMatch.username} (${alternativeAccountMatch.userId}).`
+    );
+  }
+}
+/*
+  REGISTRAR Y DEVOLVER EL BLOQUEO
+*/
+
+if (securityFailures.length > 0) {
+if (
+  security.notifySecurityFailure &&
+  config.logsChannelId
+) {
+    const securityLogsChannel =
+      guild.channels.cache.get(
+        config.logsChannelId
+      );
+
+    if (
+      securityLogsChannel &&
+      securityLogsChannel.isTextBased()
+    ) {
+      const failureEmbed =
+        new EmbedBuilder()
+          .setColor(
+            "#ef4444"
+          )
+          .setTitle(
+            "🚨 Verificación bloqueada"
+          )
+          .setDescription(
+            securityFailures
+              .map(
+                failure =>
+                  `• ${failure}`
+              )
+              .join("\n")
+          )
+          .addFields(
+            {
+              name: "Usuario",
+              value:
+                `\`${member.user.username}\``,
+              inline: true,
+            },
+            {
+              name: "Discord ID",
+              value:
+                `\`${member.id}\``,
+              inline: true,
+            },
+            {
+              name: "Servidor",
+              value:
+                `\`${guild.name}\``,
+              inline: true,
+            },
+            {
+              name: "IP",
+              value:
+                `\`${
+                  networkData.ip ||
+                  "No disponible"
+                }\``,
+              inline: true,
+            },
+            {
+              name: "VPN",
+              value:
+                `\`${
+                  networkData.vpn === null ||
+                  networkData.vpn === undefined
+                    ? "No disponible"
+                    : networkData.vpn
+                      ? "Detectada"
+                      : "No detectada"
+                }\``,
+              inline: true,
+            },
+            {
+              name: "Proxy / Tor",
+              value:
+                `\`${
+                  networkData.proxy
+                    ? "Proxy detectado"
+                    : networkData.tor
+                      ? "Tor detectado"
+                      : "No detectados"
+                }\``,
+              inline: true,
+            }
+          )
+          .setThumbnail(
+            member.user
+              .displayAvatarURL({
+                extension: "png",
+                size: 256,
+              })
+          )
+          .setFooter({
+            text:
+              "Nebula Security Center • Acceso rechazado",
+          })
+          .setTimestamp();
+if (
+  alternativeAccountMatch
+) {
+  failureEmbed.addFields({
+    name:
+      "Cuenta relacionada",
+
+    value:
+      [
+        `Usuario: \`${alternativeAccountMatch.username}\``,
+        `Discord ID: \`${alternativeAccountMatch.userId}\``,
+        `Último registro: \`${alternativeAccountMatch.verifiedAt}\``,
+      ].join("\n"),
+
+    inline: false,
+  });
+}
+
+      await securityLogsChannel
+        .send({
+          embeds: [
+            failureEmbed,
+          ],
+        })
+        .catch(error => {
+          console.error(
+            "No se pudo enviar el log de seguridad:",
+            error
           );
+        });
+    }
+  
+} else {
+  console.error(
+    "No se pudo enviar el bloqueo: el canal de logs no existe o no admite mensajes.",
+    {
+      guildId,
+      logsChannelId:
+        config.logsChannelId,
+     }
+   );
+  }
+
+}
+  return response
+    .status(403)
+    .json({
+      success: false,
+      securityBlocked: true,
+
+      message:
+        securityFailures[0],
+
+      reasons:
+        securityFailures,
+    });
 
         if (
           !alreadyVerified &&
@@ -1283,10 +1914,15 @@ const networkData =
         const verifiedAt =
           Date.now();
 
+saveVerificationHistoryRecord({
+  guild,
+  member,
+  networkData,
+});
+
         /* ===================================================
            LOG DE VERIFICACIÓN
            =================================================== */
-
         if (
           config.logsChannelId
         ) {
@@ -1544,38 +2180,179 @@ const networkData =
             ? config.embedColor
             : "#5865f2";
 
-        const embed =
-          new EmbedBuilder()
-            .setColor(
-              embedColor
-            )
-            .setTitle(
-              config.embedTitle ||
-                "Verificación del servidor"
-            )
-            .setDescription(
-              config.embedDescription ||
-                "Presioná el botón para verificarte y acceder al servidor."
-            )
-            .setThumbnail(
-              guild.iconURL({
-                extension: "png",
-                size: 256,
-              })
-            )
-            .addFields({
-              name: "Servidor",
+      const replacePanelVariables = (
+  value
+) => {
+  const now =
+    new Date();
 
-              value:
-                guild.name,
+  return String(value || "")
+    .replaceAll(
+      "{server}",
+      guild.name
+    )
+    .replaceAll(
+      "{date}",
+      now.toLocaleDateString(
+        "es-AR"
+      )
+    )
+    .replaceAll(
+      "{time}",
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
+    );
+};
 
-              inline: true,
-            })
-            .setFooter({
-              text:
-                "Nebula Security Center",
-            })
-            .setTimestamp();
+const botAvatar =
+  client.user
+    ?.displayAvatarURL({
+      extension: "png",
+      size: 256,
+    }) || null;
+
+const serverIcon =
+  guild.iconURL({
+    extension: "png",
+    size: 256,
+  });
+
+const embed =
+  new EmbedBuilder()
+    .setColor(
+      isValidHexColor(
+        config.embedColor
+      )
+        ? config.embedColor
+        : "#5865f2"
+    )
+    .setTitle(
+      replacePanelVariables(
+        config.embedTitle ||
+          "Verificación del servidor"
+      )
+    )
+    .setDescription(
+      replacePanelVariables(
+        config.embedDescription ||
+          "Presioná el botón para verificarte y acceder al servidor."
+      )
+    );
+
+/*
+  Avatar real del bot en la parte superior
+  del embed.
+*/
+
+if (
+  config.showBotAvatar !== false &&
+  client.user &&
+  botAvatar
+) {
+  embed.setAuthor({
+    name:
+      client.user.globalName ||
+      client.user.username,
+
+    iconURL:
+      botAvatar,
+  });
+}
+
+/*
+  Campo editable del servidor.
+*/
+
+if (
+  config.embedFieldName ||
+  config.embedFieldValue
+) {
+  embed.addFields({
+    name:
+      replacePanelVariables(
+        config.embedFieldName ||
+          "📌 Servidor"
+      ),
+
+    value:
+      replacePanelVariables(
+        config.embedFieldValue ||
+          "{server}"
+      ),
+
+    inline: false,
+  });
+}
+
+/*
+  Miniatura personalizada.
+  Si no hay una, puede mostrar el icono
+  del servidor.
+*/
+
+if (
+  config.showCustomThumbnail &&
+  config.embedThumbnailUrl
+) {
+  embed.setThumbnail(
+    config.embedThumbnailUrl
+  );
+} else if (
+  config.showServerIcon !== false &&
+  serverIcon
+) {
+  embed.setThumbnail(
+    serverIcon
+  );
+}
+
+/*
+  Imagen grande inferior.
+*/
+
+if (
+  config.showEmbedImage &&
+  config.embedImageUrl
+) {
+  embed.setImage(
+    config.embedImageUrl
+  );
+}
+
+/*
+  Pie editable con avatar real del bot.
+*/
+
+if (config.embedFooterText) {
+  embed.setFooter({
+    text:
+      replacePanelVariables(
+        config.embedFooterText
+      ),
+
+    ...(botAvatar
+      ? {
+          iconURL:
+            botAvatar,
+        }
+      : {}),
+  });
+}
+
+/*
+  Fecha y hora del mensaje.
+*/
+
+if (
+  config.showTimestamp !== false
+) {
+  embed.setTimestamp();
+}
 
         const method =
           getVerificationMethod(
@@ -1943,6 +2720,67 @@ const networkData =
               100
             ),
 
+/* CONTENIDO AVANZADO DEL EMBED */
+
+embedFieldName:
+  cleanString(
+    body.embedFieldName,
+    defaults.embedFieldName,
+    256
+  ),
+
+embedFieldValue:
+  cleanString(
+    body.embedFieldValue,
+    defaults.embedFieldValue,
+    1024
+  ),
+
+embedFooterText:
+  cleanString(
+    body.embedFooterText,
+    defaults.embedFooterText,
+    2048
+  ),
+
+embedThumbnailUrl:
+  cleanString(
+    body.embedThumbnailUrl,
+    defaults.embedThumbnailUrl,
+    1000
+  ),
+
+embedImageUrl:
+  cleanString(
+    body.embedImageUrl,
+    defaults.embedImageUrl,
+    1000
+  ),
+
+showBotAvatar:
+  cleanBoolean(
+    body.showBotAvatar
+  ),
+
+showServerIcon:
+  cleanBoolean(
+    body.showServerIcon
+  ),
+
+showCustomThumbnail:
+  cleanBoolean(
+    body.showCustomThumbnail
+  ),
+
+showEmbedImage:
+  cleanBoolean(
+    body.showEmbedImage
+  ),
+
+showTimestamp:
+  cleanBoolean(
+    body.showTimestamp
+  ),
           /* PERSONALIZACIÓN DE LOGS */
 
           logEmbedTitle:
