@@ -523,9 +523,22 @@ export function registerAuthRoutes({
           });
         }
 
-        response.clearCookie(
-          "connect.sid"
-        );
+      response.clearCookie(
+  "nebula.sid",
+  {
+    httpOnly: true,
+
+    secure:
+      process.env.NODE_ENV ===
+      "production",
+
+    sameSite:
+      process.env.NODE_ENV ===
+      "production"
+        ? "none"
+        : "lax",
+  }
+);
 
         response.json({
           success: true,

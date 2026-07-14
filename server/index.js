@@ -45,36 +45,54 @@ const io = new Server(httpServer, {
   cors: {
     origin: FRONTEND_URL,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
 app.use(
   cors({
     origin: FRONTEND_URL,
+    credentials: true,
   })
 );
 
 app.use(express.json());
 
+const isProduction =
+  process.env.NODE_ENV ===
+  "production";
+
 app.use(
   session({
-  secret:
-  process.env.SESSION_SECRET,
+    name: "nebula.sid",
+
+    secret:
+      process.env.SESSION_SECRET,
 
     resave: false,
+
     saveUninitialized: false,
+
+    proxy: true,
+
+    rolling: true,
 
     cookie: {
       httpOnly: true,
 
       secure:
-        process.env.NODE_ENV ===
-        "production",
+        isProduction,
 
-      sameSite: "lax",
+      sameSite:
+        isProduction
+          ? "none"
+          : "lax",
 
       maxAge:
-        1000 * 60 * 30,
+        1000 *
+        60 *
+        60 *
+        24,
     },
   })
 );
