@@ -30,6 +30,14 @@ dotenv.config();
    ========================================================= */
 
 const app = express();
+/*
+  Códigos temporales generados después de OAuth.
+  Cada código puede utilizarse una sola vez.
+*/
+const oauthTickets = new Map();
+
+const OAUTH_TICKET_DURATION =
+  60_000; // 60 segundos
 
 // Permite obtener la IP real cuando la app está detrás de Render,
 // Cloudflare u otro proxy inverso.
@@ -683,6 +691,9 @@ registerVerifyRoutes({
 registerAuthRoutes({
   app,
   client,
+  oauthTickets,
+  oauthTicketDuration:
+    OAUTH_TICKET_DURATION,
 });
 
 function replaceWelcomeVariables(text, member) {
@@ -1826,6 +1837,29 @@ process.on(
     console.error(error);
   }
 );
+/*
+  Elimina códigos OAuth vencidos cada minuto.
+*/
+setInterval(() => {
+  const now =
+    Date.now();
+
+  for (
+    const [
+      authCode,
+      ticket,
+    ] of oauthTickets.entries()
+  ) {
+    if (
+      !ticket ||
+      ticket.expiresAt <= now
+    ) {
+      oauthTickets.delete(
+        authCode
+      );
+    }
+  }
+}, 60_000);
 
 /* =========================================================
    INICIO DEL SERVIDOR

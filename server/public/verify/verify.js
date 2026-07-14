@@ -522,6 +522,101 @@ function getBrowserInformation() {
     userAgent,
   };
 }
+/* =========================================================
+   INTERCAMBIAR CÓDIGO OAUTH TEMPORAL
+   ========================================================= */
+
+async function exchangeTemporaryAuthCode() {
+  const currentUrl =
+    new URL(
+      window.location.href
+    );
+
+  const authCode =
+    currentUrl.searchParams.get(
+      "authCode"
+    );
+
+  if (!authCode) {
+    return null;
+  }
+
+  setStatus(
+    "Conectando tu cuenta de Discord...",
+    "loading"
+  );
+
+  const response =
+    await fetch(
+      `/api/verify/${encodeURIComponent(
+        guildId
+      )}/exchange`,
+      {
+        method:
+          "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Accept:
+            "application/json",
+        },
+
+        credentials:
+          "include",
+
+        body:
+          JSON.stringify({
+            authCode,
+          }),
+      }
+    );
+
+  let result;
+
+  try {
+    result =
+      await response.json();
+  } catch {
+    throw new Error(
+      "El servidor devolvió una respuesta inválida al autenticar."
+    );
+  }
+
+  /*
+    Quitamos inmediatamente el código
+    de la barra de direcciones.
+  */
+  currentUrl.searchParams.delete(
+    "authCode"
+  );
+
+  currentUrl.searchParams.delete(
+    "authenticated"
+  );
+
+  window.history.replaceState(
+    {},
+    document.title,
+    `${currentUrl.pathname}${
+      currentUrl.search
+    }${currentUrl.hash}`
+  );
+
+  if (
+    !response.ok ||
+    !result.success ||
+    !result.authenticated
+  ) {
+    throw new Error(
+      result.message ||
+      "No se pudo conectar la cuenta de Discord."
+    );
+  }
+
+  return result.data;
+}
 
 /* =========================================================
    CONSULTAR SESIÓN DE DISCORD
@@ -541,7 +636,7 @@ async function getDiscordSession() {
       },
 
       credentials:
-        "same-origin",
+        "include",
     }
   );
 
@@ -593,7 +688,7 @@ async function loadVerificationPage() {
           },
 
           credentials:
-            "same-origin",
+            "include",
         }
       );
 
@@ -629,11 +724,39 @@ async function loadVerificationPage() {
       pageData.serverName
     );
 
-    const {
-      response: sessionResponse,
-      result: sessionResult,
-    } =
-      await getDiscordSession();
+  /*
+  Si existe un authCode en la URL,
+  primero lo intercambiamos.
+*/
+
+const exchangedUser =
+  await exchangeTemporaryAuthCode();
+
+if (exchangedUser) {
+  showAuthenticatedUser(
+    exchangedUser
+  );
+
+  applyPreviewAppearance(
+    pageData.webAppearance ||
+    {}
+  );
+
+  setStatus("");
+
+  console.log(
+    "Autenticación temporal completada:",
+    exchangedUser
+  );
+
+  return;
+}
+
+const {
+  response: sessionResponse,
+  result: sessionResult,
+} =
+  await getDiscordSession();
 
 if (
   sessionResponse.ok &&
@@ -1676,7 +1799,7 @@ async function completeVerification() {
       },
 
       credentials:
-        "same-origin",
+        "include",
 
       body: JSON.stringify({
         browser:
