@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Trade Room Verification</title>
+
+  <link
+    rel="stylesheet"
+    href="/verify-assets/style.css"
+  >
+<link
+  rel="stylesheet"
+  href="/verify-assets/animations.css"
+>
+
+</head>
+
+<body>
+  <canvas id="space"></canvas>
+
+  <div class="page-glow glow-one"></div>
+  <div class="page-glow glow-two"></div>
+
+  <main class="verification-page">
+
+    <header class="verify-brand">
+      <div class="brand-shield">✓</div>
+
+      <div>
+        <h1>
+          TRADE <span>ROOM</span>
+        </h1>
+
+        <p>VERIFICACIÓN</p>
+      </div>
+    </header>
+
+    <section class="verification-card">
+
+      <div class="profile-ring">
+        <img
+          id="discordAvatar"
+          src="https://cdn.discordapp.com/embed/avatars/0.png"
+          alt="Avatar de Discord"
+        >
+      </div>
+
+      <h2 id="discordUsername">
+        Usuario de Discord
+      </h2>
+
+      <p
+        id="discordDisplayName"
+        class="display-name"
+      >
+        Apodo del usuario
+      </p>
+
+      <div class="separator"></div>
+
+<div class="verification-details">
+
+  <div class="verification-detail server-detail">
+    <span class="detail-label">
+      SERVIDOR
+    </span>
+
+    <div class="server-name-row">
+      <div class="discord-icon">
+        ◉
+      </div>
+
+      <strong id="serverName">
+        Cargando servidor...
+      </strong>
+    </div>
+  </div>
+
+  <div class="details-divider"></div>
+
+  <div class="verification-detail role-detail">
+    <span class="detail-label">
+      ROL QUE RECIBIRÁS
+    </span>
+
+    <strong id="roleDisplay">
+      @Miembro
+    </strong>
+  </div>
+
+</div>
+
+<button
+  id="completeVerification"
+  type="button"
+>
+   <span class="button-shield">✓</span>
+        COMPLETAR VERIFICACIÓN
+      </button>
+
+      <p class="verification-notice">
+        Al continuar, recibirás el rol correspondiente:
+        <strong id="roleName">@Miembro</strong>.
+      </p>
+
+      <div
+        id="verificationStatus"
+        class="verification-status"
+      ></div>
+
+    </section>
+
+    <footer>
+      <span>♢</span>
+      Protegido por
+      <strong>Trade Room Security</strong>
+    </footer>
+
+  </main>
+
+  <script src="/verify-assets/verify.js"></script>
+</body>
+</html>

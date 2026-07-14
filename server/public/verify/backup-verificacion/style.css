@@ -1,0 +1,737 @@
+:root {
+  color-scheme: dark;
+
+  --background: #030307;
+  --panel: rgba(8, 8, 16, 0.92);
+  --panel-border: rgba(139, 92, 246, 0.3);
+
+  --purple: #8b5cf6;
+  --purple-light: #a855f7;
+  --purple-dark: #4c1d95;
+
+  --text: #ffffff;
+  --muted: #a1a1aa;
+
+  --success: #22c55e;
+  --danger: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 25%,
+      rgba(76, 29, 149, 0.13),
+      transparent 40%
+    ),
+    #030307;
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* =========================================================
+   FONDO ANIMADO
+   ========================================================= */
+
+#space {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  pointer-events: none;
+}
+
+.page-glow {
+  position: fixed;
+
+  width: 420px;
+  height: 420px;
+
+  border-radius: 50%;
+
+  filter: blur(120px);
+  opacity: 0.17;
+
+  pointer-events: none;
+}
+
+.glow-one {
+  top: -140px;
+  left: -180px;
+
+  background: var(--purple);
+}
+
+.glow-two {
+  right: -180px;
+  bottom: -170px;
+
+  background: #5b21b6;
+}
+
+/* =========================================================
+   CONTENEDOR GENERAL
+   ========================================================= */
+
+.verification-page {
+  position: relative;
+  z-index: 2;
+
+  width: min(650px, calc(100% - 28px));
+  min-height: 100vh;
+
+  margin: 0 auto;
+  padding: 24px 0 18px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* =========================================================
+   LOGO Y TÍTULO
+   ========================================================= */
+
+.verify-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 13px;
+  margin-bottom: 20px;
+
+  animation: reveal 0.7s ease both;
+}
+
+.brand-shield {
+  width: 48px;
+  height: 55px;
+
+  display: grid;
+  place-items: center;
+
+  border: 4px solid var(--purple);
+  border-radius: 15px 15px 21px 21px;
+
+  color: var(--purple);
+
+  font-size: 24px;
+  font-weight: 900;
+
+  box-shadow:
+    0 0 26px rgba(139, 92, 246, 0.25),
+    inset 0 0 18px rgba(139, 92, 246, 0.08);
+}
+
+.verify-brand h1 {
+  margin: 0;
+
+  font-size: clamp(27px, 4vw, 40px);
+  line-height: 1;
+
+  letter-spacing: 1px;
+}
+
+.verify-brand h1 span {
+  color: var(--purple-light);
+}
+
+.verify-brand p {
+  margin: 6px 0 0;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  letter-spacing: 6px;
+
+  text-align: center;
+}
+
+/* =========================================================
+   TARJETA PRINCIPAL
+   ========================================================= */
+
+.verification-card {
+  position: relative;
+
+  padding: 30px 42px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(15, 15, 28, 0.96),
+      rgba(5, 5, 12, 0.94)
+    );
+
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.55),
+    0 0 40px rgba(139, 92, 246, 0.08);
+
+  text-align: center;
+
+  backdrop-filter: blur(16px);
+
+  animation: cardEnter 0.75s ease both;
+}
+
+.verification-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 300px;
+  height: 300px;
+
+  top: -220px;
+  left: 50%;
+
+  border-radius: 50%;
+
+  background: rgba(139, 92, 246, 0.16);
+
+  filter: blur(70px);
+
+  transform: translateX(-50%);
+}
+
+/* =========================================================
+   PERFIL DE DISCORD
+   ========================================================= */
+
+.profile-ring {
+  position: relative;
+
+  width: 145px;
+  height: 145px;
+
+  margin: 0 auto 16px;
+  padding: 4px;
+
+  border-radius: 50%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      #6d28d9,
+      #a855f7,
+      #7c3aed,
+      #6d28d9
+    );
+
+  box-shadow:
+    0 0 32px rgba(139, 92, 246, 0.42),
+    0 0 70px rgba(139, 92, 246, 0.12);
+
+  animation: pulseAvatar 3s ease-in-out infinite;
+}
+
+.profile-ring img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  border: 6px solid #08080f;
+  border-radius: 50%;
+
+  object-fit: cover;
+
+  background: #11111b;
+}
+
+.verification-card h2 {
+  margin: 0;
+
+  font-size: clamp(27px, 4vw, 36px);
+  letter-spacing: 0.5px;
+}
+
+.display-name {
+  margin: 5px 0 0;
+
+  color: var(--muted);
+
+  font-size: clamp(15px, 2.5vw, 20px);
+}
+
+/* =========================================================
+   SEPARADORES
+   ========================================================= */
+
+.separator {
+  height: 1px;
+
+  margin: 20px 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+}
+
+/* =========================================================
+   INFORMACIÓN DEL SERVIDOR
+   ========================================================= */
+
+.server-information > span {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  letter-spacing: 5px;
+}
+
+.server-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 11px;
+}
+
+.discord-icon {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #5865f2,
+      #7c3aed
+    );
+
+  font-size: 18px;
+
+  box-shadow:
+    0 0 20px rgba(88, 101, 242, 0.28);
+}
+
+.server-name-row strong {
+  color: var(--purple-light);
+
+  font-size: clamp(16px, 2.5vw, 21px);
+}
+
+/* =========================================================
+   BOTÓN DE VERIFICACIÓN
+   ========================================================= */
+
+#completeVerification {
+  width: 100%;
+  min-height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+
+  border: 1px solid #a855f7;
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      110deg,
+      #6d28d9,
+      #7c3aed 50%,
+      #4c1d95
+    );
+
+  color: white;
+
+  cursor: pointer;
+
+  font-size: clamp(15px, 2.5vw, 19px);
+  font-weight: 800;
+
+  letter-spacing: 0.3px;
+
+  box-shadow:
+    0 14px 38px rgba(76, 29, 149, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+#completeVerification:hover:not(:disabled) {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 20px 46px rgba(76, 29, 149, 0.42),
+    0 0 32px rgba(139, 92, 246, 0.18);
+}
+
+#completeVerification:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+#completeVerification:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.button-shield {
+  width: 31px;
+  height: 35px;
+
+  display: grid;
+  place-items: center;
+
+  border: 2px solid rgba(255, 255, 255, 0.62);
+  border-radius: 9px 9px 12px 12px;
+}
+
+/* =========================================================
+   TEXTO DEL ROL
+   ========================================================= */
+
+.verification-notice {
+  margin: 14px 0 0;
+
+  color: #9d9da8;
+
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.verification-notice strong {
+  color: var(--purple-light);
+}
+
+/* =========================================================
+   ESTADO DE VERIFICACIÓN
+   ========================================================= */
+
+.verification-status {
+  min-height: 20px;
+
+  margin-top: 12px;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.verification-status.loading {
+  color: var(--muted);
+}
+
+.verification-status.success {
+  color: var(--success);
+}
+
+.verification-status.error {
+  color: var(--danger);
+}
+
+/* =========================================================
+   PIE DE PÁGINA
+   ========================================================= */
+
+footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  margin-top: 16px;
+
+  color: #8e8e99;
+
+  font-size: 12px;
+
+  animation: reveal 1s ease both;
+}
+
+footer strong {
+  color: var(--purple-light);
+}
+
+/* =========================================================
+   ANIMACIONES
+   ========================================================= */
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulseAvatar {
+  0%,
+  100% {
+    box-shadow:
+      0 0 32px rgba(139, 92, 246, 0.36),
+      0 0 65px rgba(139, 92, 246, 0.1);
+  }
+
+  50% {
+    box-shadow:
+      0 0 45px rgba(139, 92, 246, 0.58),
+      0 0 90px rgba(139, 92, 246, 0.17);
+  }
+}
+
+/* =========================================================
+   DISEÑO PARA CELULAR
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .verification-page {
+    width: min(100% - 20px, 430px);
+    min-height: 100svh;
+
+    padding: 12px 0;
+
+    justify-content: center;
+  }
+
+  .verify-brand {
+    gap: 9px;
+    margin-bottom: 12px;
+  }
+
+  .brand-shield {
+    width: 36px;
+    height: 41px;
+
+    border-width: 3px;
+    border-radius: 11px 11px 15px 15px;
+
+    font-size: 18px;
+  }
+
+  .verify-brand h1 {
+    font-size: 23px;
+  }
+
+  .verify-brand p {
+    margin-top: 4px;
+
+    font-size: 8px;
+    letter-spacing: 4px;
+  }
+
+  .verification-card {
+    padding: 21px 17px;
+
+    border-radius: 20px;
+  }
+
+  .profile-ring {
+    width: 102px;
+    height: 102px;
+
+    margin-bottom: 11px;
+    padding: 3px;
+  }
+
+  .profile-ring img {
+    border-width: 4px;
+  }
+
+  .verification-card h2 {
+    font-size: 25px;
+  }
+
+  .display-name {
+    font-size: 14px;
+  }
+
+  .separator {
+    margin: 13px 0;
+  }
+
+  .server-information > span {
+    margin-bottom: 7px;
+
+    font-size: 8px;
+    letter-spacing: 4px;
+  }
+
+  .discord-icon {
+    width: 29px;
+    height: 29px;
+
+    border-radius: 9px;
+
+    font-size: 15px;
+  }
+
+  .server-name-row {
+    gap: 8px;
+  }
+
+  .server-name-row strong {
+    font-size: 15px;
+  }
+
+  #completeVerification {
+    min-height: 54px;
+
+    gap: 10px;
+
+    border-radius: 13px;
+
+    font-size: 13px;
+  }
+
+  .button-shield {
+    width: 25px;
+    height: 29px;
+
+    border-radius: 7px 7px 10px 10px;
+  }
+
+  .verification-notice {
+    margin-top: 10px;
+
+    padding: 0 4px;
+
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  .verification-status {
+    min-height: 15px;
+
+    margin-top: 8px;
+
+    font-size: 10px;
+  }
+
+  footer {
+    margin-top: 11px;
+
+    font-size: 9px;
+  }
+}
+
+/* =========================================================
+   PANTALLAS BAJAS DE COMPUTADORA
+   ========================================================= */
+
+@media (max-height: 760px) and (min-width: 641px) {
+  .verification-page {
+    padding: 10px 0;
+  }
+
+  .verify-brand {
+    margin-bottom: 10px;
+  }
+
+  .brand-shield {
+    width: 42px;
+    height: 48px;
+
+    font-size: 21px;
+  }
+
+  .verify-brand h1 {
+    font-size: 32px;
+  }
+
+  .verify-brand p {
+    margin-top: 4px;
+
+    font-size: 9px;
+  }
+
+  .verification-card {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .profile-ring {
+    width: 112px;
+    height: 112px;
+
+    margin-bottom: 10px;
+  }
+
+  .verification-card h2 {
+    font-size: 30px;
+  }
+
+  .display-name {
+    font-size: 16px;
+  }
+
+  .separator {
+    margin: 13px 0;
+  }
+
+  #completeVerification {
+    min-height: 55px;
+  }
+
+  .verification-notice {
+    margin-top: 10px;
+  }
+
+  footer {
+    margin-top: 9px;
+  }
+}

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#030307"
+  >
+
+  <title>Nebula Verification</title>
+
+  <link
+    rel="stylesheet"
+    href="/verify-assets/style.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/verify-assets/animations.css"
+  >
+</head>
+
+<body>
+  <canvas
+    id="space"
+    aria-hidden="true"
+  ></canvas>
+
+  <div
+    class="background-grid"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="page-glow glow-one"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="page-glow glow-two"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="page-glow glow-three"
+    aria-hidden="true"
+  ></div>
+
+  <main class="verification-page">
+
+    <header class="verify-brand">
+      <div
+        class="brand-shield"
+        aria-hidden="true"
+      >
+        <span>✓</span>
+      </div>
+
+      <div class="brand-copy">
+        <h1>
+          TRADE <span>ROOM</span>
+        </h1>
+
+        <p>VERIFICACIÓN SEGURA</p>
+      </div>
+    </header>
+
+    <section class="verification-card">
+
+      <div
+        class="card-light"
+        aria-hidden="true"
+      ></div>
+
+      <div class="profile-section">
+
+        <div class="profile-ring">
+          <div
+            class="profile-orbit orbit-one"
+            aria-hidden="true"
+          ></div>
+
+          <div
+            class="profile-orbit orbit-two"
+            aria-hidden="true"
+          ></div>
+
+          <img
+            id="discordAvatar"
+            src="https://cdn.discordapp.com/embed/avatars/0.png"
+            alt="Avatar de Discord"
+          >
+
+          <span
+            class="profile-status"
+            title="Cuenta conectada"
+          ></span>
+        </div>
+
+        <h2 id="discordUsername">
+          Iniciá sesión con Discord
+        </h2>
+
+        <p
+          id="discordDisplayName"
+          class="display-name"
+        >
+          Tu cuenta aparecerá aquí
+        </p>
+
+      </div>
+
+      <div class="verification-details">
+
+        <article class="verification-detail server-detail">
+
+          <span class="detail-label">
+            SERVIDOR
+          </span>
+
+          <div class="server-name-row">
+
+            <div class="discord-icon">
+              ◉
+            </div>
+
+            <div class="server-copy">
+              <strong id="serverName">
+                Cargando servidor...
+              </strong>
+
+              <small>
+                Comunidad de Discord
+              </small>
+            </div>
+
+          </div>
+
+        </article>
+
+        <div
+          class="details-divider"
+          aria-hidden="true"
+        ></div>
+
+        <article class="verification-detail role-detail">
+
+          <span class="detail-label">
+            ROL QUE RECIBIRÁS
+          </span>
+
+          <div class="role-badge">
+            <span
+              class="role-dot"
+              aria-hidden="true"
+            ></span>
+
+            <strong id="roleDisplay">
+              @Miembro
+            </strong>
+          </div>
+
+        </article>
+
+      </div>
+
+      <button
+        id="completeVerification"
+        type="button"
+      >
+        <span
+          class="button-background"
+          aria-hidden="true"
+        ></span>
+
+        <span class="button-shield">
+          ✓
+        </span>
+
+        <span class="button-copy">
+          COMPLETAR VERIFICACIÓN
+        </span>
+
+        <span
+          class="button-arrow"
+          aria-hidden="true"
+        >
+          ›
+        </span>
+      </button>
+
+      <p class="verification-notice">
+        Al continuar, recibirás el rol correspondiente:
+        <strong id="roleName">@Miembro</strong>.
+      </p>
+
+      <div
+        id="verificationStatus"
+        class="verification-status"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+    </section>
+
+    <footer class="verification-footer">
+
+      <span
+        class="footer-shield"
+        aria-hidden="true"
+      >
+        ♢
+      </span>
+
+      <span>
+        Protegido por
+        <strong>Nebula Security</strong>
+      </span>
+
+    </footer>
+
+  </main>
+
+  <script src="/verify-assets/verify.js"></script>
+</body>
+</html>
