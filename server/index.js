@@ -962,26 +962,45 @@ client.on(Events.InteractionCreate, async interaction => {
   }
 });
 /* =========================================================
-   RUTA PRINCIPAL
+   FRONTEND COMPILADO CON VITE
    ========================================================= */
+
+const frontendDistPath =
+  path.join(
+    process.cwd(),
+    "dist"
+  );
 
 app.use(
   express.static(
-    path.join(
-      process.cwd()
-    )
+    frontendDistPath
   )
 );
 
 app.get("/", (request, response) => {
   response.sendFile(
     path.join(
-      process.cwd(),
+      frontendDistPath,
       "index.html"
     )
   );
 });
 
+/*
+  Permite abrir rutas del dashboard directamente
+  sin recibir un error 404.
+*/
+app.get(
+  /^\/(?!api|auth|verify|verify-assets|socket\.io).*/,
+  (request, response) => {
+    response.sendFile(
+      path.join(
+        frontendDistPath,
+        "index.html"
+      )
+    );
+  }
+);
 /* =========================================================
    API DEL DASHBOARD
    ========================================================= */
