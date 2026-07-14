@@ -719,19 +719,16 @@ function buildLogFields({
     });
   }
 
-  if (options.fullIp) {
-    fields.push({
-      name: "IP protegida",
-
-      value:
-        codeValue(
-          networkData.maskedIp ||
-          "No disponible"
-        ),
-
-      inline: true,
-    });
-  }
+if (options.fullIp) {
+  fields.push({
+    name: "IP",
+    value: codeValue(
+      networkData.ip ||
+      "No disponible"
+    ),
+    inline: true,
+  });
+}
 
   if (options.vpn) {
     fields.push({
