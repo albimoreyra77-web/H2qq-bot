@@ -965,19 +965,22 @@ client.on(Events.InteractionCreate, async interaction => {
    RUTA PRINCIPAL
    ========================================================= */
 
-app.get(
-  "/",
-  (request, response) => {
-    response.json({
-      success: true,
-
-      message:
-        "Servidor de Nebula funcionando correctamente",
-
-      discord: client.isReady(),
-    });
-  }
+app.use(
+  express.static(
+    path.join(
+      process.cwd()
+    )
+  )
 );
+
+app.get("/", (request, response) => {
+  response.sendFile(
+    path.join(
+      process.cwd(),
+      "index.html"
+    )
+  );
+});
 
 /* =========================================================
    API DEL DASHBOARD
@@ -1680,7 +1683,8 @@ if (!process.env.DISCORD_TOKEN) {
       process.env.DISCORD_TOKEN
     )
     .catch(error => {
-      console.error(
+      c
+onsole.error(
         "No se pudo conectar el bot con Discord:"
       );
 
