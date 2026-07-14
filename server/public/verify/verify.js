@@ -66,6 +66,18 @@ let pageIsAuthenticated = false;
 let verificationInProgress = false;
 let currentPreviewAppearance = {};
 
+/*
+  Token temporal recibido después del OAuth.
+  Se conserva solamente en esta pestaña.
+*/
+const verificationTokenStorageKey =
+  `nebulaVerificationToken:${guildId}`;
+
+let currentVerificationToken =
+  sessionStorage.getItem(
+    verificationTokenStorageKey
+  ) || "";
+
 /* =========================================================
    FONDO ESPACIAL
    ========================================================= */
@@ -585,8 +597,9 @@ async function exchangeTemporaryAuthCode() {
   }
 
   /*
-    Quitamos inmediatamente el código
-    de la barra de direcciones.
+    Quitamos el código OAuth de la URL
+    para que no quede visible ni pueda
+    reutilizarse desde el historial.
   */
   currentUrl.searchParams.delete(
     "authCode"
@@ -607,13 +620,22 @@ async function exchangeTemporaryAuthCode() {
   if (
     !response.ok ||
     !result.success ||
-    !result.authenticated
+    !result.authenticated ||
+    !result.verificationToken
   ) {
     throw new Error(
       result.message ||
       "No se pudo conectar la cuenta de Discord."
     );
   }
+
+  currentVerificationToken =
+    result.verificationToken;
+
+  sessionStorage.setItem(
+    verificationTokenStorageKey,
+    currentVerificationToken
+  );
 
   return result.data;
 }
@@ -642,6 +664,71 @@ async function getDiscordSession() {
 
   const result =
     await response.json();
+
+  return {
+    response,
+    result,
+  };
+}
+/* =========================================================
+   CONSULTAR USUARIO MEDIANTE TOKEN
+   ========================================================= */
+
+async function getTokenSession() {
+  if (!currentVerificationToken) {
+    return {
+      response: null,
+      result: null,
+    };
+  }
+
+  const response =
+    await fetch(
+      `/api/verify/${encodeURIComponent(
+        guildId
+      )}/token-session`,
+      {
+        method:
+          "GET",
+
+        headers: {
+          Accept:
+            "application/json",
+
+          "x-verification-token":
+            currentVerificationToken,
+        },
+
+        credentials:
+          "include",
+      }
+    );
+
+  let result;
+
+  try {
+    result =
+      await response.json();
+  } catch {
+    result = {
+      success: false,
+      authenticated: false,
+      message:
+        "El servidor devolvió una respuesta inválida.",
+    };
+  }
+
+  if (
+    response.status === 401 ||
+    response.status === 403
+  ) {
+    currentVerificationToken =
+      "";
+
+    sessionStorage.removeItem(
+      verificationTokenStorageKey
+    );
+  }
 
   return {
     response,
@@ -752,22 +839,54 @@ if (exchangedUser) {
   return;
 }
 
+/*
+  Primero intentamos recuperar al usuario
+  usando el token independiente de cookies.
+*/
+
 const {
-  response: sessionResponse,
-  result: sessionResult,
+  response:
+    tokenSessionResponse,
+
+  result:
+    tokenSessionResult,
 } =
-  await getDiscordSession();
+  await getTokenSession();
 
 if (
-  sessionResponse.ok &&
-  sessionResult.success &&
-  sessionResult.authenticated
+  tokenSessionResponse?.ok &&
+  tokenSessionResult?.success &&
+  tokenSessionResult?.authenticated
 ) {
   showAuthenticatedUser(
-    sessionResult.data
+    tokenSessionResult.data
   );
 } else {
-  showLoginRequired();
+  /*
+    Compatibilidad con sesiones anteriores
+    en PC y navegadores donde la cookie funciona.
+  */
+
+  const {
+    response:
+      sessionResponse,
+
+    result:
+      sessionResult,
+  } =
+    await getDiscordSession();
+
+  if (
+    sessionResponse.ok &&
+    sessionResult.success &&
+    sessionResult.authenticated
+  ) {
+    showAuthenticatedUser(
+      sessionResult.data
+    );
+  } else {
+    showLoginRequired();
+  }
 }
 
 /*
@@ -782,14 +901,21 @@ applyPreviewAppearance(
 
 setStatus("");
 
-    console.log(
-      "Datos reales de verificación:",
-      {
-        server: pageData,
-        session: sessionResult,
-      }
-    );
-  } catch (error) {
+
+console.log(
+  "Datos reales de verificación:",
+  {
+    server: pageData,
+    authenticated:
+      pageIsAuthenticated,
+    tokenAvailable:
+      Boolean(
+        currentVerificationToken
+      ),
+  }
+);
+
+     } catch (error) {
     console.error(
       "Error cargando la página:",
       error
@@ -1436,7 +1562,15 @@ function startAutomaticCloseTimer(
 function showVerificationSuccess(
   verificationData
 ) {
-  verificationInProgress = false;
+  verificationInProgress =
+    false;
+
+  currentVerificationToken =
+    "";
+
+  sessionStorage.removeItem(
+    verificationTokenStorageKey
+  );
 
   document.body.classList.remove(
     "verification-processing"
@@ -1790,13 +1924,16 @@ async function completeVerification() {
     {
       method: "POST",
 
-      headers: {
-        "Content-Type":
-          "application/json",
+  headers: {
+  "Content-Type":
+    "application/json",
 
-        Accept:
-          "application/json",
-      },
+  Accept:
+    "application/json",
+
+  "x-verification-token":
+    currentVerificationToken,
+},
 
       credentials:
         "include",

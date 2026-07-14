@@ -63,7 +63,20 @@ export function registerAuthRoutes({
   client,
   oauthTickets,
   oauthTicketDuration,
+  verificationTickets,
+  verificationTicketDuration,
 }) {
+  if (!(oauthTickets instanceof Map)) {
+    throw new Error(
+      "oauthTickets debe ser una instancia de Map."
+    );
+  }
+
+  if (!(verificationTickets instanceof Map)) {
+    throw new Error(
+      "verificationTickets debe ser una instancia de Map."
+    );
+  }
 
   /* =========================================================
      INICIAR AUTORIZACIÓN CON DISCORD
@@ -73,23 +86,31 @@ export function registerAuthRoutes({
     "/auth/discord",
     (request, response) => {
       try {
-        const guildId = String(
-          request.query.guildId || ""
-        );
+        const guildId =
+          String(
+            request.query.guildId ||
+            ""
+          );
 
         if (!guildId) {
-          return response.status(400).send(
-            "Falta el ID del servidor."
-          );
+          return response
+            .status(400)
+            .send(
+              "Falta el ID del servidor."
+            );
         }
 
         const guild =
-          client.guilds.cache.get(guildId);
+          client.guilds.cache.get(
+            guildId
+          );
 
         if (!guild) {
-          return response.status(404).send(
-            "El servidor no existe o el bot no está dentro."
-          );
+          return response
+            .status(404)
+            .send(
+              "El servidor no existe o el bot no está dentro."
+            );
         }
 
         const {
@@ -99,9 +120,9 @@ export function registerAuthRoutes({
           getRequiredEnvironmentVariables();
 
         const state =
-          crypto.randomBytes(32).toString(
-            "hex"
-          );
+          crypto
+            .randomBytes(32)
+            .toString("hex");
 
         request.session.oauthState =
           state;
@@ -132,10 +153,6 @@ export function registerAuthRoutes({
           "code"
         );
 
-        /*
-          Solamente identify:
-          no solicita acceso al correo.
-        */
         authorizationUrl.searchParams.set(
           "scope",
           "identify"
@@ -151,33 +168,37 @@ export function registerAuthRoutes({
           "consent"
         );
 
-        request.session.save(error => {
-          if (error) {
-            console.error(
-              "No se pudo guardar la sesión OAuth:",
-              error
-            );
-
-            return response
-              .status(500)
-              .send(
-                "No se pudo iniciar la autenticación."
+        request.session.save(
+          error => {
+            if (error) {
+              console.error(
+                "No se pudo guardar la sesión OAuth:",
+                error
               );
-          }
 
-          response.redirect(
-            authorizationUrl.toString()
-          );
-        });
+              return response
+                .status(500)
+                .send(
+                  "No se pudo iniciar la autenticación."
+                );
+            }
+
+            return response.redirect(
+              authorizationUrl.toString()
+            );
+          }
+        );
       } catch (error) {
         console.error(
           "Error iniciando OAuth2:",
           error
         );
 
-        response.status(500).send(
-          "No se pudo iniciar sesión con Discord."
-        );
+        return response
+          .status(500)
+          .send(
+            "No se pudo iniciar sesión con Discord."
+          );
       }
     }
   );
@@ -188,15 +209,22 @@ export function registerAuthRoutes({
 
   app.get(
     "/auth/discord/callback",
-    async (request, response) => {
+    async (
+      request,
+      response
+    ) => {
       try {
-        const code = String(
-          request.query.code || ""
-        );
+        const code =
+          String(
+            request.query.code ||
+            ""
+          );
 
-        const returnedState = String(
-          request.query.state || ""
-        );
+        const returnedState =
+          String(
+            request.query.state ||
+            ""
+          );
 
         const storedState =
           request.session.oauthState;
@@ -213,9 +241,11 @@ export function registerAuthRoutes({
         }
 
         if (!code) {
-          return response.status(400).send(
-            "Discord no devolvió el código de autorización."
-          );
+          return response
+            .status(400)
+            .send(
+              "Discord no devolvió el código de autorización."
+            );
         }
 
         if (
@@ -223,24 +253,32 @@ export function registerAuthRoutes({
           !returnedState ||
           returnedState !== storedState
         ) {
-          return response.status(403).send(
-            "La solicitud de autenticación no es válida o expiró."
-          );
+          return response
+            .status(403)
+            .send(
+              "La solicitud de autenticación no es válida o expiró."
+            );
         }
 
         if (!guildId) {
-          return response.status(400).send(
-            "No se encontró el servidor asociado a la sesión."
-          );
+          return response
+            .status(400)
+            .send(
+              "No se encontró el servidor asociado a la sesión."
+            );
         }
 
         const guild =
-          client.guilds.cache.get(guildId);
+          client.guilds.cache.get(
+            guildId
+          );
 
         if (!guild) {
-          return response.status(404).send(
-            "El servidor ya no está disponible."
-          );
+          return response
+            .status(404)
+            .send(
+              "El servidor ya no está disponible."
+            );
         }
 
         const {
@@ -252,26 +290,35 @@ export function registerAuthRoutes({
 
         const tokenBody =
           new URLSearchParams({
-            client_id: clientId,
-            client_secret: clientSecret,
+            client_id:
+              clientId,
+
+            client_secret:
+              clientSecret,
+
             grant_type:
               "authorization_code",
+
             code,
-            redirect_uri: redirectUri,
+
+            redirect_uri:
+              redirectUri,
           });
 
         const tokenResponse =
           await fetch(
             `${DISCORD_API_URL}/oauth2/token`,
             {
-              method: "POST",
+              method:
+                "POST",
 
               headers: {
                 "Content-Type":
                   "application/x-www-form-urlencoded",
               },
 
-              body: tokenBody,
+              body:
+                tokenBody,
             }
           );
 
@@ -320,14 +367,14 @@ export function registerAuthRoutes({
           );
         }
 
-        /*
-          Verificamos que el usuario realmente
-          pertenezca al servidor seleccionado.
-        */
         const member =
           await guild.members
-            .fetch(discordUser.id)
-            .catch(() => null);
+            .fetch(
+              discordUser.id
+            )
+            .catch(
+              () => null
+            );
 
         if (!member) {
           request.session.discordUser =
@@ -338,118 +385,125 @@ export function registerAuthRoutes({
           );
         }
 
-const now =
-  Date.now();
+        const now =
+          Date.now();
 
-const authCode =
-  crypto
-    .randomBytes(48)
-    .toString("hex");
+        const authCode =
+          crypto
+            .randomBytes(48)
+            .toString("hex");
 
-const ticket = {
-  guildId:
-    String(guildId),
+        const ticket = {
+          guildId:
+            String(guildId),
 
-  userId:
-    String(discordUser.id),
+          userId:
+            String(
+              discordUser.id
+            ),
 
-  username:
-    discordUser.username,
+          username:
+            discordUser.username,
 
-  globalName:
-    discordUser.global_name ||
-    discordUser.username,
+          globalName:
+            discordUser.global_name ||
+            discordUser.username,
 
-  avatar:
-    createDiscordAvatarUrl(
-      discordUser
-    ),
+          avatar:
+            createDiscordAvatarUrl(
+              discordUser
+            ),
 
-  displayName:
-    member.displayName ||
-    discordUser.global_name ||
-    discordUser.username,
+          displayName:
+            member.displayName ||
+            discordUser.global_name ||
+            discordUser.username,
 
-  createdAt:
-    now,
+          createdAt:
+            now,
 
-  createdAtIso:
-    new Date(
-      now
-    ).toISOString(),
+          createdAtIso:
+            new Date(
+              now
+            ).toISOString(),
 
-  expiresAt:
-    now +
-    oauthTicketDuration,
+          expiresAt:
+            now +
+            oauthTicketDuration,
 
-  expiresAtIso:
-    new Date(
-      now +
-      oauthTicketDuration
-    ).toISOString(),
+          expiresAtIso:
+            new Date(
+              now +
+              oauthTicketDuration
+            ).toISOString(),
 
-  userAgent:
-    String(
-      request.headers[
-        "user-agent"
-      ] ||
-      ""
-    ).slice(0, 500),
+          userAgent:
+            String(
+              request.headers[
+                "user-agent"
+              ] ||
+              ""
+            ).slice(
+              0,
+              500
+            ),
 
-  ip:
-    String(
-      request.ip ||
-      request.socket
-        ?.remoteAddress ||
-      ""
-    ).slice(0, 100),
-};
+          ip:
+            String(
+              request.ip ||
+              request.socket
+                ?.remoteAddress ||
+              ""
+            ).slice(
+              0,
+              100
+            ),
+        };
 
-oauthTickets.set(
-  authCode,
-  ticket
-);
+        oauthTickets.set(
+          authCode,
+          ticket
+        );
 
-delete request.session.oauthState;
-delete request.session.oauthGuildId;
-delete request.session.discordUser;
+        delete request.session.oauthState;
+        delete request.session.oauthGuildId;
+        delete request.session.discordUser;
 
-console.log(
-  "Código temporal OAuth creado:",
-  {
-    guildId:
-      ticket.guildId,
+        console.log(
+          "Código temporal OAuth creado:",
+          {
+            guildId:
+              ticket.guildId,
 
-    userId:
-      ticket.userId,
+            userId:
+              ticket.userId,
 
-    createdAt:
-      ticket.createdAtIso,
+            createdAt:
+              ticket.createdAtIso,
 
-    expiresAt:
-      ticket.expiresAtIso,
-  }
-);
+            expiresAt:
+              ticket.expiresAtIso,
+          }
+        );
 
-const destination =
-  new URL(
-    `/verify/${guildId}`,
-    process.env.PUBLIC_URL ||
-    `${request.protocol}://${request.get(
-      "host"
-    )}`
-  );
+        const destination =
+          new URL(
+            `/verify/${guildId}`,
+            process.env.PUBLIC_URL ||
+            `${request.protocol}://${request.get(
+              "host"
+            )}`
+          );
 
-destination.searchParams.set(
-  "authCode",
-  authCode
-);
+        destination.searchParams.set(
+          "authCode",
+          authCode
+        );
 
-return response.redirect(
-  destination.toString()
-);
-
-           } catch (error) {
+        return response.redirect(
+          destination.toString()
+        );
+      } catch (error) {
         console.error(
           "Error procesando OAuth2:",
           error
@@ -459,7 +513,7 @@ return response.redirect(
           request.session
             ?.oauthGuildId;
 
-        response.redirect(
+        return response.redirect(
           guildId
             ? `/verify/${guildId}?error=oauth_failed`
             : "/?error=oauth_failed"
@@ -467,140 +521,186 @@ return response.redirect(
       }
     }
   );
-/* =========================================================
-   INTERCAMBIAR CÓDIGO TEMPORAL
-   ========================================================= */
+  /* =========================================================
+     INTERCAMBIAR CÓDIGO OAUTH POR TOKEN DE VERIFICACIÓN
+     ========================================================= */
 
-app.post(
-  "/api/verify/:guildId/exchange",
-  async (request, response) => {
-    try {
-      const guildId =
-        String(
-          request.params.guildId ||
-          ""
-        );
-
-      const authCode =
-        String(
-          request.body
-            ?.authCode ||
-          ""
-        ).trim();
-
-      if (
-        !authCode ||
-        !/^[a-f0-9]{96}$/i.test(
-          authCode
-        )
-      ) {
-        return response
-          .status(400)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "El código de autenticación no es válido.",
-          });
-      }
-
-      const ticket =
-        oauthTickets.get(
-          authCode
-        );
-
-      if (!ticket) {
-        return response
-          .status(401)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "El código ya fue utilizado, venció o no existe.",
-          });
-      }
-
-      if (
-        ticket.expiresAt <=
-        Date.now()
-      ) {
-        oauthTickets.delete(
-          authCode
-        );
-
-        return response
-          .status(401)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "El código de autenticación venció.",
-          });
-      }
-
-      if (
-        String(
-          ticket.guildId
-        ) !== guildId
-      ) {
-        return response
-          .status(403)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "El código pertenece a otro servidor.",
-          });
-      }
-
-      const guild =
-        client.guilds.cache.get(
-          guildId
-        );
-
-      if (!guild) {
-        oauthTickets.delete(
-          authCode
-        );
-
-        return response
-          .status(404)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "El servidor ya no está disponible.",
-          });
-      }
-
-      const member =
-        await guild.members
-          .fetch(
-            ticket.userId
-          )
-          .catch(
-            () => null
+  app.post(
+    "/api/verify/:guildId/exchange",
+    async (
+      request,
+      response
+    ) => {
+      try {
+        const guildId =
+          String(
+            request.params
+              .guildId ||
+            ""
           );
 
-      if (!member) {
-        oauthTickets.delete(
-          authCode
-        );
+        const authCode =
+          String(
+            request.body
+              ?.authCode ||
+            ""
+          ).trim();
 
-        return response
-          .status(403)
-          .json({
-            success: false,
-            authenticated: false,
-            message:
-              "La cuenta no pertenece al servidor.",
-          });
-      }
+        if (
+          !authCode ||
+          !/^[a-f0-9]{96}$/i
+            .test(
+              authCode
+            )
+        ) {
+          return response
+            .status(400)
+            .json({
+              success:
+                false,
 
-      request.session
-        .discordUser = {
-          id:
-            ticket.userId,
+              authenticated:
+                false,
+
+              message:
+                "El código de autenticación no es válido.",
+            });
+        }
+
+        const ticket =
+          oauthTickets.get(
+            authCode
+          );
+
+        if (!ticket) {
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El código ya fue utilizado, venció o no existe.",
+            });
+        }
+
+        if (
+          ticket.expiresAt <=
+          Date.now()
+        ) {
+          oauthTickets.delete(
+            authCode
+          );
+
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El código de autenticación venció.",
+            });
+        }
+
+        if (
+          String(
+            ticket.guildId
+          ) !== guildId
+        ) {
+          return response
+            .status(403)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El código pertenece a otro servidor.",
+            });
+        }
+
+        const guild =
+          client.guilds.cache.get(
+            guildId
+          );
+
+        if (!guild) {
+          oauthTickets.delete(
+            authCode
+          );
+
+          return response
+            .status(404)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El servidor ya no está disponible.",
+            });
+        }
+
+        const member =
+          await guild.members
+            .fetch(
+              ticket.userId
+            )
+            .catch(
+              () => null
+            );
+
+        if (!member) {
+          oauthTickets.delete(
+            authCode
+          );
+
+          return response
+            .status(403)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "La cuenta no pertenece al servidor.",
+            });
+        }
+
+        const verificationToken =
+          crypto
+            .randomBytes(48)
+            .toString("hex");
+
+        const createdAt =
+          Date.now();
+
+        const verificationTicket = {
+          token:
+            verificationToken,
+
+          guildId:
+            String(
+              ticket.guildId
+            ),
+
+          userId:
+            String(
+              ticket.userId
+            ),
 
           username:
             ticket.username,
@@ -608,113 +708,371 @@ app.post(
           globalName:
             ticket.globalName,
 
-          avatar:
-            ticket.avatar,
-
-          guildId:
-            ticket.guildId,
-
           displayName:
-            ticket.displayName,
+            member.displayName ||
+            member.user
+              .globalName ||
+            member.user
+              .username,
 
-          authenticatedAt:
-            Date.now(),
+          avatar:
+            member.user
+              .displayAvatarURL({
+                extension:
+                  "png",
+
+                size:
+                  256,
+              }),
+
+          guildName:
+            guild.name,
+
+          guildIcon:
+            guild.iconURL({
+              extension:
+                "png",
+
+              size:
+                256,
+            }),
+
+          createdAt,
+
+          createdAtIso:
+            new Date(
+              createdAt
+            ).toISOString(),
+
+          expiresAt:
+            createdAt +
+            verificationTicketDuration,
+
+          expiresAtIso:
+            new Date(
+              createdAt +
+              verificationTicketDuration
+            ).toISOString(),
 
           oauthCreatedAt:
             ticket.createdAt,
 
-          oauthExpiresAt:
-            ticket.expiresAt,
+          oauthCreatedAtIso:
+            ticket.createdAtIso,
+
+          ip:
+            ticket.ip,
+
+          userAgent:
+            ticket.userAgent,
+
+          used:
+            false,
         };
 
-      request.session.save(
-        error => {
-          if (error) {
-            console.error(
-              "No se pudo guardar la sesión intercambiada:",
-              error
+        verificationTickets.set(
+          verificationToken,
+          verificationTicket
+        );
+
+        /*
+          El authCode se elimina inmediatamente.
+          Ya no puede volver a utilizarse.
+        */
+        oauthTickets.delete(
+          authCode
+        );
+
+        console.log(
+          "Código OAuth intercambiado correctamente:",
+          {
+            guildId:
+              verificationTicket
+                .guildId,
+
+            userId:
+              verificationTicket
+                .userId,
+
+            createdAt:
+              verificationTicket
+                .createdAtIso,
+
+            expiresAt:
+              verificationTicket
+                .expiresAtIso,
+          }
+        );
+
+        return response.json({
+          success:
+            true,
+
+          authenticated:
+            true,
+
+          verificationToken,
+
+          expiresAt:
+            verificationTicket
+              .expiresAt,
+
+          data: {
+            id:
+              member.id,
+
+            username:
+              member.user
+                .username,
+
+            globalName:
+              member.user
+                .globalName ||
+              ticket.globalName ||
+              "",
+
+            displayName:
+              verificationTicket
+                .displayName,
+
+            avatar:
+              verificationTicket
+                .avatar,
+
+            guildId:
+              guild.id,
+
+            guildName:
+              guild.name,
+
+            guildIcon:
+              verificationTicket
+                .guildIcon,
+
+            authenticatedAt:
+              createdAt,
+          },
+        });
+      } catch (error) {
+        console.error(
+          "Error intercambiando código OAuth:",
+          error
+        );
+
+        return response
+          .status(500)
+          .json({
+            success:
+              false,
+
+            authenticated:
+              false,
+
+            message:
+              "No se pudo completar el intercambio de autenticación.",
+          });
+      }
+    }
+  );
+  /* =========================================================
+     DATOS DEL USUARIO AUTENTICADO POR TOKEN
+     ========================================================= */
+
+  app.get(
+    "/api/verify/:guildId/token-session",
+    async (
+      request,
+      response
+    ) => {
+      try {
+        const guildId =
+          String(
+            request.params
+              .guildId ||
+            ""
+          );
+
+        const verificationToken =
+          String(
+            request.headers[
+              "x-verification-token"
+            ] ||
+            request.query
+              .verificationToken ||
+            ""
+          ).trim();
+
+        if (
+          !verificationToken ||
+          !/^[a-f0-9]{96}$/i
+            .test(
+              verificationToken
+            )
+        ) {
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "Falta un token de verificación válido.",
+            });
+        }
+
+        const ticket =
+          verificationTickets.get(
+            verificationToken
+          );
+
+        if (
+          !ticket ||
+          ticket.used
+        ) {
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El token no existe, ya fue utilizado o venció.",
+            });
+        }
+
+        if (
+          ticket.expiresAt <=
+          Date.now()
+        ) {
+          verificationTickets.delete(
+            verificationToken
+          );
+
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El token de verificación venció.",
+            });
+        }
+
+        if (
+          String(
+            ticket.guildId
+          ) !== guildId
+        ) {
+          return response
+            .status(403)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El token pertenece a otro servidor.",
+            });
+        }
+
+        const guild =
+          client.guilds.cache.get(
+            guildId
+          );
+
+        if (!guild) {
+          verificationTickets.delete(
+            verificationToken
+          );
+
+          return response
+            .status(404)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El servidor no está disponible.",
+            });
+        }
+
+        const member =
+          await guild.members
+            .fetch(
+              ticket.userId
+            )
+            .catch(
+              () => null
             );
 
-            return response
-              .status(500)
-              .json({
-                success: false,
-                authenticated: false,
-                message:
-                  "No se pudo guardar la autenticación.",
-              });
-          }
-
-          /*
-            Se elimina después de guardar
-            correctamente la sesión.
-            Ya no puede utilizarse otra vez.
-          */
-          oauthTickets.delete(
-            authCode
+        if (!member) {
+          verificationTickets.delete(
+            verificationToken
           );
 
-          console.log(
-            "Código OAuth intercambiado y eliminado:",
-            {
-              guildId:
-                ticket.guildId,
+          return response
+            .status(403)
+            .json({
+              success:
+                false,
 
-              userId:
-                ticket.userId,
+              authenticated:
+                false,
 
-              createdAt:
-                ticket.createdAtIso,
+              message:
+                "Tu cuenta no pertenece al servidor.",
+            });
+        }
 
-              exchangedAt:
-                new Date()
-                  .toISOString(),
-            }
-          );
+        return response.json({
+          success:
+            true,
 
-          return response.json({
-            success: true,
-            authenticated: true,
+          authenticated:
+            true,
 
-            data: {
-              id:
-                member.id,
+          expiresAt:
+            ticket.expiresAt,
 
-              username:
-                member.user
-                  .username,
+          data: {
+            id:
+              member.id,
 
-              globalName:
-                member.user
-                  .globalName ||
-                ticket.globalName ||
-                "",
+            username:
+              member.user
+                .username,
 
-              displayName:
-                member.displayName ||
-                member.user
-                  .globalName ||
-                member.user
-                  .username,
+            displayName:
+              member.displayName ||
+              member.user
+                .globalName ||
+              member.user
+                .username,
 
-              avatar:
-                member.user
-                  .displayAvatarURL({
-                    extension:
-                      "png",
+            globalName:
+              member.user
+                .globalName ||
+              member.user
+                .username,
 
-                    size:
-                      256,
-                  }),
-
-              guildId:
-                guild.id,
-
-              guildName:
-                guild.name,
-
-              guildIcon:
-                guild.iconURL({
+            avatar:
+              member.user
+                .displayAvatarURL({
                   extension:
                     "png",
 
@@ -722,94 +1080,133 @@ app.post(
                     256,
                 }),
 
-              authenticatedAt:
-                Date.now(),
-            },
-          });
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Error intercambiando código OAuth:",
-        error
-      );
+            guildId:
+              guild.id,
 
-      return response
-        .status(500)
-        .json({
-          success: false,
-          authenticated: false,
-          message:
-            "No se pudo completar el intercambio de autenticación.",
+            serverName:
+              guild.name,
+          },
         });
-    }
-  }
-);
+      } catch (error) {
+        console.error(
+          "Error consultando el token de verificación:",
+          error
+        );
 
-  /* =========================================================
-     DATOS DEL USUARIO AUTENTICADO
+        return response
+          .status(500)
+          .json({
+            success:
+              false,
+
+            authenticated:
+              false,
+
+            message:
+              "No se pudo consultar la autenticación.",
+          });
+      }
+    }
+  );  /* =========================================================
+     SESIÓN TRADICIONAL — COMPATIBILIDAD CON PC
      ========================================================= */
 
   app.get(
     "/api/verify/:guildId/session",
-    async (request, response) => {
+    async (
+      request,
+      response
+    ) => {
       try {
-        const { guildId } =
+        const {
+          guildId,
+        } =
           request.params;
 
         const sessionUser =
-          request.session.discordUser;
+          request.session
+            .discordUser;
 
         if (
           !sessionUser ||
-          sessionUser.guildId !== guildId
+          sessionUser.guildId !==
+            guildId
         ) {
-          return response.status(401).json({
-            success: false,
-            authenticated: false,
-            message:
-              "Todavía no iniciaste sesión con Discord.",
-          });
+          return response
+            .status(401)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "Todavía no iniciaste sesión con Discord.",
+            });
         }
 
         const guild =
-          client.guilds.cache.get(guildId);
+          client.guilds.cache.get(
+            guildId
+          );
 
         if (!guild) {
-          return response.status(404).json({
-            success: false,
-            authenticated: false,
-            message:
-              "El servidor no está disponible.",
-          });
+          return response
+            .status(404)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "El servidor no está disponible.",
+            });
         }
 
         const member =
           await guild.members
-            .fetch(sessionUser.id)
-            .catch(() => null);
+            .fetch(
+              sessionUser.id
+            )
+            .catch(
+              () => null
+            );
 
         if (!member) {
-          request.session.discordUser =
+          request.session
+            .discordUser =
             null;
 
-          return response.status(403).json({
-            success: false,
-            authenticated: false,
-            message:
-              "Tu cuenta no pertenece al servidor.",
-          });
+          return response
+            .status(403)
+            .json({
+              success:
+                false,
+
+              authenticated:
+                false,
+
+              message:
+                "Tu cuenta no pertenece al servidor.",
+            });
         }
 
         const user =
           member.user;
 
-        response.json({
-          success: true,
-          authenticated: true,
+        return response.json({
+          success:
+            true,
+
+          authenticated:
+            true,
 
           data: {
-            id: user.id,
+            id:
+              user.id,
 
             username:
               user.username,
@@ -825,8 +1222,11 @@ app.post(
 
             avatar:
               user.displayAvatarURL({
-                extension: "png",
-                size: 256,
+                extension:
+                  "png",
+
+                size:
+                  256,
               }),
 
             guildId:
@@ -842,12 +1242,18 @@ app.post(
           error
         );
 
-        response.status(500).json({
-          success: false,
-          authenticated: false,
-          message:
-            "No se pudo consultar la sesión.",
-        });
+        return response
+          .status(500)
+          .json({
+            success:
+              false,
+
+            authenticated:
+              false,
+
+            message:
+              "No se pudo consultar la sesión.",
+          });
       }
     }
   );
@@ -858,39 +1264,53 @@ app.post(
 
   app.post(
     "/auth/discord/logout",
-    (request, response) => {
-      request.session.destroy(error => {
-        if (error) {
-          return response.status(500).json({
-            success: false,
+    (
+      request,
+      response
+    ) => {
+      request.session.destroy(
+        error => {
+          if (error) {
+            return response
+              .status(500)
+              .json({
+                success:
+                  false,
+
+                message:
+                  "No se pudo cerrar la sesión.",
+              });
+          }
+
+          response.clearCookie(
+            "nebula.sid",
+            {
+              httpOnly:
+                true,
+
+              secure:
+                process.env
+                  .NODE_ENV ===
+                "production",
+
+              sameSite:
+                process.env
+                  .NODE_ENV ===
+                "production"
+                  ? "none"
+                  : "lax",
+            }
+          );
+
+          return response.json({
+            success:
+              true,
+
             message:
-              "No se pudo cerrar la sesión.",
+              "Sesión cerrada correctamente.",
           });
         }
-
-      response.clearCookie(
-  "nebula.sid",
-  {
-    httpOnly: true,
-
-    secure:
-      process.env.NODE_ENV ===
-      "production",
-
-    sameSite:
-      process.env.NODE_ENV ===
-      "production"
-        ? "none"
-        : "lax",
-  }
-);
-
-        response.json({
-          success: true,
-          message:
-            "Sesión cerrada correctamente.",
-        });
-      });
+      );
     }
   );
 

@@ -1045,14 +1045,20 @@ function saveVerificationHistoryRecord({
 /* =========================================================
    REGISTRO DE RUTAS
    ========================================================= */
-
 export function registerVerifyRoutes({
   app,
   client,
   getDefaultVerifyConfig,
   getVerifyConfig,
   saveVerifyConfig,
+  verificationTickets,
 }) {
+  if (!(verificationTickets instanceof Map)) {
+    throw new Error(
+      "verificationTickets debe ser una instancia de Map."
+    );
+  }
+
 /* =========================================================
    INFORMACIÓN PÚBLICA DEL BOT
    ========================================================= */
@@ -1447,41 +1453,146 @@ console.log(
             ),
         };
 
-        /*
-         * Esta era la variable que faltaba
-         * en tu archivo anterior.
-         */
-        const sessionUser =
-          request.session
-            ?.discordUser;
+     /*
+ * Primero intentamos autenticar mediante
+ * el token independiente de cookies.
+ */
 
-        if (!sessionUser) {
-          return response
-            .status(401)
-            .json({
-              success: false,
-              authenticated: false,
+const verificationToken =
+  String(
+    request.headers[
+      "x-verification-token"
+    ] ||
+    ""
+  ).trim();
 
-              message:
-                "Primero tenés que iniciar sesión con Discord.",
-            });
-        }
+let verificationTicket =
+  null;
 
-        if (
-          String(
-            sessionUser.guildId
-          ) !==
-          String(guildId)
-        ) {
-          return response
-            .status(403)
-            .json({
-              success: false,
+let authenticatedUserId =
+  "";
 
-              message:
-                "Esta sesión no pertenece al servidor seleccionado.",
-            });
-        }
+if (verificationToken) {
+  if (
+    !/^[a-f0-9]{96}$/i.test(
+      verificationToken
+    )
+  ) {
+    return response
+      .status(401)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "El token de verificación no es válido.",
+      });
+  }
+
+  verificationTicket =
+    verificationTickets.get(
+      verificationToken
+    );
+
+  if (
+    !verificationTicket ||
+    verificationTicket.used
+  ) {
+    return response
+      .status(401)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "El token no existe, venció o ya fue utilizado.",
+      });
+  }
+
+  if (
+    verificationTicket.expiresAt <=
+    Date.now()
+  ) {
+    verificationTickets.delete(
+      verificationToken
+    );
+
+    return response
+      .status(401)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "El token de verificación venció. Volvé a iniciar sesión con Discord.",
+      });
+  }
+
+  if (
+    String(
+      verificationTicket.guildId
+    ) !==
+    String(guildId)
+  ) {
+    return response
+      .status(403)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "El token pertenece a otro servidor.",
+      });
+  }
+
+  authenticatedUserId =
+    String(
+      verificationTicket.userId
+    );
+} else {
+  /*
+   * Compatibilidad con PC y sesiones
+   * anteriores que todavía usan cookies.
+   */
+
+  const sessionUser =
+    request.session
+      ?.discordUser;
+
+  if (!sessionUser) {
+    return response
+      .status(401)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "Primero tenés que iniciar sesión con Discord.",
+      });
+  }
+
+  if (
+    String(
+      sessionUser.guildId
+    ) !==
+    String(guildId)
+  ) {
+    return response
+      .status(403)
+      .json({
+        success: false,
+        authenticated: false,
+
+        message:
+          "Esta sesión no pertenece al servidor seleccionado.",
+      });
+  }
+
+  authenticatedUserId =
+    String(
+      sessionUser.id
+    );
+}
 
         const guild =
           client.guilds.cache.get(
@@ -1557,12 +1668,12 @@ const networkData =
             });
         }
 
-        const member =
-          await guild.members
-            .fetch(
-              sessionUser.id
-            )
-            .catch(() => null);
+     const member =
+  await guild.members
+    .fetch(
+      authenticatedUserId
+    )
+    .catch(() => null);
 
         if (!member) {
           return response
@@ -2024,12 +2135,45 @@ saveVerificationHistoryRecord({
           }
         }
 
-        console.log(
-          `Verificación web completada: ${member.user.username} en ${guild.name}`
-        );
+console.log(
+  `Verificación web completada: ${member.user.username} en ${guild.name}`
+);
 
-        return response.json({
-          success: true,
+/*
+ * El token se elimina solamente cuando
+ * la verificación terminó correctamente.
+ * Así no puede volver a utilizarse.
+ */
+
+if (
+  verificationToken &&
+  verificationTicket
+) {
+  verificationTicket.used =
+    true;
+
+  verificationTickets.delete(
+    verificationToken
+  );
+
+  console.log(
+    "Token de verificación utilizado y eliminado:",
+    {
+      guildId:
+        guild.id,
+
+      userId:
+        member.id,
+
+      usedAt:
+        new Date()
+          .toISOString(),
+    }
+  );
+}
+
+return response.json({
+     success: true,
 
           message:
             alreadyVerified

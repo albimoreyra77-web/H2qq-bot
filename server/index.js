@@ -34,10 +34,26 @@ const app = express();
   Códigos temporales generados después de OAuth.
   Cada código puede utilizarse una sola vez.
 */
-const oauthTickets = new Map();
+
+/*
+  Código recibido después del OAuth.
+  Dura 60 segundos y se usa una sola vez.
+*/
+const oauthTickets =
+  new Map();
+
+/*
+  Token utilizado para mostrar el usuario
+  y completar la verificación sin cookies.
+*/
+const verificationTickets =
+  new Map();
 
 const OAUTH_TICKET_DURATION =
   60_000; // 60 segundos
+
+const VERIFICATION_TICKET_DURATION =
+  1000 * 60 * 5; // 5 minutos
 
 // Permite obtener la IP real cuando la app está detrás de Render,
 // Cloudflare u otro proxy inverso.
@@ -680,20 +696,28 @@ webAppearance: {
     },
   };
 }
+
 registerVerifyRoutes({
   app,
   client,
   getDefaultVerifyConfig,
   getVerifyConfig,
   saveVerifyConfig,
+  verificationTickets,
 });
 
 registerAuthRoutes({
   app,
   client,
   oauthTickets,
+
   oauthTicketDuration:
     OAUTH_TICKET_DURATION,
+
+  verificationTickets,
+
+  verificationTicketDuration:
+    VERIFICATION_TICKET_DURATION,
 });
 
 function replaceWelcomeVariables(text, member) {
@@ -1840,6 +1864,11 @@ process.on(
 /*
   Elimina códigos OAuth vencidos cada minuto.
 */
+
+/*
+  Elimina automáticamente los códigos
+  y tokens vencidos.
+*/
 setInterval(() => {
   const now =
     Date.now();
@@ -1856,6 +1885,22 @@ setInterval(() => {
     ) {
       oauthTickets.delete(
         authCode
+      );
+    }
+  }
+
+  for (
+    const [
+      verificationToken,
+      ticket,
+    ] of verificationTickets.entries()
+  ) {
+    if (
+      !ticket ||
+      ticket.expiresAt <= now
+    ) {
+      verificationTickets.delete(
+        verificationToken
       );
     }
   }
