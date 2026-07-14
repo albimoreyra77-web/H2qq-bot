@@ -805,138 +805,256 @@ export function registerVerifyRoutes({
   getVerifyConfig,
   saveVerifyConfig,
 }) {
-  /* =========================================================
-     DATOS PÚBLICOS DE LA WEB DE VERIFICACIÓN
-     ========================================================= */
+ /* =========================================================
+   DATOS PÚBLICOS DE LA WEB DE VERIFICACIÓN
+   ========================================================= */
 
-  app.get(
-    "/api/verify/:guildId/page-data",
-    async (request, response) => {
-      try {
-        const { guildId } =
-          request.params;
+app.get(
+  "/api/verify/:guildId/page-data",
+  async (request, response) => {
+    try {
+      const { guildId } =
+        request.params;
 
-        const guild =
-          client.guilds.cache.get(
-            guildId
-          );
-
-        if (!guild) {
-          return response
-            .status(404)
-            .json({
-              success: false,
-
-              message:
-                "El servidor no existe o el bot no está dentro de él.",
-            });
-        }
-
-        const config =
-          getVerifyConfig(
-            guildId
-          );
-
-        if (!config.enabled) {
-          return response
-            .status(400)
-            .json({
-              success: false,
-
-              message:
-                "El sistema de verificación está desactivado.",
-            });
-        }
-
-        if (
-          !config.verifiedRoleId
-        ) {
-          return response
-            .status(400)
-            .json({
-              success: false,
-
-              message:
-                "No hay ningún rol configurado para entregar.",
-            });
-        }
-
-        const role =
-          guild.roles.cache.get(
-            config.verifiedRoleId
-          );
-
-        if (!role) {
-          return response
-            .status(404)
-            .json({
-              success: false,
-
-              message:
-                "El rol configurado ya no existe.",
-            });
-        }
-
-        const serverIcon =
-          guild.iconURL({
-            extension: "png",
-            size: 256,
-          });
-
-        return response.json({
-          success: true,
-
-          data: {
-            guildId:
-              guild.id,
-
-            serverName:
-              guild.name,
-
-            serverIcon,
-
-            memberCount:
-              guild.memberCount,
-
-            roleId:
-              role.id,
-
-            roleName:
-              role.name,
-
-            roleColor:
-              role.hexColor,
-
-            verificationEnabled:
-              config.enabled,
-
-            verificationMethod:
-              config.verificationMethod ||
-              "oauth_link",
-
-            webAppearance:
-              config.webAppearance ||
-              {},
-          },
-        });
-      } catch (error) {
-        console.error(
-          "Error obteniendo datos públicos de verificación:",
-          error
+      const guild =
+        client.guilds.cache.get(
+          guildId
         );
 
+      if (!guild) {
         return response
-          .status(500)
+          .status(404)
           .json({
             success: false,
-
             message:
-              "No se pudieron cargar los datos de verificación.",
+              "El servidor no existe o el bot no está dentro de él.",
           });
       }
-    }
-  );
 
+      const config =
+        getVerifyConfig(
+          guildId
+        );
+
+      if (!config.enabled) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "El sistema de verificación está desactivado.",
+          });
+      }
+
+      if (!config.verifiedRoleId) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "No hay ningún rol configurado para entregar.",
+          });
+      }
+
+      const role =
+        guild.roles.cache.get(
+          config.verifiedRoleId
+        );
+
+      if (!role) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "El rol configurado ya no existe.",
+          });
+      }
+
+      return response.json({
+        success: true,
+
+        data: {
+          guildId:
+            guild.id,
+
+          serverName:
+            guild.name,
+
+          serverIcon:
+            guild.iconURL({
+              extension: "png",
+              size: 256,
+            }),
+
+          memberCount:
+            guild.memberCount,
+
+          roleId:
+            role.id,
+
+          roleName:
+            role.name,
+
+          roleColor:
+            role.hexColor,
+
+          verificationEnabled:
+            config.enabled,
+
+          verificationMethod:
+            config.verificationMethod ||
+            "oauth_link",
+
+          webAppearance:
+            config.webAppearance ||
+            {},
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error obteniendo datos públicos de verificación:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudieron cargar los datos de verificación.",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   CONSULTAR SESIÓN DE DISCORD
+   ========================================================= */
+
+app.get(
+  "/api/verify/:guildId/session",
+  async (request, response) => {
+    try {
+      const { guildId } =
+        request.params;
+
+      const sessionUser =
+        request.session?.discordUser;
+
+      if (!sessionUser) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            authenticated: false,
+            message:
+              "No existe una sesión de Discord activa.",
+          });
+      }
+
+      if (
+        String(sessionUser.guildId) !==
+        String(guildId)
+      ) {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            authenticated: false,
+            message:
+              "La sesión pertenece a otro servidor.",
+          });
+      }
+
+      const guild =
+        client.guilds.cache.get(
+          guildId
+        );
+
+      if (!guild) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            authenticated: false,
+            message:
+              "El servidor no está disponible.",
+          });
+      }
+
+      const member =
+        await guild.members
+          .fetch(sessionUser.id)
+          .catch(() => null);
+
+      if (!member) {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            authenticated: false,
+            message:
+              "La cuenta no pertenece al servidor.",
+          });
+      }
+
+      return response.json({
+        success: true,
+        authenticated: true,
+
+        data: {
+          id: member.id,
+
+          username:
+            member.user.username,
+
+          globalName:
+            member.user.globalName ||
+            "",
+
+          displayName:
+            member.displayName ||
+            member.user.globalName ||
+            member.user.username,
+
+          avatar:
+            member.user
+              .displayAvatarURL({
+                extension: "png",
+                size: 256,
+              }),
+
+          guildId:
+            guild.id,
+
+          guildName:
+            guild.name,
+
+          guildIcon:
+            guild.iconURL({
+              extension: "png",
+              size: 256,
+            }),
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error consultando la sesión de Discord:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          authenticated: false,
+          message:
+            "No se pudo comprobar la sesión.",
+        });
+    }
+  }
+);
   /* =========================================================
      COMPLETAR VERIFICACIÓN DESDE LA WEB
      ========================================================= */
@@ -1006,12 +1124,6 @@ export function registerVerifyRoutes({
          * Esta era la variable que faltaba
          * en tu archivo anterior.
          */
-
-        const networkData =
-          await getNetworkInformation(
-            request
-          );
-
         const sessionUser =
           request.session
             ?.discordUser;
@@ -1075,6 +1187,27 @@ export function registerVerifyRoutes({
                 "El sistema de verificación está desactivado.",
             });
         }
+
+const needsNetworkInformation =
+  Boolean(
+    config.logOptions?.country ||
+    config.logOptions?.city ||
+    config.logOptions?.region ||
+    config.logOptions?.countryCode ||
+    config.logOptions?.isp ||
+    config.logOptions?.asn ||
+    config.logOptions?.vpn ||
+    config.logOptions?.proxy ||
+    config.logOptions?.hosting ||
+    config.logOptions?.fullIp
+  );
+
+const networkData =
+  needsNetworkInformation
+    ? await getNetworkInformation(
+        request
+      )
+    : {};
 
         if (
           !config.verifiedRoleId
