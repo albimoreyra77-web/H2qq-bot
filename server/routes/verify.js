@@ -1685,6 +1685,7 @@ const needsNetworkInformation =
 security.detectVpn ||
 security.detectProxy ||
 security.detectTor ||
+security.blockHosting ||
 security.detectAltAccounts
  );
 
@@ -1872,6 +1873,20 @@ if (
     "Se detectó una conexión mediante la red Tor."
   );
 }
+
+/*
+   DETECCIÓN DE HOSTING / DATACENTER
+*/
+
+if (
+  security.blockHosting &&
+  networkData.hosting === true
+) {
+  securityFailures.push(
+    "Se detectó una conexión desde un hosting o centro de datos."
+  );
+}
+
 /*
   DETECCIÓN DE MULTICUENTAS
 */
@@ -1986,7 +2001,21 @@ if (securityFailures.length > 0) {
                       : "No detectados"
                 }\``,
               inline: true,
-            }
+              },
+{
+  name: "Hosting / Datacenter",
+  value:
+    `\`${
+      networkData.hosting === null ||
+      networkData.hosting === undefined
+        ? "No disponible"
+        : networkData.hosting
+          ? "Detectado"
+          : "No detectado"
+    }\``,
+  inline: true,
+},
+
           )
           .setThumbnail(
             member.user.displayAvatarURL({

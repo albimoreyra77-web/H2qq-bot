@@ -135,7 +135,8 @@
     "blockWithoutAvatar": true,
     "blockWithoutBanner": true,
     "allowReverification": true,
-    "notifySecurityFailure": true
+    "notifySecurityFailure": true,
+    "blockHosting": true
   },
   "successTitle": "✅ Verificación completada",
   "successMessage": "Tu cuenta fue verificada correctamente.\n\n¡Bienvenido a {servidor}!\n\nYa podés acceder a todos los canales.",

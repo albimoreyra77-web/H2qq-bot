@@ -4013,6 +4013,7 @@ const currentAppearance = {
     detectVpn: false,
     detectProxy: false,
     detectTor: false,
+    blockHosting: false,
     detectAltAccounts: false,
     minimumAccountAgeEnabled: false,
     minimumAccountAgeDays: 7,
@@ -6100,6 +6101,12 @@ const currentAppearance = {
                 "Marca conexiones de la red Tor.",
                 currentSecurity.detectTor
               )}
+${createToggle(
+  "verifyBlockHosting",
+  "Bloquear hosting / datacenter",
+  "Bloquea conexiones provenientes de servidores o centros de datos.",
+  currentSecurity.blockHosting
+)}
 
               ${createToggle(
                 "verifyDetectAltAccounts",
@@ -9514,6 +9521,9 @@ webAppearance:
 
       detectTor:
         getElement("verifyDetectTor").checked,
+
+      blockHosting:
+                     getElement("verifyBlockHosting").checked,
 
       detectAltAccounts:
         getElement(
