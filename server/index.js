@@ -2308,6 +2308,19 @@ app.get(
   }
 );
 
+app.get("/health", (request, response) => {
+  const botConnected = client.isReady();
+
+  response.status(botConnected ? 200 : 503).json({
+    success: botConnected,
+    status: botConnected ? "online" : "starting",
+    bot: botConnected ? "connected" : "disconnected",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+
 /* =========================================================
    LISTA DE SERVIDORES
    ========================================================= */
