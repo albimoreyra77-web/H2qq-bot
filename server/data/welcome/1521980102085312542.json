@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "channelId": "1521980553404874913",
+  "title": "✦ Bienvenido a {server}",
+  "message": "Bienvenido, {mention}.\n\nEs un placer recibirte en **{server}**. Desde este momento formas parte de una comunidad de **{membercount} miembros**.\n\nAntes de comenzar, te recomendamos leer atentamente nuestras normas en <#1521980555212619796> para mantener una experiencia ordenada y agradable para todos.\n\n✦ Usuario: **{username}**\n✦ Fecha de ingreso: **{joindate}**\n✦ Miembro número: **{membercount}**\n\nEsperamos que disfrutes de tu estadía y encuentres tu lugar dentro de nuestra comunidad.\n\n**Bienvenido a {server}.**",
+  "color": "#ffffff",
+  "showAvatar": true,
+  "dmEnabled": true,
+  "dmTitle": "✦ Bienvenido a {server}",
+  "dmMessage": "¡Hola {user}! 👋\n\nGracias por unirte a **{server}**. Nos alegra mucho tenerte con nosotros.\n\nTe recomendamos revisar las reglas y los canales principales del servidor para conocer toda la información importante.\n\n📅 Fecha de ingreso: **{joindate}**\n👥 Miembros actuales: **{membercount}**\n\nSi necesitás ayuda, no dudes en comunicarte con nuestro equipo de administración.\n\n¡Esperamos que tengas una excelente experiencia en **{server}**! 💜🚀",
+  "dmColor": "#5865f2",
+  "dmShowAvatar": true
+}

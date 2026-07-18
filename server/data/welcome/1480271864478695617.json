@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "channelId": "1480271864977948896",
+  "title": "¡Bienvenido al servidor!",
+  "message": "Hola {user}, bienvenido a **{server}**.dhhad2424",
+  "color": "#8b5cf6",
+  "showAvatar": true,
+  "dmEnabled": true,
+  "dmTitle": "¡Bienvenido a {server}!2342",
+  "dmMessage": "Hola {username}. Gracias por unirte a **{server}**.\n\nEsperamos que disfrutes de la comunidad.2342",
+  "dmColor": "#5865f2",
+  "dmShowAvatar": true
+}

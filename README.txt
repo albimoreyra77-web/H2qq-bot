@@ -1,53 +1,28 @@
-NEBULA ULTIMATE DASHBOARD — ETAPA 1
+NEBULA DASHBOARD BLACK & WHITE
 
-ESTA VERSIÓN YA INCLUYE NAVEGACIÓN REAL.
+Este proyecto trae el frontend nuevo con fondo negro total,
+tarjetas negras/grises y textos blancos.
 
-Todos los botones de la barra izquierda abren una sección distinta sin recargar la página:
-
-- Dashboard
-- Servidores
-- Invitaciones
-- Miembros
-- Roles
-- Canales
-- Logs del servidor
-- Comandos
-- Slash Commands
-- Mensajes
-- Auto Respuestas
-- Moderación
-- Advertencias
-- Baneos
-- Muteos
-- Anti Raid
-- Auto Mod
-- Logs
-- Auditoría
-- Tareas programadas
-- Backups
-- Webhooks
-- Configuración
-- Personalización
-- Variables de entorno
-- Tokens
-- Permisos
-- Integraciones
-
-CÓMO ABRIRLO
+PARA USARLO CON TU BOT ANTERIOR:
 
 1. Descomprimí la carpeta.
-2. Abrila en Visual Studio Code.
-3. Abrí la terminal.
-4. Ejecutá:
-
-npm install
-
-5. Después:
-
-npm run dev
-
-6. Entrá en la dirección que muestre Vite.
+2. Copiá desde tu proyecto anterior la carpeta completa:
+   server
+3. Pegala dentro de esta carpeta, al mismo nivel que:
+   src
+   package.json
+   index.html
+4. Copiá también tu archivo .env solamente en tu PC.
+   No lo subas a GitHub.
+5. Abrí PowerShell dentro de la carpeta.
+6. Ejecutá:
+   npm install
+   npm run build
+7. Para iniciar el backend usá el mismo comando que utilizabas
+   en el proyecto anterior.
 
 IMPORTANTE:
-Los datos todavía son visuales. En las siguientes etapas los conectaremos con Discord.js,
-Express, login de Discord, base de datos y Render.
+Este frontend ya consulta:
+- /api/dashboard
+- Socket.IO
+Por eso es compatible con la estructura que venías usando.

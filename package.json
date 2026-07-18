@@ -1,25 +1,26 @@
 {
-  "name": "nebula-ultimate-dashboard",
+  "name": "nebula-dashboard",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node --watch server/index.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node --watch server/index.js",
+    "start": "node server/index.js"
   },
   "dependencies": {
-    "axios": "^1.18.1",
+    "axios": "^1.10.0",
     "cors": "^2.8.5",
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
-    "express-session": "^1.19.0",
+    "express-session": "^1.18.2",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
-    "vite": "^7.3.6"
+    "vite": "^7.0.0"
   }
 }

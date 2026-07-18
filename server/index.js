@@ -482,6 +482,36 @@ buttonStyle:
 reactionEmoji:
   "✅",
 
+/* =====================================================
+   MENSAJE PRIVADO DEL BOTÓN DE INTERACCIÓN
+   ===================================================== */
+
+interactionTitle:
+  "🔒 Verificá tu cuenta",
+
+interactionMessage:
+  [
+    "¡Hola {mention}! 👋",
+    "",
+    "Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.",
+    "",
+    "El enlace es personal y solo puede utilizarse una vez.",
+    "",
+    "Si no solicitaste esto, ignorá este mensaje.",
+  ].join("\n"),
+
+interactionColor:
+  "#8b5cf6",
+
+interactionImage:
+  "",
+
+interactionButtonEmoji:
+  "🛡️",
+
+interactionButtonText:
+  "Continuar verificación",
+
 /* TEXTOS DEL EMBED */
 
 embedFieldName:
@@ -708,6 +738,7 @@ registerVerifyRoutes({
   getVerifyConfig,
   saveVerifyConfig,
   verificationTickets,
+  resolveDynamicVariables,
 });
 
 registerAuthRoutes({
@@ -723,34 +754,868 @@ registerAuthRoutes({
   verificationTicketDuration:
     VERIFICATION_TICKET_DURATION,
 });
+/* =========================================================
+   RESOLVEDOR GENERAL DE VARIABLES
+   ========================================================= */
 
-function replaceWelcomeVariables(text, member) {
-  const displayName =
-    member.displayName ||
-    member.user.globalName ||
-    member.user.username;
+function formatRelativeTime(date, now = new Date()) {
+  if (!(date instanceof Date)) {
+    return "Sin datos";
+  }
 
-  return String(text)
-    .replaceAll("{user}", `<@${member.id}>`)
-    .replaceAll("{mention}", `<@${member.id}>`)
-    .replaceAll("{username}", member.user.username)
-    .replaceAll("{displayname}", displayName)
-    .replaceAll("{userid}", member.id)
-    .replaceAll("{server}", member.guild.name)
-    .replaceAll("{serverid}", member.guild.id)
-    .replaceAll(
-      "{members}",
-      member.guild.memberCount.toLocaleString("es-AR")
-    )
-    .replaceAll(
-      "{membercount}",
-      member.guild.memberCount.toLocaleString("es-AR")
-    )
-    .replaceAll(
-      "{joindate}",
-      new Date().toLocaleDateString("es-AR")
+  const difference =
+    Math.max(
+      0,
+      now.getTime() - date.getTime()
     );
+
+  const totalMinutes =
+    Math.floor(
+      difference / 60000
+    );
+
+  const days =
+    Math.floor(
+      totalMinutes / 1440
+    );
+
+  const hours =
+    Math.floor(
+      (totalMinutes % 1440) / 60
+    );
+
+  const minutes =
+    totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days} días, ${hours} horas`;
+  }
+
+  if (hours > 0) {
+    return `${hours} horas, ${minutes} minutos`;
+  }
+
+  return `${minutes} minutos`;
 }
+
+function resolveDynamicVariables(
+  text,
+  context = {}
+) {
+  const now =
+    context.now instanceof Date
+      ? context.now
+      : new Date();
+
+  const member =
+    context.member ||
+    null;
+
+  const user =
+    context.user ||
+    member?.user ||
+    null;
+
+  const guild =
+    context.guild ||
+    member?.guild ||
+    context.channel?.guild ||
+    null;
+
+  const channel =
+    context.channel ||
+    null;
+
+  const botUser =
+    context.bot ||
+    client.user ||
+    null;
+
+const verification =
+  context.verification ||
+  {};
+
+  const memberRoles =
+    member?.roles?.cache
+      ? [...member.roles.cache.values()]
+          .filter(
+            currentRole =>
+              currentRole.name !==
+              "@everyone"
+          )
+          .sort(
+            (roleA, roleB) =>
+              roleB.position -
+              roleA.position
+          )
+      : [];
+
+  const selectedRole =
+    context.role ||
+    memberRoles[0] ||
+    null;
+
+  const highestRole =
+    memberRoles[0] ||
+    null;
+
+  const lowestRole =
+    memberRoles[
+      memberRoles.length - 1
+    ] ||
+    null;
+
+  const username =
+    user?.username ||
+    "Usuario";
+
+  const globalName =
+    user?.globalName ||
+    username;
+
+  const displayName =
+    member?.displayName ||
+    globalName;
+
+  const nickname =
+    member?.nickname ||
+    displayName;
+
+  const joinedAt =
+    member?.joinedAt instanceof Date
+      ? member.joinedAt
+      : null;
+
+  const createdAt =
+    user?.createdAt instanceof Date
+      ? user.createdAt
+      : null;
+
+  const avatar =
+    user?.displayAvatarURL
+      ? user.displayAvatarURL({
+          extension: "png",
+          size: 512,
+        })
+      : "";
+
+  const banner =
+    user?.bannerURL
+      ? user.bannerURL({
+          extension: "png",
+          size: 1024,
+        }) || "Sin banner"
+      : "Sin banner";
+
+  const serverIcon =
+    guild?.iconURL
+      ? guild.iconURL({
+          extension: "png",
+          size: 512,
+        }) || "Sin icono"
+      : "Sin icono";
+
+  const serverBanner =
+    guild?.bannerURL
+      ? guild.bannerURL({
+          extension: "png",
+          size: 1024,
+        }) || "Sin banner"
+      : "Sin banner";
+
+  const cachedMembers =
+    guild?.members?.cache
+      ? [...guild.members.cache.values()]
+      : [];
+
+  const bots =
+    cachedMembers.filter(
+      currentMember =>
+        currentMember.user?.bot
+    ).length;
+
+  const humans =
+    Math.max(
+      0,
+      Number(
+        guild?.memberCount || 0
+      ) - bots
+    );
+
+  const online =
+    cachedMembers.filter(
+      currentMember =>
+        currentMember.presence?.status &&
+        currentMember.presence.status !==
+          "offline"
+    ).length;
+
+  const offline =
+    Math.max(
+      0,
+      Number(
+        guild?.memberCount || 0
+      ) - online
+    );
+
+  const guildChannels =
+    guild?.channels?.cache;
+
+  const textChannels =
+    guildChannels
+      ? guildChannels.filter(
+          currentChannel =>
+            currentChannel.type ===
+            ChannelType.GuildText
+        ).size
+      : 0;
+
+  const voiceChannels =
+    guildChannels
+      ? guildChannels.filter(
+          currentChannel =>
+            currentChannel.type ===
+            ChannelType.GuildVoice
+        ).size
+      : 0;
+
+  const categories =
+    guildChannels
+      ? guildChannels.filter(
+          currentChannel =>
+            currentChannel.type ===
+            ChannelType.GuildCategory
+        ).size
+      : 0;
+
+  const status =
+    member?.presence?.status ||
+    "Sin datos";
+
+  const activity =
+    member?.presence?.activities?.[0]
+      ?.name ||
+    "Sin actividad";
+
+  const permissions =
+    member?.permissions?.toArray
+      ? member.permissions
+          .toArray()
+          .join(", ") ||
+        "Sin permisos"
+      : "Sin datos";
+
+  const rolesText =
+    memberRoles.length
+      ? memberRoles
+          .map(role => role.name)
+          .join(", ")
+      : "Sin roles";
+
+  const memberCount =
+    Number(
+      guild?.memberCount || 0
+    ).toLocaleString("es-AR");
+
+
+const verificationExpiresAt =
+  verification.expiresAt instanceof Date
+    ? verification.expiresAt
+    : verification.expiresAt
+      ? new Date(
+          verification.expiresAt
+        )
+      : null;
+
+const verificationExpiresUnix =
+  verificationExpiresAt &&
+  !Number.isNaN(
+    verificationExpiresAt.getTime()
+  )
+    ? Math.floor(
+        verificationExpiresAt.getTime() /
+        1000
+      )
+    : null;
+
+  const unix =
+    Math.floor(
+      now.getTime() / 1000
+    );
+
+  const timezone =
+    Intl.DateTimeFormat()
+      .resolvedOptions()
+      .timeZone ||
+    "America/Argentina/Buenos_Aires";
+
+  const latency =
+    Number.isFinite(
+      client.ws.ping
+    )
+      ? `${Math.round(
+          client.ws.ping
+        )} ms`
+      : "0 ms";
+
+  const memory =
+    `${(
+      process.memoryUsage().rss /
+      1024 /
+      1024
+    ).toFixed(1)} MB`;
+
+  const values = {
+    /* USUARIO */
+
+    "{user}":
+      username,
+
+    "{username}":
+      username,
+
+    "{displayname}":
+      displayName,
+
+    "{globalname}":
+      globalName,
+
+    "{nickname}":
+      nickname,
+
+    "{mention}":
+      user?.id
+        ? `<@${user.id}>`
+        : "Usuario",
+
+    "{userid}":
+      user?.id ||
+      "Sin datos",
+
+    "{avatar}":
+      avatar ||
+      "Sin avatar",
+
+    "{banner}":
+      banner,
+
+    "{created}":
+      createdAt
+        ? createdAt.toLocaleDateString(
+            "es-AR"
+          )
+        : "Sin datos",
+
+    "{joined}":
+      joinedAt
+        ? joinedAt.toLocaleDateString(
+            "es-AR"
+          )
+        : "Sin datos",
+
+    "{joindate}":
+      joinedAt
+        ? joinedAt.toLocaleDateString(
+            "es-AR"
+          )
+        : now.toLocaleDateString(
+            "es-AR"
+          ),
+
+    "{joinedrelative}":
+      joinedAt
+        ? formatRelativeTime(
+            joinedAt,
+            now
+          )
+        : "Sin datos",
+
+    "{status}":
+      status,
+
+    "{activity}":
+      activity,
+
+    "{roles}":
+      rolesText,
+
+    "{rolecount}":
+      String(
+        memberRoles.length
+      ),
+
+    "{highestrole}":
+      highestRole?.name ||
+      "Sin rol",
+
+    "{permissions}":
+      permissions,
+
+    "{boosting}":
+      member?.premiumSince
+        ? "Sí"
+        : "No",
+
+    /* SERVIDOR */
+
+    "{server}":
+      guild?.name ||
+      "Servidor",
+
+    "{serverid}":
+      guild?.id ||
+      "Sin datos",
+
+    "{servericon}":
+      serverIcon,
+
+    "{serverbanner}":
+      serverBanner,
+
+    "{serverdescription}":
+      guild?.description ||
+      "Sin descripción",
+
+    "{owner}":
+      guild?.ownerId
+        ? `<@${guild.ownerId}>`
+        : "Sin datos",
+
+    "{ownerid}":
+      guild?.ownerId ||
+      "Sin datos",
+
+    "{membercount}":
+      memberCount,
+
+    "{members}":
+      memberCount,
+
+    "{bots}":
+      String(bots),
+
+    "{humans}":
+      String(humans),
+
+    "{online}":
+      String(online),
+
+    "{offline}":
+      String(offline),
+
+    "{boosts}":
+      String(
+        guild?.premiumSubscriptionCount ||
+        0
+      ),
+
+    "{boostlevel}":
+      String(
+        guild?.premiumTier ||
+        0
+      ),
+
+    "{verificationlevel}":
+      String(
+        guild?.verificationLevel ??
+        "Sin datos"
+      ),
+
+    "{channels}":
+      String(
+        guildChannels?.size ||
+        0
+      ),
+
+    "{textchannels}":
+      String(textChannels),
+
+    "{voicechannels}":
+      String(voiceChannels),
+
+    "{categories}":
+      String(categories),
+
+    "{rolescount}":
+      String(
+        guild?.roles?.cache?.size ||
+        0
+      ),
+
+    "{emojis}":
+      String(
+        guild?.emojis?.cache?.size ||
+        0
+      ),
+
+    "{stickers}":
+      String(
+        guild?.stickers?.cache?.size ||
+        0
+      ),
+
+    "{createdserver}":
+      guild?.createdAt
+        ? guild.createdAt
+            .toLocaleDateString(
+              "es-AR"
+            )
+        : "Sin datos",
+
+    /* ROLES */
+
+    "{role}":
+      selectedRole?.name ||
+      "Sin rol",
+
+    "{roleid}":
+      selectedRole?.id ||
+      "Sin datos",
+
+    "{rolename}":
+      selectedRole?.name ||
+      "Sin rol",
+
+    "{rolecolor}":
+      selectedRole?.hexColor ||
+      "#000000",
+
+    "{roleicon}":
+      selectedRole?.iconURL
+        ? selectedRole.iconURL() ||
+          "Sin icono"
+        : "Sin icono",
+
+    "{lowestrole}":
+      lowestRole?.name ||
+      "Sin rol",
+
+    "{autorole}":
+      selectedRole?.name ||
+      "Sin rol",
+
+    /* CANAL */
+
+    "{channel}":
+      channel?.name ||
+      "Sin canal",
+
+    "{channelid}":
+      channel?.id ||
+      "Sin datos",
+
+    "{channelmention}":
+      channel?.id
+        ? `<#${channel.id}>`
+        : "Sin canal",
+
+    "{channeltopic}":
+      channel?.topic ||
+      "Sin tema",
+
+    "{category}":
+      channel?.parent?.name ||
+      "Sin categoría",
+
+    "{categoryid}":
+      channel?.parentId ||
+      "Sin datos",
+
+    "{thread}":
+      channel?.isThread?.()
+        ? channel.name
+        : "No es un hilo",
+
+    "{threadid}":
+      channel?.isThread?.()
+        ? channel.id
+        : "Sin datos",
+
+    "{slowmode}":
+      `${channel?.rateLimitPerUser || 0} segundos`,
+
+    "{channeltype}":
+      String(
+        channel?.type ??
+        "Sin datos"
+      ),
+
+    /* BOT */
+
+    "{bot}":
+      botUser?.username ||
+      "VTX Bot",
+
+    "{botid}":
+      botUser?.id ||
+      "Sin datos",
+
+    "{botavatar}":
+      botUser?.displayAvatarURL
+        ? botUser.displayAvatarURL({
+            extension: "png",
+            size: 512,
+          })
+        : "Sin avatar",
+
+    "{botversion}":
+      "2.4.1",
+
+    "{latency}":
+      latency,
+
+    "{ping}":
+      latency,
+
+    "{uptime}":
+      formatUptime(
+        Date.now() -
+        startedAt
+      ),
+
+    "{commands}":
+      String(
+        statistics.commands
+      ),
+
+    "{servers}":
+      String(
+        client.guilds.cache.size
+      ),
+
+    "{users}":
+      String(
+        getTotalUsers()
+      ),
+
+    "{memory}":
+      memory,
+
+    "{cpu}":
+      "Disponible en el sistema",
+
+    "{node}":
+      process.version,
+
+    "{library}":
+      "discord.js v14",
+
+/* VERIFICACIÓN */
+
+"{verifylink}":
+  verification.link ||
+  "Sin enlace",
+
+"{verificationcode}":
+  verification.code ||
+  "Sin código",
+
+"{verificationid}":
+  verification.id ||
+  "Sin datos",
+
+"{verificationmethod}":
+  verification.method ||
+  "Sin método",
+
+"{verificationrole}":
+  verification.role ||
+  selectedRole?.name ||
+  "Sin rol",
+
+"{verificationchannel}":
+  verification.channel ||
+  channel?.name ||
+  "Sin canal",
+
+"{verificationtime}":
+  now.toLocaleTimeString(
+    "es-AR",
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ),
+
+"{verificationdate}":
+  now.toLocaleDateString(
+    "es-AR"
+  ),
+
+"{verifyexpires}":
+  verificationExpiresUnix
+    ? `<t:${verificationExpiresUnix}:R>`
+    : "Sin vencimiento",
+
+"{verified}":
+  verification.verified === true
+    ? "Verificado"
+    : "Pendiente",
+
+"{verifybrowser}":
+  verification.browser ||
+  "Sin datos",
+
+"{verifyos}":
+  verification.os ||
+  "Sin datos",
+
+"{verifydevice}":
+  verification.device ||
+  "Sin datos",
+
+"{verifycountry}":
+  verification.country ||
+  "Sin datos",
+
+"{verifycity}":
+  verification.city ||
+  "Sin datos",
+
+"{verifylanguage}":
+  verification.language ||
+  "Sin datos",
+
+"{verifyisp}":
+  verification.isp ||
+  "Sin datos",
+
+    /* FECHA Y HORA */
+
+    "{date}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+
+    "{time}":
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      ),
+
+    "{datetime}":
+      now.toLocaleString(
+        "es-AR"
+      ),
+
+    "{timestamp}":
+      `<t:${unix}:F>`,
+
+    "{year}":
+      String(
+        now.getFullYear()
+      ),
+
+    "{month}":
+      String(
+        now.getMonth() + 1
+      ).padStart(2, "0"),
+
+    "{monthname}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          month: "long",
+        }
+      ),
+
+    "{day}":
+      String(
+        now.getDate()
+      ).padStart(2, "0"),
+
+    "{weekday}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          weekday: "long",
+        }
+      ),
+
+    "{hour}":
+      String(
+        now.getHours()
+      ).padStart(2, "0"),
+
+    "{minute}":
+      String(
+        now.getMinutes()
+      ).padStart(2, "0"),
+
+    "{second}":
+      String(
+        now.getSeconds()
+      ).padStart(2, "0"),
+
+    "{timezone}":
+      timezone,
+
+    "{unix}":
+      String(unix),
+
+    "{shortdate}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+
+    "{longdate}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      ),
+  };
+
+  let result =
+    String(text || "");
+
+  for (
+    const [
+      variable,
+      value,
+    ] of Object.entries(values)
+  ) {
+    result =
+      result.replaceAll(
+        variable,
+        String(value)
+      );
+  }
+
+  return result;
+}
+
+/*
+  Conservamos el nombre anterior para que
+  la bienvenida siga funcionando sin modificar
+  el resto del archivo.
+*/
+
+function replaceWelcomeVariables(
+  text,
+  member
+) {
+  return resolveDynamicVariables(
+    text,
+    {
+      member,
+      user:
+        member?.user,
+      guild:
+        member?.guild,
+      bot:
+        client.user,
+    }
+  );
+}
+
 /* =========================================================
    EVENTOS DE DISCORD
    ========================================================= */
@@ -1177,18 +2042,48 @@ client.on(
           verificationToken
         );
 
-      const continueButton =
-        new ButtonBuilder()
-          .setLabel(
-            "Continuar verificación"
-          )
-          .setEmoji("🛡️")
-          .setStyle(
-            ButtonStyle.Link
-          )
-          .setURL(
-            verificationUrl
-          );
+     const interactionButtonText =
+  String(
+    config.interactionButtonText ||
+    "Continuar verificación"
+  )
+    .trim()
+    .slice(
+      0,
+      80
+    ) ||
+  "Continuar verificación";
+
+const interactionButtonEmoji =
+  String(
+    config.interactionButtonEmoji ||
+    ""
+  ).trim();
+
+const continueButton =
+  new ButtonBuilder()
+    .setLabel(
+      interactionButtonText
+    )
+    .setStyle(
+      ButtonStyle.Link
+    )
+    .setURL(
+      verificationUrl
+    );
+
+if (interactionButtonEmoji) {
+  try {
+    continueButton.setEmoji(
+      interactionButtonEmoji
+    );
+  } catch (emojiError) {
+    console.log(
+      "Emoji inválido en el botón de interacción:",
+      interactionButtonEmoji
+    );
+  }
+}
 
       const row =
         new ActionRowBuilder()
@@ -1196,47 +2091,90 @@ client.on(
             continueButton
           );
 
-      const verificationEmbed =
-        new EmbedBuilder()
-          .setColor(
-            config.embedColor ||
-            "#8b5cf6"
-          )
-          .setTitle(
-            "🛡️ Verificación preparada"
-          )
-          .setDescription(
-            [
-              `Hola **${member.displayName}**.`,
-              "",
-              "Tu enlace privado está listo.",
-              "Presioná el botón de abajo para continuar.",
-              "",
-              "El enlace es personal, temporal y solo puede utilizarse una vez.",
-            ].join("\n")
-          )
-          .setThumbnail(
-            interaction.user
-              .displayAvatarURL({
-                extension: "png",
-                size: 256,
-              })
-          )
-          .addFields({
-            name:
-              "Servidor",
+const verificationContext = {
+  member,
+  user: interaction.user,
+  guild: interaction.guild,
+  channel: interaction.channel,
+  role,
+  bot: client.user,
+  verification: {
+    link: verificationUrl,
+    code: verificationToken,
+    id: verificationToken,
+    method:
+      config.verificationMethod,
+    role:
+      role.name,
+    channel:
+      interaction.channel?.name ||
+      "Sin canal",
+    expiresAt:
+      new Date(expiresAt),
+    verified:
+      false,
+  },
+};
 
-            value:
-              interaction.guild.name,
+const interactionColor =
+  /^#[0-9A-Fa-f]{6}$/.test(
+    String(
+      config.interactionColor ||
+      ""
+    )
+  )
+    ? config.interactionColor
+    : "#8b5cf6";
 
-            inline:
-              true,
-          })
-          .setFooter({
-            text:
-              "Nebula Security Center • No compartas este enlace",
-          })
-          .setTimestamp();
+const verificationEmbed =
+  new EmbedBuilder()
+    .setColor(
+      interactionColor
+    )
+    .setTitle(
+      resolveDynamicVariables(
+        config.interactionTitle ||
+          "🔒 Verificá tu cuenta",
+        verificationContext
+      )
+    )
+    .setDescription(
+      resolveDynamicVariables(
+        config.interactionMessage ||
+          [
+            "¡Hola {mention}! 👋",
+            "",
+            "Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.",
+            "",
+            "El enlace es personal y solo puede utilizarse una vez.",
+            "",
+            "Si no solicitaste esto, ignorá este mensaje.",
+          ].join("\n"),
+        verificationContext
+      )
+    );
+
+/*
+  Imagen opcional configurada desde
+  el Dashboard.
+*/
+
+const interactionImage =
+  String(
+    config.interactionImage ||
+    ""
+  ).trim();
+
+if (
+  interactionImage &&
+  /^https?:\/\//i.test(
+    interactionImage
+  )
+) {
+  verificationEmbed.setImage(
+    interactionImage
+  );
+}
 
       await interaction.editReply({
         embeds: [
@@ -1469,8 +2407,7 @@ app.get(
 
             position: role.position,
           }))
-          .slice(0, 10);
-
+          
       const channels =
         guild.channels.cache
           .filter(
@@ -1840,47 +2777,38 @@ app.post(
           });
       }
 
-      const title =
-        String(config.title)
-          .replaceAll(
-            "{user}",
-            "@Usuario"
-          )
-          .replaceAll(
-            "{username}",
-            "Usuario"
-          )
-          .replaceAll(
-            "{server}",
-            guild.name
-          )
-          .replaceAll(
-            "{members}",
-            guild.memberCount.toLocaleString(
-              "es-AR"
-            )
-          );
+      const testMember =
+  guild.members.cache.get(
+    guild.ownerId
+  ) ||
+  guild.members.cache.find(
+    member =>
+      !member.user.bot
+  ) ||
+  guild.members.me;
 
-      const message =
-        String(config.message)
-          .replaceAll(
-            "{user}",
-            "@Usuario"
-          )
-          .replaceAll(
-            "{username}",
-            "Usuario"
-          )
-          .replaceAll(
-            "{server}",
-            guild.name
-          )
-          .replaceAll(
-            "{members}",
-            guild.memberCount.toLocaleString(
-              "es-AR"
-            )
-          );
+if (!testMember) {
+  return response
+    .status(400)
+    .json({
+      success: false,
+
+      message:
+        "No se encontró un miembro para realizar la prueba",
+    });
+}
+
+const title =
+  replaceWelcomeVariables(
+    config.title,
+    testMember
+  );
+
+const message =
+  replaceWelcomeVariables(
+    config.message,
+    testMember
+  );
 
       const embed =
         new EmbedBuilder()
@@ -1893,6 +2821,16 @@ app.post(
               `Mensaje de prueba`,
           })
           .setTimestamp();
+
+if (config.showAvatar) {
+  embed.setThumbnail(
+    testMember.user
+      .displayAvatarURL({
+        extension: "png",
+        size: 256,
+      })
+  );
+}
 
       await channel.send({
         embeds: [embed],

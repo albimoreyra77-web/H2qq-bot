@@ -30,7 +30,56 @@ function createDiscordAvatarUrl(user) {
     "?size=256"
   );
 }
+function createDiscordGuildIconUrl(
+  guild
+) {
+  if (
+    !guild?.id ||
+    !guild?.icon
+  ) {
+    return null;
+  }
 
+  const extension =
+    guild.icon.startsWith("a_")
+      ? "gif"
+      : "png";
+
+  return (
+    "https://cdn.discordapp.com/icons/" +
+    `${guild.id}/${guild.icon}.${extension}` +
+    "?size=256"
+  );
+}
+
+function canManageDiscordGuild(
+  permissions
+) {
+  try {
+    const permissionBits =
+      BigInt(
+        permissions ||
+        "0"
+      );
+
+    const administrator =
+      0x8n;
+
+    const manageGuild =
+      0x20n;
+
+    return (
+      (permissionBits &
+        administrator) ===
+        administrator ||
+      (permissionBits &
+        manageGuild) ===
+        manageGuild
+    );
+  } catch {
+    return false;
+  }
+}
 function getRequiredEnvironmentVariables() {
   const clientId =
     process.env.DISCORD_CLIENT_ID;
@@ -77,7 +126,189 @@ export function registerAuthRoutes({
       "verificationTickets debe ser una instancia de Map."
     );
   }
+/* =========================================================
+   INVITAR EL BOT A UN SERVIDOR
+   ========================================================= */
 
+app.get(
+  "/auth/bot/invite",
+  (request, response) => {
+    try {
+      const {
+        clientId,
+      } =
+        getRequiredEnvironmentVariables();
+
+      const guildId =
+        String(
+          request.query.guildId ||
+          ""
+        ).trim();
+
+      const inviteUrl =
+        new URL(
+          "https://discord.com/oauth2/authorize"
+        );
+
+      inviteUrl.searchParams.set(
+        "client_id",
+        clientId
+      );
+
+      inviteUrl.searchParams.set(
+        "scope",
+        "bot applications.commands"
+      );
+
+      /*
+        Permiso Administrador.
+        Después podemos reemplazarlo
+        por permisos específicos.
+      */
+      inviteUrl.searchParams.set(
+        "permissions",
+        "8"
+      );
+
+      if (
+        /^\d{17,20}$/.test(
+          guildId
+        )
+      ) {
+        inviteUrl.searchParams.set(
+          "guild_id",
+          guildId
+        );
+
+        inviteUrl.searchParams.set(
+          "disable_guild_select",
+          "true"
+        );
+      }
+
+      return response.redirect(
+        inviteUrl.toString()
+      );
+    } catch (error) {
+      console.error(
+        "No se pudo generar la invitación del bot:",
+        error
+      );
+
+      return response
+        .status(500)
+        .send(
+          "No se pudo preparar la invitación del bot."
+        );
+    }
+  }
+);
+/* =========================================================
+   INICIAR SESIÓN EN EL DASHBOARD
+   ========================================================= */
+
+app.get(
+  "/auth/dashboard",
+  (
+    request,
+    response
+  ) => {
+    try {
+      const {
+        clientId,
+        redirectUri,
+      } =
+        getRequiredEnvironmentVariables();
+
+      const state =
+        crypto
+          .randomBytes(32)
+          .toString("hex");
+
+      request.session.oauthState =
+        state;
+
+      request.session.oauthPurpose =
+        "dashboard";
+
+      request.session.oauthGuildId =
+        null;
+
+      const authorizationUrl =
+        new URL(
+          "https://discord.com/oauth2/authorize"
+        );
+
+      authorizationUrl
+        .searchParams
+        .set(
+          "client_id",
+          clientId
+        );
+
+      authorizationUrl
+        .searchParams
+        .set(
+          "redirect_uri",
+          redirectUri
+        );
+
+      authorizationUrl
+        .searchParams
+        .set(
+          "response_type",
+          "code"
+        );
+
+      authorizationUrl
+        .searchParams
+        .set(
+          "scope",
+          "identify guilds"
+        );
+
+      authorizationUrl
+        .searchParams
+        .set(
+          "state",
+          state
+        );
+
+      request.session.save(
+        error => {
+          if (error) {
+            console.error(
+              "No se pudo guardar la sesión del dashboard:",
+              error
+            );
+
+            return response
+              .status(500)
+              .send(
+                "No se pudo iniciar sesión."
+              );
+          }
+
+          return response.redirect(
+            authorizationUrl
+              .toString()
+          );
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Error iniciando sesión del dashboard:",
+        error
+      );
+
+      return response
+        .status(500)
+        .send(
+          "No se pudo iniciar sesión con Discord."
+        );
+    }
+  }
+);
   /* =========================================================
      INICIAR AUTORIZACIÓN CON DISCORD
      ========================================================= */
@@ -127,12 +358,15 @@ export function registerAuthRoutes({
         request.session.oauthState =
           state;
 
-        request.session.oauthGuildId =
-          guildId;
+     request.session.oauthGuildId =
+  guildId;
 
-        request.session.discordUser =
-          null;
+request.session.oauthPurpose =
+  "verification";
 
+request.session.discordUser =
+  null;
+  
         const authorizationUrl =
           new URL(
             "https://discord.com/oauth2/authorize"
@@ -232,6 +466,11 @@ export function registerAuthRoutes({
         const guildId =
           request.session.oauthGuildId;
 
+const oauthPurpose =
+  request.session
+    .oauthPurpose ||
+  "verification";
+
         if (request.query.error) {
           return response.redirect(
             guildId
@@ -260,26 +499,34 @@ export function registerAuthRoutes({
             );
         }
 
-        if (!guildId) {
-          return response
-            .status(400)
-            .send(
-              "No se encontró el servidor asociado a la sesión."
-            );
-        }
+     let guild =
+  null;
 
-        const guild =
-          client.guilds.cache.get(
-            guildId
-          );
+if (
+  oauthPurpose ===
+  "verification"
+) {
+  if (!guildId) {
+    return response
+      .status(400)
+      .send(
+        "No se encontró el servidor asociado a la sesión."
+      );
+  }
 
-        if (!guild) {
-          return response
-            .status(404)
-            .send(
-              "El servidor ya no está disponible."
-            );
-        }
+  guild =
+    client.guilds.cache.get(
+      guildId
+    );
+
+  if (!guild) {
+    return response
+      .status(404)
+      .send(
+        "El servidor ya no está disponible."
+      );
+  }
+}
 
         const {
           clientId,
@@ -366,6 +613,160 @@ export function registerAuthRoutes({
             "No se pudo obtener el usuario de Discord."
           );
         }
+/*
+  Cuando el acceso es para el dashboard,
+  obtenemos los servidores que el usuario
+  puede administrar.
+*/
+
+if (
+  oauthPurpose ===
+  "dashboard"
+) {
+  const guildsResponse =
+    await fetch(
+      `${DISCORD_API_URL}/users/@me/guilds`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${tokenData.access_token}`,
+        },
+      }
+    );
+
+  const discordGuilds =
+    await guildsResponse
+      .json();
+
+  if (
+    !guildsResponse.ok ||
+    !Array.isArray(
+      discordGuilds
+    )
+  ) {
+    console.error(
+      "Respuesta de servidores de Discord:",
+      discordGuilds
+    );
+
+    throw new Error(
+      "No se pudieron cargar los servidores de Discord."
+    );
+  }
+
+  const manageableGuilds =
+    discordGuilds
+      .filter(
+        discordGuild =>
+          canManageDiscordGuild(
+            discordGuild.permissions
+          )
+      )
+      .map(
+        discordGuild => {
+          const botGuild =
+            client.guilds.cache.get(
+              discordGuild.id
+            );
+
+          return {
+            id:
+              discordGuild.id,
+
+            name:
+              discordGuild.name,
+
+            icon:
+              createDiscordGuildIconUrl(
+                discordGuild
+              ),
+
+            owner:
+              Boolean(
+                discordGuild.owner
+              ),
+
+            permissions:
+              String(
+                discordGuild.permissions ||
+                "0"
+              ),
+
+            botPresent:
+              Boolean(
+                botGuild
+              ),
+
+            memberCount:
+              botGuild
+                ?.memberCount ||
+              null,
+          };
+        }
+      );
+
+  request.session
+    .dashboardUser = {
+      id:
+        String(
+          discordUser.id
+        ),
+
+      username:
+        discordUser.username,
+
+      globalName:
+        discordUser
+          .global_name ||
+        discordUser.username,
+
+      displayName:
+        discordUser
+          .global_name ||
+        discordUser.username,
+
+      avatar:
+        createDiscordAvatarUrl(
+          discordUser
+        ),
+
+      guilds:
+        manageableGuilds,
+
+      authenticatedAt:
+        Date.now(),
+    };
+
+  delete request.session
+    .oauthState;
+
+  delete request.session
+    .oauthPurpose;
+
+  delete request.session
+    .oauthGuildId;
+
+  return request.session.save(
+    error => {
+      if (error) {
+        console.error(
+          "No se pudo guardar la cuenta del dashboard:",
+          error
+        );
+
+        return response
+          .status(500)
+          .send(
+            "No se pudo guardar la sesión."
+          );
+      }
+
+      return response.redirect(
+        "/?view=servers"
+      );
+    }
+  );
+}
 
         const member =
           await guild.members
@@ -1258,6 +1659,97 @@ export function registerAuthRoutes({
     }
   );
 
+/* =========================================================
+   SESIÓN DEL DASHBOARD
+   ========================================================= */
+
+app.get(
+  "/api/dashboard/session",
+  (
+    request,
+    response
+  ) => {
+    const dashboardUser =
+      request.session
+        ?.dashboardUser;
+
+    if (!dashboardUser) {
+      return response
+        .status(401)
+        .json({
+          success: false,
+
+          authenticated: false,
+
+          message:
+            "No hay una sesión iniciada.",
+        });
+    }
+
+    const updatedGuilds =
+      (
+        dashboardUser.guilds ||
+        []
+      ).map(
+        dashboardGuild => {
+          const botGuild =
+            client.guilds.cache.get(
+              String(
+                dashboardGuild.id
+              )
+            );
+
+          return {
+            ...dashboardGuild,
+
+            botPresent:
+              Boolean(
+                botGuild
+              ),
+
+            memberCount:
+              botGuild
+                ?.memberCount ||
+              dashboardGuild
+                .memberCount ||
+              null,
+          };
+        }
+      );
+
+    return response.json({
+      success: true,
+
+      authenticated: true,
+
+      data: {
+        user: {
+          id:
+            dashboardUser.id,
+
+          username:
+            dashboardUser
+              .username,
+
+          globalName:
+            dashboardUser
+              .globalName,
+
+          displayName:
+            dashboardUser
+              .displayName,
+
+          avatar:
+            dashboardUser
+              .avatar,
+        },
+
+        guilds:
+          updatedGuilds,
+      },
+    });
+  }
+);
   /* =========================================================
      CERRAR SESIÓN
      ========================================================= */

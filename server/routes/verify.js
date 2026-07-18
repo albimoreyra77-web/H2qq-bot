@@ -1052,12 +1052,22 @@ export function registerVerifyRoutes({
   getVerifyConfig,
   saveVerifyConfig,
   verificationTickets,
+  resolveDynamicVariables,
 }) {
+
   if (!(verificationTickets instanceof Map)) {
     throw new Error(
       "verificationTickets debe ser una instancia de Map."
     );
   }
+if (
+  typeof resolveDynamicVariables !==
+  "function"
+) {
+  throw new Error(
+    "resolveDynamicVariables debe ser una función."
+  );
+}
 
 /* =========================================================
    INFORMACIÓN PÚBLICA DEL BOT
@@ -1222,10 +1232,40 @@ app.get(
             config.verificationMethod ||
             "oauth_link",
 
-          webAppearance:
-            config.webAppearance ||
-            {},
-        },
+
+webAppearance:
+  config.webAppearance ||
+  {},
+
+successTitle:
+  config.successTitle ||
+  "✅ Verificación completada",
+
+successMessage:
+  config.successMessage ||
+  `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`,
+
+successColor:
+  config.successColor ||
+  "#22c55e",
+
+successAnimation:
+  config.successAnimation ||
+  "check",
+
+showCountdown:
+  config.showCountdown !== false,
+
+closePageEnabled:
+  Boolean(
+    config.closePageEnabled
+  ),
+
+  },
       });
     } catch (error) {
       console.error(
@@ -2044,6 +2084,177 @@ saveVerificationHistoryRecord({
   networkData,
 });
 
+/* ===================================================
+   MENSAJE PRIVADO DESPUÉS DE VERIFICAR
+   =================================================== */
+
+if (config.successDmEnabled) {
+  const verificationChannel =
+    guild.channels.cache.get(
+      config.verificationChannelId
+    );
+
+ const replaceDmVariables = value => {
+  const verificationDate =
+    new Date(verifiedAt);
+
+  const userName =
+    member.displayName ||
+    member.user.globalName ||
+    member.user.username;
+
+  const serverName =
+    guild.name ||
+    "Servidor de Discord";
+
+  const roleName =
+    role?.name ||
+    "Sin rol";
+
+  const dateText =
+    verificationDate.toLocaleDateString(
+      "es-AR",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone:
+          "America/Argentina/Buenos_Aires",
+      }
+    );
+
+  const timeText =
+    verificationDate.toLocaleTimeString(
+      "es-AR",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZone:
+          "America/Argentina/Buenos_Aires",
+      }
+    );
+
+  const replacedText =
+    String(value || "")
+      .replaceAll(
+        "{usuario}",
+        userName
+      )
+      .replaceAll(
+        "{servidor}",
+        serverName
+      )
+      .replaceAll(
+        "{rol}",
+        roleName
+      )
+      .replaceAll(
+        "{fecha}",
+        dateText
+      )
+      .replaceAll(
+        "{hora}",
+        timeText
+      );
+
+  return resolveDynamicVariables(
+    replacedText,
+    {
+      member,
+
+      user:
+        member.user,
+
+      guild,
+
+      channel:
+        verificationChannel,
+
+      role,
+
+      bot:
+        client.user,
+
+      now:
+        verificationDate,
+
+      verification: {
+        method:
+          config.verificationMethod ||
+          "oauth_link",
+
+        role:
+          roleName,
+
+        channel:
+          verificationChannel?.name ||
+          "Sin canal",
+
+        verified:
+          true,
+      },
+    }
+  );
+};
+
+  const dmColor =
+    isValidHexColor(
+      config.successDmColor
+    )
+      ? config.successDmColor
+      : "#3b82f6";
+
+  const dmEmbed =
+    new EmbedBuilder()
+      .setColor(
+        dmColor
+      )
+      .setTitle(
+        replaceDmVariables(
+          config.successDmTitle ||
+          "🎉 ¡Verificado!"
+        )
+      )
+      .setDescription(
+        replaceDmVariables(
+          config.successDmMessage ||
+          `¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`
+        )
+      )
+      .setTimestamp();
+
+  if (
+    config.successDmThumbnail &&
+    /^https?:\/\//i.test(
+      config.successDmThumbnail
+    )
+  ) {
+    dmEmbed.setThumbnail(
+      config.successDmThumbnail
+    );
+  }
+
+  await member
+    .send({
+      embeds: [
+        dmEmbed,
+      ],
+    })
+    .catch(error => {
+      console.error(
+        "No se pudo enviar el MD de verificación:",
+        error instanceof Error
+          ? error.message
+          : String(error)
+      );
+    });
+}
+
         /* ===================================================
            LOG DE VERIFICACIÓN
            =================================================== */
@@ -2076,24 +2287,122 @@ saveVerificationHistoryRecord({
                 ? config.logEmbedColor
                 : "#22c55e";
 
-            const logEmbed =
-              new EmbedBuilder()
-                .setColor(
-                  logColor
-                )
-                .setTitle(
-                  config
-                    .logEmbedTitle ||
-                  "🛡️ Usuario verificado"
-                )
-                .setDescription(
-                  config
-                    .logEmbedDescription ||
-                  "La verificación fue completada correctamente."
-                )
-                .setFooter({
-                  text:
-                    "Nebula Security Center • Verificación web completada",
+function replaceLogVariables(text) {
+  const verificationChannel =
+    guild.channels.cache.get(
+      config.verificationChannelId
+    );
+
+  return resolveDynamicVariables(
+    text,
+    {
+      member,
+      user:
+        member.user,
+
+      guild,
+
+      channel:
+        logsChannel,
+
+      role,
+
+      bot:
+        client.user,
+
+      now:
+        new Date(
+          verifiedAt
+        ),
+
+      verification: {
+        id:
+          verificationToken ||
+          verificationTicket?.token ||
+          "Sin datos",
+
+        code:
+          verificationToken ||
+          verificationTicket?.token ||
+          "Sin código",
+
+        method:
+          config.verificationMethod ||
+          "oauth_link",
+
+        role:
+          role?.name ||
+          "Sin rol",
+
+        channel:
+          verificationChannel?.name ||
+          "Sin canal",
+
+        verified:
+          true,
+
+        browser:
+          technicalData.browser ||
+          "Sin datos",
+
+        os:
+          technicalData.operatingSystem ||
+          "Sin datos",
+
+        device:
+          technicalData.device ||
+          "Sin datos",
+
+        language:
+          technicalData.language ||
+          "Sin datos",
+
+        country:
+          networkData.country ||
+          "Sin datos",
+
+        city:
+          networkData.city ||
+          "Sin datos",
+
+        isp:
+          networkData.isp ||
+          "Sin datos",
+
+        expiresAt:
+          verificationTicket?.expiresAt
+            ? new Date(
+                verificationTicket.expiresAt
+              )
+            : null,
+      },
+    }
+  );
+}
+
+const logEmbed =
+    new EmbedBuilder()
+      .setColor(
+        logColor
+    )
+
+.setTitle(
+  replaceLogVariables(
+    config.logEmbedTitle ||
+    "🛡️ Usuario verificado"
+  )
+)
+            
+.setDescription(
+  replaceLogVariables(
+    config.logEmbedDescription ||
+    "La verificación fue completada correctamente."
+  )
+)
+
+ .setFooter({
+   text:
+"Nebula Security Center • Verificación web completada",
                 })
                 .setTimestamp();
 
@@ -2380,33 +2689,33 @@ return response.json({
             ? config.embedColor
             : "#5865f2";
 
-      const replacePanelVariables = (
-  value
-) => {
-  const now =
-    new Date();
+    const replacePanelVariables = value => {
+  return resolveDynamicVariables(
+    value,
+    {
+      guild,
+      channel,
+      role,
+      bot:
+        client.user,
 
-  return String(value || "")
-    .replaceAll(
-      "{server}",
-      guild.name
-    )
-    .replaceAll(
-      "{date}",
-      now.toLocaleDateString(
-        "es-AR"
-      )
-    )
-    .replaceAll(
-      "{time}",
-      now.toLocaleTimeString(
-        "es-AR",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-        }
-      )
-    );
+      verification: {
+        method:
+          config.verificationMethod,
+
+        role:
+          role?.name ||
+          "Sin rol",
+
+        channel:
+          channel?.name ||
+          "Sin canal",
+
+        verified:
+          false,
+      },
+    }
+  );
 };
 
 const botAvatar =
@@ -2919,7 +3228,152 @@ if (
                 "✅",
               100
             ),
+/* MENSAJE DEL BOTÓN DE INTERACCIÓN */
 
+interactionTitle:
+  cleanString(
+    body.interactionTitle,
+    defaults.interactionTitle ||
+      "🔒 Verificá tu cuenta",
+    256
+  ),
+
+interactionMessage:
+  cleanString(
+    body.interactionMessage,
+    defaults.interactionMessage ||
+      "Presioná el botón para verificarte.",
+    2000
+  ),
+
+interactionColor:
+  isValidHexColor(
+    body.interactionColor
+  )
+    ? String(
+        body.interactionColor
+      )
+    : defaults.interactionColor ||
+      "#8b5cf6",
+
+interactionImage:
+  cleanString(
+    body.interactionImage,
+    defaults.interactionImage ||
+      "",
+    1000
+  ),
+
+interactionButtonEmoji:
+  cleanString(
+    body.interactionButtonEmoji,
+    defaults.interactionButtonEmoji ||
+      "🛡️",
+    100
+  ),
+
+interactionButtonText:
+  cleanString(
+    body.interactionButtonText,
+    defaults.interactionButtonText ||
+      "Continuar verificación",
+    80
+  ),
+
+/* MENSAJE DESPUÉS DE VERIFICAR */
+
+successTitle:
+  cleanString(
+    body.successTitle,
+    defaults.successTitle ||
+      "✅ Verificación completada",
+    256
+  ),
+
+successMessage:
+  cleanString(
+    body.successMessage,
+    defaults.successMessage ||
+      `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`,
+    4000
+  ),
+
+successColor:
+  isValidHexColor(
+    body.successColor
+  )
+    ? String(
+        body.successColor
+      )
+    : defaults.successColor ||
+      "#22c55e",
+
+successAnimation:
+  cleanString(
+    body.successAnimation,
+    defaults.successAnimation ||
+      "check",
+    40
+  ),
+
+showCountdown:
+  cleanBoolean(
+    body.showCountdown
+  ),
+
+closePageEnabled:
+  cleanBoolean(
+    body.closePageEnabled
+  ),
+
+/* MENSAJE PRIVADO DESPUÉS DE VERIFICAR */
+
+successDmEnabled:
+  cleanBoolean(
+    body.successDmEnabled
+  ),
+
+successDmTitle:
+  cleanString(
+    body.successDmTitle,
+    defaults.successDmTitle ||
+      "🎉 ¡Verificado!",
+    256
+  ),
+
+successDmMessage:
+  cleanString(
+    body.successDmMessage,
+    defaults.successDmMessage ||
+      `¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`,
+    2000
+  ),
+
+successDmColor:
+  isValidHexColor(
+    body.successDmColor
+  )
+    ? String(
+        body.successDmColor
+      )
+    : defaults.successDmColor ||
+      "#3b82f6",
+
+successDmThumbnail:
+  cleanString(
+    body.successDmThumbnail,
+    defaults.successDmThumbnail ||
+      "",
+    1000
+  ),
 /* CONTENIDO AVANZADO DEL EMBED */
 
 embedFieldName:

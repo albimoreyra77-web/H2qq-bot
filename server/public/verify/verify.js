@@ -916,10 +916,49 @@ async function loadVerificationPage() {
         exchangedUser
       );
 
-      applyPreviewAppearance(
-        pageData.webAppearance ||
-        {}
-      );
+  applyPreviewAppearance({
+  ...(pageData.webAppearance || {}),
+
+  successTitle:
+    pageData.successTitle ??
+    pageData.webAppearance
+      ?.successTitle ??
+    "✅ Verificación completada",
+
+  successMessage:
+    pageData.successMessage ??
+    pageData.webAppearance
+      ?.successMessage ??
+    `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`,
+
+  successColor:
+    pageData.successColor ??
+    pageData.webAppearance
+      ?.successColor ??
+    "#22c55e",
+
+  successAnimation:
+    pageData.successAnimation ??
+    pageData.webAppearance
+      ?.successAnimation ??
+    "check",
+
+  showCountdown:
+    pageData.showCountdown ??
+    pageData.webAppearance
+      ?.showCountdown ??
+    true,
+
+  closePageEnabled:
+    pageData.closePageEnabled ??
+    pageData.webAppearance
+      ?.closePageEnabled ??
+    false,
+});
 
       setStatus("");
 
@@ -971,10 +1010,49 @@ async function loadVerificationPage() {
       }
     }
 
-    applyPreviewAppearance(
-      pageData.webAppearance ||
-      {}
-    );
+   applyPreviewAppearance({
+  ...(pageData.webAppearance || {}),
+
+  successTitle:
+    pageData.successTitle ??
+    pageData.webAppearance
+      ?.successTitle ??
+    "✅ Verificación completada",
+
+  successMessage:
+    pageData.successMessage ??
+    pageData.webAppearance
+      ?.successMessage ??
+    `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`,
+
+  successColor:
+    pageData.successColor ??
+    pageData.webAppearance
+      ?.successColor ??
+    "#22c55e",
+
+  successAnimation:
+    pageData.successAnimation ??
+    pageData.webAppearance
+      ?.successAnimation ??
+    "check",
+
+  showCountdown:
+    pageData.showCountdown ??
+    pageData.webAppearance
+      ?.showCountdown ??
+    true,
+
+  closePageEnabled:
+    pageData.closePageEnabled ??
+    pageData.webAppearance
+      ?.closePageEnabled ??
+    false,
+});
 
     setStatus("");
 
@@ -1030,11 +1108,14 @@ function showProcessingScreen({
     return;
   }
 
-  verificationCard.classList.add(
-    "verification-processing-state"
-  );
+  const activeDesign =
+    currentPreviewAppearance
+      ?.cardDesign ||
+    document.body.dataset
+      .cardDesign ||
+    "classic";
 
-  verificationCard.innerHTML = `
+  const processingContent = `
     <div class="verification-processing-content">
 
       <div class="processing-orbit">
@@ -1077,14 +1158,184 @@ function showProcessingScreen({
       </div>
 
       <div class="processing-points">
-        <span class="${step >= 25 ? "active" : ""}"></span>
-        <span class="${step >= 55 ? "active" : ""}"></span>
-        <span class="${step >= 80 ? "active" : ""}"></span>
-        <span class="${step >= 100 ? "active" : ""}"></span>
+        <span class="${
+          step >= 25
+            ? "active"
+            : ""
+        }"></span>
+
+        <span class="${
+          step >= 55
+            ? "active"
+            : ""
+        }"></span>
+
+        <span class="${
+          step >= 80
+            ? "active"
+            : ""
+        }"></span>
+
+        <span class="${
+          step >= 100
+            ? "active"
+            : ""
+        }"></span>
       </div>
 
     </div>
   `;
+
+  verificationCard.classList.remove(
+    "verification-success-state",
+    "verification-error-state"
+  );
+
+  verificationCard.classList.add(
+    "verification-processing-state"
+  );
+
+  verificationCard.dataset
+    .activeDesign =
+    activeDesign;
+
+
+if (
+  activeDesign === "split" ||
+  activeDesign === "split_premium"
+) {
+
+const splitImageUrl =
+  String(
+    currentPreviewAppearance
+      ?.splitImageUrl ||
+    ""
+  ).trim();
+
+const splitImageFit =
+  currentPreviewAppearance
+    ?.splitImageFit ||
+  "cover";
+
+const splitImageDarkness =
+  Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        currentPreviewAppearance
+          ?.splitImageDarkness ??
+        45
+      )
+    )
+  ) / 100;
+
+    verificationCard.innerHTML = `
+   <div class="split-processing-layout">
+
+     <div class="split-processing-image">
+
+  ${
+    splitImageUrl
+      ? `
+
+<img
+  class="split-processing-background-image"
+  src="${escapeHtmlAttribute(
+    splitImageUrl
+  )}"
+  alt=""
+  onerror="
+    this.style.display='none';
+    this.parentElement.classList.add('image-load-failed');
+  "
+>
+      `
+      : `
+        <div class="split-processing-fallback"></div>
+      `
+  }
+
+          <div class="split-processing-overlay"></div>
+
+          <div class="split-processing-image-copy">
+            <span>VERIFICACIÓN SEGURA</span>
+
+            <strong>
+              Protegiendo tu acceso
+            </strong>
+
+            <small>
+              No cierres esta ventana mientras finaliza el proceso.
+            </small>
+          </div>
+        </div>
+
+        <div class="split-processing-content">
+          ${processingContent}
+        </div>
+
+      </div>
+    `;
+const processingImage =
+  verificationCard.querySelector(
+    ".split-processing-background-image"
+  );
+
+if (processingImage) {
+  processingImage.style.objectFit =
+    splitImageFit;
+
+  processingImage.style.filter =
+    `brightness(${
+      Math.max(
+        0,
+        1 - splitImageDarkness
+      )
+    })`;
+}
+    return;
+  }
+
+  if (
+    activeDesign ===
+    "terminal"
+  ) {
+    verificationCard.innerHTML = `
+      <div class="terminal-processing-layout">
+
+        <div class="terminal-processing-header">
+          <span class="terminal-processing-dot"></span>
+
+          <strong>
+            NEBULA SECURITY TERMINAL
+          </strong>
+        </div>
+
+        <div class="terminal-processing-command">
+          <span class="terminal-prefix">
+            ${
+              currentPreviewAppearance
+                ?.terminalPrefix ||
+              ">"
+            }
+          </span>
+
+          <span>
+            Ejecutando proceso de verificación...
+          </span>
+        </div>
+
+        ${processingContent}
+
+      </div>
+    `;
+
+    return;
+  }
+
+  verificationCard.innerHTML =
+    processingContent;
 }
 
 function updateProcessingScreen({
@@ -1158,9 +1409,15 @@ function updateProcessingScreen({
    ========================================================= */
 let automaticCloseInterval = null;
 
+
 function startAutomaticCloseTimer(
-  seconds = 20
+  seconds = 20,
+  {
+    showNotice = true,
+    closePage = true,
+  } = {}
 ) {
+
   /*
     Detenemos un temporizador anterior.
   */
@@ -1225,9 +1482,11 @@ function startAutomaticCloseTimer(
     </div>
   `;
 
+if (showNotice) {
   document.body.appendChild(
     timerNotice
   );
+}
 
   /*
     ESTILOS DEL TEMPORIZADOR.
@@ -1605,20 +1864,62 @@ function startAutomaticCloseTimer(
       remainingSeconds <= 5
     );
 
-    if (
-      remainingSeconds <= 0
-    ) {
-      clearInterval(
-        automaticCloseInterval
-      );
+   if (
+  remainingSeconds <= 0
+) {
+  clearInterval(
+    automaticCloseInterval
+  );
 
-      automaticCloseInterval =
-        null;
+  automaticCloseInterval =
+    null;
 
-      closeVerificationPage();
+ if (closePage) {
+  timerNotice.remove();
 
-      return;
+  try {
+    window.open("", "_self");
+    window.close();
+  } catch (error) {
+    console.error(
+      "No se pudo cerrar la ventana:",
+      error
+    );
+  }
+
+  /*
+    Algunos navegadores no permiten cerrar
+    una pestaña que el usuario abrió manualmente.
+    Si sigue abierta, mostramos una pantalla final.
+  */
+  setTimeout(() => {
+    if (!window.closed) {
+      document.body.innerHTML = `
+        <div style="
+          min-height:100vh;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:#050505;
+          color:#fff;
+          font-family:Arial,sans-serif;
+          text-align:center;
+        ">
+          <div>
+            <h1>✓ Verificación completada</h1>
+            <p>Ya podés cerrar esta pestaña y volver a Discord.</p>
+          </div>
+        </div>
+      `;
     }
+  }, 500);
+
+} else {
+  timerNotice.remove();
+}
+
+  return;
+}
 
     remainingSeconds -= 1;
   }
@@ -1635,6 +1936,155 @@ function startAutomaticCloseTimer(
       updateAutomaticTimer,
       1000
     );
+}
+
+function launchSuccessConfetti() {
+  document
+    .querySelector(
+      ".success-confetti-container"
+    )
+    ?.remove();
+
+  if (
+    !document.getElementById(
+      "successConfettiStyle"
+    )
+  ) {
+    const confettiStyle =
+      document.createElement(
+        "style"
+      );
+
+    confettiStyle.id =
+      "successConfettiStyle";
+
+    confettiStyle.textContent = `
+      .success-confetti-container {
+        position: fixed;
+        inset: 0;
+        z-index: 999999;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .success-confetti-piece {
+        position: absolute;
+        top: -30px;
+
+        width: 10px;
+        height: 17px;
+
+        border-radius: 2px;
+
+        opacity: 0;
+
+        animation-name:
+          successConfettiFall;
+
+        animation-timing-function:
+          cubic-bezier(
+            0.15,
+            0.75,
+            0.35,
+            1
+          );
+
+        animation-fill-mode:
+          forwards;
+      }
+
+      @keyframes successConfettiFall {
+        0% {
+          opacity: 0;
+
+          transform:
+            translateY(-40px)
+            rotate(0deg);
+        }
+
+        10% {
+          opacity: 1;
+        }
+
+        100% {
+          opacity: 0;
+
+          transform:
+            translateY(110vh)
+            rotate(900deg);
+        }
+      }
+    `;
+
+    document.head.appendChild(
+      confettiStyle
+    );
+  }
+
+  const confettiContainer =
+    document.createElement("div");
+
+  confettiContainer.className =
+    "success-confetti-container";
+
+  const colors = [
+    "#22c55e",
+    "#a855f7",
+    "#facc15",
+    "#38bdf8",
+    "#fb7185",
+    "#ffffff",
+  ];
+
+  for (
+    let index = 0;
+    index < 100;
+    index += 1
+  ) {
+    const piece =
+      document.createElement("span");
+
+    piece.className =
+      "success-confetti-piece";
+
+    piece.style.left =
+      `${Math.random() * 100}%`;
+
+    piece.style.backgroundColor =
+      colors[
+        Math.floor(
+          Math.random() *
+          colors.length
+        )
+      ];
+
+    piece.style.animationDelay =
+      `${Math.random() * 0.8}s`;
+
+    piece.style.animationDuration =
+      `${
+        2.5 +
+        Math.random() * 2
+      }s`;
+
+    piece.style.width =
+      `${6 + Math.random() * 8}px`;
+
+    piece.style.height =
+      `${10 + Math.random() * 12}px`;
+
+    confettiContainer.appendChild(
+      piece
+    );
+  }
+
+  document.body.appendChild(
+    confettiContainer
+  );
+
+  setTimeout(() => {
+    confettiContainer.remove();
+  }, 5500);
 }
 
 function showVerificationSuccess(
@@ -1734,8 +2184,122 @@ function showVerificationSuccess(
   verificationCard.classList.add(
     "verification-success-state"
   );
+const activeDesign =
+  currentPreviewAppearance
+    ?.cardDesign ||
+  document.body.dataset
+    .cardDesign ||
+  "classic";
 
-  verificationCard.innerHTML = `
+const splitImageUrl =
+  String(
+    currentPreviewAppearance
+      ?.splitImageUrl ||
+    ""
+  ).trim();
+
+const splitImageFit =
+  currentPreviewAppearance
+    ?.splitImageFit ||
+  "cover";
+
+const splitImageDarkness =
+  Math.min(
+    100,
+    Math.max(
+      0,
+      Number(
+        currentPreviewAppearance
+          ?.splitImageDarkness ??
+        45
+      )
+    )
+  ) / 100;
+
+const successTitle =
+  String(
+    currentPreviewAppearance
+      ?.successTitle ||
+    (
+      alreadyVerified
+        ? "Cuenta verificada"
+        : "✅ Verificación completada"
+    )
+  ).trim();
+
+const successMessage =
+  String(
+    currentPreviewAppearance
+      ?.successMessage ||
+    (
+      alreadyVerified
+        ? "Tu cuenta ya tenía acceso."
+        : `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`
+    )
+  )
+    .replaceAll(
+      "{servidor}",
+      guildName
+    )
+    .replaceAll(
+      "{server}",
+      guildName
+    );
+
+const successColor =
+  /^#[0-9a-f]{6}$/i.test(
+    currentPreviewAppearance
+      ?.successColor ||
+    ""
+  )
+    ? currentPreviewAppearance
+        .successColor
+    : "#22c55e";
+
+const successAnimation =
+  currentPreviewAppearance
+    ?.successAnimation ||
+  "check";
+
+const showCountdown =
+  currentPreviewAppearance
+    ?.showCountdown !== false;
+
+const closePageEnabled =
+  Boolean(
+    currentPreviewAppearance
+      ?.closePageEnabled
+  );
+
+console.log(
+  "successAnimation:",
+  successAnimation
+);
+
+console.log(
+  "showCountdown:",
+  showCountdown
+);
+
+console.log(
+  "closePageEnabled:",
+  closePageEnabled
+);
+
+console.log(
+  "currentPreviewAppearance:",
+  JSON.stringify(
+    currentPreviewAppearance,
+    null,
+    2
+  )
+);
+
+ const successContent = `
     <div class="success-page-content">
 
       <div class="success-check-area">
@@ -1747,22 +2311,19 @@ function showVerificationSuccess(
           </div>
         </div>
 
-        <h2>
-          ${
-            alreadyVerified
-              ? "Cuenta verificada"
-              : "Verificación exitosa"
-          }
-        </h2>
 
-        <p>
-          ${
-            alreadyVerified
-              ? "Tu cuenta ya tenía acceso."
-              : "Tu cuenta fue verificada correctamente."
-          }
-        </p>
-      </div>
+<h2>
+  ${escapeVerificationText(
+    successTitle
+  )}
+</h2>
+
+<p>
+  ${escapeVerificationText(
+    successMessage
+  )}
+</p>
+             </div>
 
       <section class="success-user-panel">
 
@@ -1901,7 +2462,239 @@ function showVerificationSuccess(
     </div>
   `;
 
-  startAutomaticCloseTimer(20);
+
+if (
+  activeDesign === "split" ||
+  activeDesign === "split_premium"
+) {
+  verificationCard.innerHTML = `
+    <div class="split-success-layout">
+
+      <div class="split-success-image">
+        ${
+          splitImageUrl
+            ? `
+              <img
+                class="split-success-background-image"
+                src="${escapeHtmlAttribute(
+                  splitImageUrl
+                )}"
+                alt=""
+                onerror="
+                  this.style.display='none';
+                  this.parentElement.classList.add('image-load-failed');
+                "
+              >
+            `
+            : `
+              <div class="split-success-fallback"></div>
+            `
+        }
+
+        <div class="split-success-overlay"></div>
+
+        <div class="split-success-image-copy">
+          <span>ACCESO AUTORIZADO</span>
+
+          <strong>
+            Verificación completada
+          </strong>
+
+          <small>
+            Ya podés volver a Discord y usar el servidor normalmente.
+          </small>
+        </div>
+      </div>
+
+      <div class="split-success-content">
+        ${successContent}
+      </div>
+
+    </div>
+  `;
+
+  const successImage =
+    verificationCard.querySelector(
+      ".split-success-background-image"
+    );
+
+  if (successImage) {
+    successImage.style.objectFit =
+      splitImageFit;
+
+    successImage.style.filter =
+      `brightness(${
+        Math.max(
+          0,
+          1 - splitImageDarkness
+        )
+      })`;
+  }
+} else {
+  verificationCard.innerHTML =
+    successContent;
+}
+
+const successCircle =
+  verificationCard.querySelector(
+    ".success-check-circle"
+  );
+
+const successRing =
+  verificationCard.querySelector(
+    ".success-check-ring"
+  );
+
+const successAuthorized =
+  verificationCard.querySelector(
+    ".success-authorized"
+  );
+
+const returnButton =
+  verificationCard.querySelector(
+    ".return-discord-button"
+  );
+
+if (successCircle) {
+  successCircle.style.setProperty(
+    "background-color",
+    successColor,
+    "important"
+  );
+
+  successCircle.style.setProperty(
+    "box-shadow",
+    `0 0 30px ${successColor}88`,
+    "important"
+  );
+}
+
+if (successRing) {
+  successRing.style.setProperty(
+    "border-color",
+    successColor,
+    "important"
+  );
+}
+
+if (successAuthorized) {
+  successAuthorized.style.setProperty(
+    "color",
+    successColor,
+    "important"
+  );
+}
+
+if (returnButton) {
+  returnButton.style.setProperty(
+    "border-color",
+    successColor,
+    "important"
+  );
+}
+
+const successCheckArea =
+  verificationCard.querySelector(
+    ".success-check-area"
+  );
+
+const successCheckIcon =
+  verificationCard.querySelector(
+    ".success-check-circle span"
+  );
+
+if (
+  successAnimation === "none"
+) {
+  if (successCheckArea) {
+    successCheckArea.classList.add(
+      "success-animation-none"
+    );
+  }
+
+  if (successCircle) {
+    successCircle.style.display =
+      "none";
+  }
+
+  if (successRing) {
+    successRing.style.display =
+      "none";
+  }
+} else if (
+  [
+  "confetti",
+  "confeti",
+  "confetti_animation",
+].includes(
+  String(
+    successAnimation
+  ).toLowerCase()
+)
+
+) {
+  if (successCheckArea) {
+    successCheckArea.classList.add(
+      "success-animation-confetti"
+    );
+  }
+
+  if (successCheckIcon) {
+    successCheckIcon.textContent =
+      "🎉";
+  }
+launchSuccessConfetti();
+
+} else {
+  if (successCheckArea) {
+    successCheckArea.classList.add(
+      "success-animation-check"
+    );
+  }
+
+  if (successCheckIcon) {
+    successCheckIcon.textContent =
+      "✓";
+  }
+}
+
+ if (
+  showCountdown ||
+  closePageEnabled
+) {
+  startAutomaticCloseTimer(
+    20,
+    {
+      showNotice:
+        showCountdown,
+
+      closePage:
+        closePageEnabled,
+    }
+  );
+} else {
+  if (automaticCloseInterval) {
+    clearInterval(
+      automaticCloseInterval
+    );
+
+    automaticCloseInterval =
+      null;
+  }
+
+  document
+    .getElementById(
+      "automaticCloseNotice"
+    )
+    ?.remove();
+
+  document
+    .getElementById(
+      "automaticCloseBottomNotice"
+    )
+    ?.remove();
+}
+
 }
 
    /* =========================================================
@@ -2286,6 +3079,171 @@ function applyPreviewAppearance(
   const body =
     document.body;
 
+  const cardDesign =
+    settings.cardDesign ||
+    "classic";
+  const splitImageUrl =
+    settings.splitImageUrl ||
+    "";
+
+  const splitShowImage =
+    settings.splitShowImage !==
+    false;
+
+  const splitImagePosition =
+    settings.splitImagePosition ||
+    "left";
+
+  const splitImageFit =
+    settings.splitImageFit ||
+    "cover";
+
+  const splitImageDarkness =
+    Number(
+      settings.splitImageDarkness ??
+      45
+    );
+
+  const splitImageWidth =
+    Number(
+      settings.splitImageWidth ??
+      48
+    );
+
+  root.style.setProperty(
+    "--split-image-url",
+    splitImageUrl && splitShowImage
+      ? `url("${splitImageUrl}")`
+      : "none"
+  );
+
+  root.style.setProperty(
+    "--split-image-fit",
+    splitImageFit
+  );
+
+  root.style.setProperty(
+    "--split-image-darkness",
+    String(
+      splitImageDarkness / 100
+    )
+  );
+
+  root.style.setProperty(
+    "--split-image-width",
+    `${splitImageWidth}%`
+  );
+
+  body.dataset.splitImagePosition =
+    splitImagePosition;
+
+  body.classList.toggle(
+    "split-image-hidden",
+    !splitShowImage ||
+    !splitImageUrl
+  );
+
+  body.dataset.cardDesign =
+    cardDesign;
+
+  /*
+    CONFIGURACIÓN DEL DISEÑO TERMINAL
+  */
+
+  const terminalBackgroundColor =
+    settings.terminalBackgroundColor ||
+    "#020703";
+
+  const terminalTextColor =
+    settings.terminalTextColor ||
+    "#d9ffe0";
+
+  const terminalAccentColor =
+    settings.terminalAccentColor ||
+    "#22c55e";
+
+  const terminalBorderColor =
+    settings.terminalBorderColor ||
+    "#14532d";
+
+  const terminalGlow =
+    Math.min(
+      70,
+      Math.max(
+        0,
+        Number(
+          settings.terminalGlow ??
+          25
+        )
+      )
+    );
+
+  const terminalRadius =
+    Math.min(
+      30,
+      Math.max(
+        0,
+        Number(
+          settings.terminalRadius ??
+          10
+        )
+      )
+    );
+
+  root.style.setProperty(
+    "--terminal-background",
+    terminalBackgroundColor
+  );
+
+  root.style.setProperty(
+    "--terminal-text",
+    terminalTextColor
+  );
+
+  root.style.setProperty(
+    "--terminal-accent",
+    terminalAccentColor
+  );
+
+  root.style.setProperty(
+    "--terminal-border",
+    terminalBorderColor
+  );
+
+  root.style.setProperty(
+    "--terminal-glow",
+    `${terminalGlow}px`
+  );
+
+  root.style.setProperty(
+    "--terminal-radius",
+    `${terminalRadius}px`
+  );
+
+  body.classList.toggle(
+    "terminal-cursor-hidden",
+    settings.terminalShowCursor ===
+      false
+  );
+
+  body.classList.toggle(
+    "terminal-lines-hidden",
+    settings.terminalShowLines ===
+      false
+  );
+
+  body.classList.toggle(
+    "terminal-server-hidden",
+    settings.terminalShowServer ===
+      false
+  );
+
+  body.classList.toggle(
+    "terminal-role-hidden",
+    settings.terminalShowRole ===
+      false
+  );
+
   const card =
     document.querySelector(
       ".verification-card"
@@ -2314,6 +3272,26 @@ const brandDescription =
 const brandShield =
   document.querySelector(
     ".brand-shield"
+  );
+
+const terminalPanel =
+  document.getElementById(
+    "terminalPanel"
+  );
+
+const terminalTitleElement =
+  document.getElementById(
+    "terminalTitle"
+  );
+
+const terminalStatusElement =
+  document.getElementById(
+    "terminalStatusText"
+  );
+
+const terminalPrefixElements =
+  document.querySelectorAll(
+    ".terminal-prefix"
   );
 
 const primaryColor =
@@ -2359,6 +3337,37 @@ const primaryColor =
     "--text",
     textColor
   );
+
+  /*
+    TEXTOS DEL DISEÑO TERMINAL
+  */
+
+  if (terminalTitleElement) {
+    terminalTitleElement.textContent =
+      settings.terminalTitle ||
+      "NEBULA SECURITY TERMINAL";
+  }
+
+  if (terminalStatusElement) {
+    terminalStatusElement.textContent =
+      settings.terminalStatusText ||
+      "Sistema preparado";
+  }
+
+  terminalPrefixElements.forEach(
+    element => {
+      element.textContent =
+        settings.terminalPrefix ||
+        ">";
+    }
+  );
+
+  if (terminalPanel) {
+    terminalPanel.hidden =
+      cardDesign !==
+      "terminal";
+  }
+
 /*
   NOMBRE, DESCRIPCIÓN Y LOGO
 */

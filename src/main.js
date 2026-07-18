@@ -1,11 +1,14 @@
 import "./style.css";
 import { io } from "socket.io-client";
 
+const API_URL =
+  window.location.origin;
+
 const menuSections = [
   {
     title: "SERVIDORES",
     items: [
-      ["◈", "Servidores", "12"],
+      ["◈", "Servidor actual", ""],
       ["⌁", "Invitaciones", ""],
       ["♧", "Miembros", ""],
       ["♙", "Roles", ""],
@@ -82,27 +85,175 @@ document.querySelector("#app").innerHTML = `
           <span>BOT CONTROL</span>
         </div>
       </div>
+<nav
+  class="public-sidebar-menu"
+  id="publicSidebarMenu"
+>
+  <button
+    class="public-side-item active"
+    id="publicMyServers"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ▱
+    </span>
 
-      <button class="side-item dashboard-link active">
+    <span>
+      Mis servidores
+    </span>
+  </button>
+
+  <button
+    class="public-side-item"
+    id="publicInviteBot"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ＋
+    </span>
+
+    <span>
+      Invitar bot
+    </span>
+  </button>
+
+  <button
+    class="public-side-item"
+    id="publicBotStatus"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ◉
+    </span>
+
+    <span>
+      Estado del bot
+    </span>
+  </button>
+
+  <button
+    class="public-side-item"
+    id="publicSupport"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ?
+    </span>
+
+    <span>
+      Soporte
+    </span>
+  </button>
+
+  <button
+    class="public-side-item public-logout"
+    id="publicLogout"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ↪
+    </span>
+
+    <span>
+      Cerrar sesión
+    </span>
+  </button>
+</nav>
+<div
+  class="server-switcher dashboard-only"
+  id="serverSwitcher"
+>
+  <button
+    class="server-current"
+    id="serverCurrent"
+    type="button"
+  >
+    <div
+      class="server-current-icon"
+      id="serverCurrentIcon"
+    >
+      N
+    </div>
+
+    <div class="server-current-copy">
+      <span>Servidor actual</span>
+
+      <strong id="serverCurrentName">
+        Cargando...
+      </strong>
+    </div>
+
+    <span class="server-current-arrow">
+      ⌄
+    </span>
+  </button>
+
+  <div
+    class="server-dropdown"
+    id="serverDropdown"
+  >
+    <div class="server-dropdown-head">
+      <strong>Tus servidores</strong>
+
+      <span id="serverDropdownCount">
+        0
+      </span>
+    </div>
+
+    <div
+      class="server-dropdown-list"
+      id="serverDropdownList"
+    >
+      <div class="server-dropdown-empty">
+        Cargando servidores...
+      </div>
+    </div>
+  </div>
+</div>
+
+      <button
+  class="side-item dashboard-link active dashboard-only"
+>
         <span class="side-icon">⌂</span>
         <span>Dashboard</span>
         <b>⌁</b>
       </button>
 
-      <div class="sidebar-scroll">
+    <div class="sidebar-scroll dashboard-only">
         ${sidebarMenus}
       </div>
 
-      <div class="owner-card">
-        <div class="owner-avatar">AM</div>
-        <div class="owner-info">
-          <strong>Alvi Moreyra</strong>
-          <span>Propietario</span>
-          <small>Premium</small>
-        </div>
-        <button>⚙</button>
-      </div>
-    </aside>
+<div class="owner-card">
+  <div
+    class="owner-avatar"
+    id="ownerAvatar"
+  >
+    U
+  </div>
+
+  <div class="owner-info">
+    <strong id="ownerDisplayName">
+      Cargando...
+    </strong>
+
+    <span id="ownerUsername">
+      @discord
+    </span>
+
+    <small>
+      Administrador
+    </small>
+  </div>
+
+  <button
+    id="ownerMenuButton"
+    type="button"
+  >
+    ⚙
+  </button>
+</div>
+
+          </aside>
 
     <main class="main">
       <header class="topbar">
@@ -120,20 +271,42 @@ document.querySelector("#app").innerHTML = `
           <button class="circle-btn">▣</button>
           <button class="circle-btn">⚙</button>
           <button class="circle-btn">?</button>
-          <div class="top-profile">
-            <div class="profile-avatar">AM</div>
-            <div>
-              <strong>Alvi Moreyra</strong>
-              <span><i></i> En línea</span>
-            </div>
-            <b>⌄</b>
-          </div>
+<button
+  class="top-profile"
+  id="topProfile"
+  type="button"
+>
+  <div
+    class="profile-avatar"
+    id="profileAvatar"
+  >
+    AM
+  </div>
+
+  <div>
+    <strong id="profileDisplayName">
+      Cargando...
+    </strong>
+
+    <span id="profileUsername">
+      <i></i>
+      Discord
+    </span>
+  </div>
+
+  <b>⌄</b>
+</button>
         </div>
       </header>
 
       <section class="welcome-row">
         <div>
-          <h1>¡Bienvenido de vuelta, <span>Alvi!</span> 👋</h1>
+         <h1>
+  ¡Bienvenido de vuelta,
+  <span id="welcomeUsername">
+    usuario
+  </span>! 👋
+</h1>
           <p>Aquí tienes un resumen completo de tu bot y servidores.</p>
         </div>
         <div class="welcome-actions">
@@ -300,6 +473,981 @@ document.querySelector("#app").innerHTML = `
     <div><strong>Demo visual</strong><p>Esta función se conectará en el siguiente paso.</p></div>
   </div>
 `;
+/* =========================================================
+   SELECTOR DE SERVIDORES Y PERFIL
+   ========================================================= */
+
+const serverSwitcher =
+  document.getElementById(
+    "serverSwitcher"
+  );
+
+const serverCurrent =
+  document.getElementById(
+    "serverCurrent"
+  );
+
+const serverCurrentIcon =
+  document.getElementById(
+    "serverCurrentIcon"
+  );
+
+const serverCurrentName =
+  document.getElementById(
+    "serverCurrentName"
+  );
+
+const serverDropdown =
+  document.getElementById(
+    "serverDropdown"
+  );
+
+const serverDropdownList =
+  document.getElementById(
+    "serverDropdownList"
+  );
+
+const serverDropdownCount =
+  document.getElementById(
+    "serverDropdownCount"
+  );
+
+const profileAvatar =
+  document.getElementById(
+    "profileAvatar"
+  );
+
+const profileDisplayName =
+  document.getElementById(
+    "profileDisplayName"
+  );
+
+const profileUsername =
+  document.getElementById(
+    "profileUsername"
+  );
+const ownerAvatar =
+  document.getElementById(
+    "ownerAvatar"
+  );
+
+const ownerDisplayName =
+  document.getElementById(
+    "ownerDisplayName"
+  );
+
+const ownerUsername =
+  document.getElementById(
+    "ownerUsername"
+  );
+
+const welcomeUsername =
+  document.getElementById(
+    "welcomeUsername"
+  );
+let dashboardServers = [];
+
+let selectedServerId =
+  localStorage.getItem(
+    "nebulaSelectedServerId"
+  ) || "";
+
+function getServerInitials(name) {
+  return String(name || "N")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word =>
+      word.charAt(0)
+    )
+    .join("")
+    .toUpperCase();
+}
+
+function renderSelectedServer(server) {
+  if (!server) {
+    serverCurrentName.textContent =
+      "Seleccioná un servidor";
+
+    serverCurrentIcon.textContent =
+      "N";
+
+    return;
+  }
+
+  serverCurrentName.textContent =
+    server.name ||
+    "Servidor";
+
+  if (server.icon) {
+    serverCurrentIcon.innerHTML = `
+      <img
+        src="${server.icon}"
+        alt="${server.name}"
+      >
+    `;
+  } else {
+    serverCurrentIcon.textContent =
+      getServerInitials(
+        server.name
+      );
+  }
+}
+
+function selectDashboardServer(server) {
+  if (!server?.id) {
+    return;
+  }
+
+  selectedServerId =
+    String(server.id);
+
+  localStorage.setItem(
+    "nebulaSelectedServerId",
+    selectedServerId
+  );
+
+  renderSelectedServer(server);
+
+  serverDropdown.classList.remove(
+    "open"
+  );
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "nebula:server-changed",
+      {
+        detail: {
+          server,
+        },
+      }
+    )
+  );
+}
+
+function renderServerDropdown() {
+  serverDropdownCount.textContent =
+    String(
+      dashboardServers.length
+    );
+
+  if (
+    dashboardServers.length === 0
+  ) {
+    serverDropdownList.innerHTML = `
+      <div class="server-dropdown-empty">
+        No se encontraron servidores.
+      </div>
+    `;
+
+    renderSelectedServer(null);
+
+    return;
+  }
+
+  let selectedServer =
+    dashboardServers.find(
+      server =>
+        String(server.id) ===
+        String(selectedServerId)
+    );
+
+  if (!selectedServer) {
+    selectedServer =
+      dashboardServers[0];
+
+    selectedServerId =
+      String(
+        selectedServer.id
+      );
+
+    localStorage.setItem(
+      "nebulaSelectedServerId",
+      selectedServerId
+    );
+  }
+
+  serverDropdownList.innerHTML =
+    dashboardServers
+      .map(server => {
+        const active =
+          String(server.id) ===
+          String(selectedServerId);
+
+        const icon =
+          server.icon
+            ? `<img
+                 src="${server.icon}"
+                 alt="${server.name}"
+               >`
+            : getServerInitials(
+                server.name
+              );
+
+        return `
+          <button
+            class="server-dropdown-item ${
+              active
+                ? "active"
+                : ""
+            }"
+            data-server-id="${server.id}"
+            type="button"
+          >
+            <span class="server-dropdown-icon">
+              ${icon}
+            </span>
+
+            <span class="server-dropdown-copy">
+              <strong>
+                ${server.name}
+              </strong>
+
+              <small>
+                ${
+                  Number(
+                    server.members ||
+                    server.memberCount ||
+                    0
+                  ).toLocaleString(
+                    "es-AR"
+                  )
+                } miembros
+              </small>
+            </span>
+
+            ${
+              active
+                ? `
+                  <span class="server-dropdown-check">
+                    ✓
+                  </span>
+                `
+                : ""
+            }
+          </button>
+        `;
+      })
+      .join("");
+
+  renderSelectedServer(
+    selectedServer
+  );
+
+  serverDropdownList
+    .querySelectorAll(
+      "[data-server-id]"
+    )
+    .forEach(button => {
+      button.addEventListener(
+        "click",
+        () => {
+          const server =
+            dashboardServers.find(
+              item =>
+                String(item.id) ===
+                String(
+                  button.dataset
+                    .serverId
+                )
+            );
+
+
+selectDashboardServer(
+  server
+);
+
+renderServerDropdown();
+
+if (server?.botPresent) {
+  abrirPanelServidor(
+    server.id
+  );
+}
+             }
+      );
+    });
+}
+
+/* =========================================================
+   SESIÓN REAL DEL DASHBOARD
+   ========================================================= */
+
+let dashboardSessionUser =
+  null;
+
+let dashboardBotData = {
+  name: "Nebula Bot",
+  avatar: "",
+};
+
+async function loadDashboardSession() {
+  const sessionController =
+    new AbortController();
+
+  const sessionTimeout =
+    setTimeout(
+      () => {
+        sessionController.abort();
+      },
+      10000
+    );
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/dashboard/session`,
+        {
+          method:
+            "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+
+          signal:
+            sessionController.signal,
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      response.status === 401 ||
+      !result.authenticated
+    ) {
+      window.location.replace(
+        "/auth/dashboard"
+      );
+
+      return;
+    }
+
+    if (
+      !response.ok ||
+      !result.success ||
+      !result.data
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo cargar la sesión."
+      );
+    }
+
+    const sessionData =
+      result.data;
+
+    dashboardSessionUser =
+      sessionData.user ||
+      null;
+
+    dashboardServers =
+      Array.isArray(
+        sessionData.guilds
+      )
+        ? sessionData.guilds
+        : [];
+
+    updateDashboardUser(
+      dashboardSessionUser
+    );
+
+    renderServerDropdown();
+
+    const query =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    if (
+      query.get("view") ===
+      "servers"
+    ) {
+      showSessionServersPage();
+    } else {
+      pageContent.innerHTML =
+        dashboardHTML;
+
+      updateDashboardUser(
+        dashboardSessionUser
+      );
+
+      renderServerDropdown();
+
+      cargarDatosDashboard();
+    }
+  } catch (error) {
+    console.error(
+      "Error cargando la sesión:",
+      error
+    );
+
+    if (
+      error.name ===
+      "AbortError"
+    ) {
+      profileDisplayName.textContent =
+        "Servidor sin respuesta";
+
+      profileUsername.innerHTML =
+        "<i></i> Reintentá";
+
+      ownerDisplayName.textContent =
+        "Servidor sin respuesta";
+
+      ownerUsername.textContent =
+        "Recargá la página";
+
+      serverCurrentName.textContent =
+        "Sin respuesta";
+
+      return;
+    }
+
+    profileDisplayName.textContent =
+      "Sesión no disponible";
+
+    profileUsername.innerHTML =
+      "<i></i> Discord";
+
+    ownerDisplayName.textContent =
+      "Sesión no disponible";
+
+    ownerUsername.textContent =
+      "@discord";
+
+    serverCurrentName.textContent =
+      "Sin conexión";
+
+    setTimeout(
+      () => {
+        window.location.replace(
+          "/auth/dashboard"
+        );
+      },
+      1500
+    );
+  } finally {
+    clearTimeout(
+      sessionTimeout
+    );
+  }
+}
+
+function updateDashboardUser(user) {
+  if (!user) {
+    return;
+  }
+
+  const displayName =
+    user.displayName ||
+    user.globalName ||
+    user.username ||
+    "Usuario";
+
+  const username =
+    user.username ||
+    "discord";
+
+  profileDisplayName.textContent =
+    displayName;
+
+  profileUsername.innerHTML = `
+    <i></i>
+    @${username}
+  `;
+
+  ownerDisplayName.textContent =
+    displayName;
+
+  ownerUsername.textContent =
+    `@${username}`;
+
+const currentWelcomeUsername =
+  document.getElementById(
+    "welcomeUsername"
+  );
+
+if (currentWelcomeUsername) {
+  currentWelcomeUsername.textContent =
+    displayName;
+}
+
+  if (user.avatar) {
+    const avatarImage = `
+      <img
+        src="${user.avatar}"
+        alt="${displayName}"
+      >
+    `;
+
+    profileAvatar.innerHTML =
+      avatarImage;
+
+    ownerAvatar.innerHTML =
+      avatarImage;
+  } else {
+    const initials =
+      getServerInitials(
+        displayName
+      );
+
+    profileAvatar.textContent =
+      initials;
+
+    ownerAvatar.textContent =
+      initials;
+  }
+}
+
+function showSessionServersPage() {
+  document.body.classList.add(
+    "servers-selection-mode"
+  );
+
+  const manageableServers =
+    dashboardServers;
+
+  const serverCards =
+    manageableServers
+      .map(server => {
+        const initials =
+          getServerInitials(
+            server.name
+          );
+
+        const icon =
+          server.icon
+            ? `
+              <img
+                src="${server.icon}"
+                alt="${server.name}"
+              >
+            `
+            : `
+              <span>
+                ${initials}
+              </span>
+            `;
+
+        const botStatus =
+          server.botPresent
+            ? `
+              <span class="session-server-online">
+                ● Bot conectado
+              </span>
+            `
+            : `
+              <span class="session-server-missing">
+                Bot no agregado
+              </span>
+            `;
+
+        const actionButton =
+          server.botPresent
+            ? `
+              <button
+                class="session-manage-server"
+                data-server-id="${server.id}"
+                type="button"
+              >
+                Administrar
+              </button>
+            `
+            : `
+              <button
+                class="session-invite-server"
+                data-server-id="${server.id}"
+                type="button"
+              >
+                Agregar bot
+              </button>
+            `;
+
+        return `
+          <article class="session-server-card">
+            <div class="session-server-icon">
+              ${icon}
+            </div>
+
+            <div class="session-server-info">
+              <strong>
+                ${server.name}
+              </strong>
+
+              <span>
+                ${
+                  server.memberCount
+                    ? `${Number(
+                        server.memberCount
+                      ).toLocaleString(
+                        "es-AR"
+                      )} miembros`
+                    : "Cantidad no disponible"
+                }
+              </span>
+
+              ${botStatus}
+            </div>
+
+            ${actionButton}
+          </article>
+        `;
+      })
+      .join("");
+
+  pageContent.innerHTML = `
+    <div class="dynamic-page session-servers-page">
+      <section class="section-header">
+        <div>
+          <span>
+            CUENTA DE DISCORD
+          </span>
+
+          <h1>
+            Mis servidores
+          </h1>
+
+          <p>
+            Seleccioná un servidor que puedas administrar.
+          </p>
+        </div>
+
+        <button
+          id="sessionInviteBot"
+          class="section-action"
+          type="button"
+        >
+          ＋ Invitar bot
+        </button>
+      </section>
+
+      <section class="session-user-summary">
+        <div class="session-user-avatar">
+          ${
+            dashboardSessionUser?.avatar
+              ? `
+                <img
+                  src="${dashboardSessionUser.avatar}"
+                  alt="${dashboardSessionUser.displayName}"
+                >
+              `
+              : getServerInitials(
+                  dashboardSessionUser?.displayName
+                )
+          }
+        </div>
+
+        <div>
+          <span>
+            Sesión iniciada como
+          </span>
+
+          <strong>
+            ${
+              dashboardSessionUser?.displayName ||
+              dashboardSessionUser?.username ||
+              "Usuario"
+            }
+          </strong>
+
+          <small>
+            @${
+              dashboardSessionUser?.username ||
+              "discord"
+            }
+          </small>
+        </div>
+      </section>
+
+      <section class="session-server-list">
+        ${
+          serverCards ||
+          `
+            <div class="session-servers-empty">
+              No administrás ningún servidor.
+            </div>
+          `
+        }
+      </section>
+    </div>
+  `;
+
+  document
+    .querySelectorAll(
+      ".session-manage-server"
+    )
+    .forEach(button => {
+      button.addEventListener(
+        "click",
+        async () => {
+          const serverId =
+            button.dataset.serverId;
+
+          const selectedServer =
+            dashboardServers.find(
+              server =>
+                String(server.id) ===
+                String(serverId)
+            );
+
+          if (!selectedServer) {
+            return;
+          }
+
+
+selectDashboardServer(
+  selectedServer
+);
+
+document.body.classList.remove(
+  "servers-selection-mode"
+);
+
+await abrirPanelServidor(
+  serverId
+);
+               }
+      );
+    });
+
+document
+  .querySelectorAll(
+    ".session-invite-server"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      () => {
+        const serverId =
+          button.dataset.serverId;
+
+        invitarBotYEsperar(
+          serverId,
+          button
+        );
+      }
+    );
+  });
+
+document
+  .getElementById(
+    "sessionInviteBot"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      window.open(
+        "/auth/bot/invite",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  );
+ }
+/* =========================================================
+   INVITAR BOT Y DETECTAR CUANDO ENTRA
+   ========================================================= */
+
+async function invitarBotYEsperar(
+  serverId,
+  button
+) {
+  const originalText =
+    button.textContent;
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "Esperando autorización...";
+
+  const inviteWindow =
+    window.open(
+      `/auth/bot/invite?guildId=${encodeURIComponent(
+        serverId
+      )}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  /*
+    Algunos navegadores bloquean ventanas
+    nuevas si no se abren directamente
+    desde el clic.
+  */
+
+  if (!inviteWindow) {
+    window.location.href =
+      `/auth/bot/invite?guildId=${encodeURIComponent(
+        serverId
+      )}`;
+
+    return;
+  }
+
+  const startedAt =
+    Date.now();
+
+  const maximumWait =
+    120000;
+
+  const checkInterval =
+    2500;
+
+  async function checkBotPresence() {
+    try {
+      const response =
+        await fetch(
+          `${API_URL}/api/servers/${encodeURIComponent(
+            serverId
+          )}`,
+          {
+            credentials:
+              "include",
+
+            cache:
+              "no-store",
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        response.ok &&
+        result.success &&
+        result.data
+      ) {
+        clearInterval(
+          watcher
+        );
+
+        button.textContent =
+          "Bot agregado ✓";
+
+        /*
+          Seleccionamos el servidor
+          y abrimos automáticamente
+          su panel.
+        */
+
+        const selectedServer =
+          dashboardServers.find(
+            server =>
+              String(
+                server.id
+              ) ===
+              String(
+                serverId
+              )
+          );
+
+        if (selectedServer) {
+          selectedServer.botPresent =
+            true;
+
+          selectDashboardServer(
+            selectedServer
+          );
+        }
+
+        setTimeout(
+          () => {
+            abrirPanelServidor(
+              serverId
+            );
+          },
+          600
+        );
+
+        return;
+      }
+
+      if (
+        Date.now() -
+          startedAt >
+        maximumWait
+      ) {
+        clearInterval(
+          watcher
+        );
+
+        button.disabled =
+          false;
+
+        button.textContent =
+          "Comprobar nuevamente";
+      }
+    } catch (error) {
+      console.log(
+        "El bot todavía no aparece en el servidor:",
+        error.message
+      );
+    }
+  }
+
+  const watcher =
+    setInterval(
+      checkBotPresence,
+      checkInterval
+    );
+
+  checkBotPresence();
+
+  setTimeout(
+    () => {
+      clearInterval(
+        watcher
+      );
+
+      if (
+        button.textContent ===
+        "Esperando autorización..."
+      ) {
+        button.disabled =
+          false;
+
+        button.textContent =
+          originalText;
+      }
+    },
+    maximumWait
+  );
+}
+serverCurrent.addEventListener(
+  "click",
+  event => {
+    event.stopPropagation();
+
+    serverDropdown.classList.toggle(
+      "open"
+    );
+  }
+);
+
+document.addEventListener(
+  "click",
+  event => {
+    if (
+      !serverSwitcher.contains(
+        event.target
+      )
+    ) {
+      serverDropdown.classList.remove(
+        "open"
+      );
+    }
+  }
+);
 
 const toast = document.getElementById("toast");
 const showToast = () => {
@@ -308,11 +1456,47 @@ const showToast = () => {
   window.toastTimer = setTimeout(() => toast.classList.remove("show"), 2300);
 };
 
-document.querySelectorAll("button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    if (btn.id !== "hamburger") showToast();
+document
+  .querySelectorAll("button")
+  .forEach(btn => {
+    btn.addEventListener(
+      "click",
+      () => {
+
+const ignoredButton =
+  btn.id === "openWelcomeVariables" ||
+  btn.id === "hamburger" ||
+  btn.id === "serverCurrent" ||
+  btn.id === "topProfile" ||
+  btn.id === "sessionInviteBot" ||
+  btn.id === "publicMyServers" ||
+  btn.id === "publicInviteBot" ||
+  btn.id === "publicBotStatus" ||
+  btn.id === "publicSupport" ||
+  btn.id === "publicLogout" ||
+  btn.id === "publicDiscordSupport" ||
+  btn.classList.contains(
+    "public-support-button"
+  ) ||
+  btn.classList.contains(
+    "server-dropdown-item"
+  ) ||
+  btn.classList.contains(
+    "session-invite-server"
+  ) ||
+  btn.classList.contains(
+    "session-manage-server"
+  ) ||
+  btn.classList.contains(
+    "verify-variable-button"
+  );
+
+if (!ignoredButton) {
+             showToast();
+        }
+      }
+    );
   });
-});
 
 document.querySelectorAll(".side-item").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -320,6 +1504,415 @@ document.querySelectorAll(".side-item").forEach(btn => {
     btn.classList.add("active");
   });
 });
+/* =========================================================
+   NAVEGACIÓN PÚBLICA DE MIS SERVIDORES
+   ========================================================= */
+
+let publicBotStatusInterval =
+  null;
+
+function stopPublicBotStatusUpdates() {
+  if (
+    publicBotStatusInterval
+  ) {
+    clearInterval(
+      publicBotStatusInterval
+    );
+
+    publicBotStatusInterval =
+      null;
+  }
+}
+
+document
+  .getElementById(
+    "publicMyServers"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+  stopPublicBotStatusUpdates();
+
+      showSessionServersPage();
+
+      window.history.replaceState(
+        {},
+        "",
+        "/?view=servers"
+      );
+    }
+  );
+
+document
+  .getElementById(
+    "publicInviteBot"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      stopPublicBotStatusUpdates();
+
+      window.open(
+        "/auth/bot/invite",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  );
+
+document
+  .getElementById(
+    "publicBotStatus"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      document.body.classList.add(
+        "servers-selection-mode"
+      );
+
+      stopPublicBotStatusUpdates();
+
+      pageContent.innerHTML = `
+        <div class="dynamic-page">
+          <section class="section-header">
+            <div>
+              <span>
+                ESTADO DEL SERVICIO
+              </span>
+
+              <h1>
+                Estado del bot
+              </h1>
+
+              <p>
+                Información actualizada automáticamente cada segundo.
+              </p>
+            </div>
+          </section>
+
+          <section class="public-status-grid">
+            <article class="public-info-card">
+              <span>
+                CONEXIÓN
+              </span>
+
+              <strong id="liveBotConnection">
+                Consultando...
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                LATENCIA
+              </span>
+
+              <strong id="liveBotLatency">
+                -- ms
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                TIEMPO ACTIVO
+              </span>
+
+              <strong id="liveBotUptime">
+                Sin datos
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                ÚLTIMA ACTUALIZACIÓN
+              </span>
+
+              <strong id="liveBotUpdatedAt">
+                --
+              </strong>
+            </article>
+          </section>
+        </div>
+      `;
+
+      async function updatePublicBotStatus() {
+        const connectionElement =
+          document.getElementById(
+            "liveBotConnection"
+          );
+
+        const latencyElement =
+          document.getElementById(
+            "liveBotLatency"
+          );
+
+        const uptimeElement =
+          document.getElementById(
+            "liveBotUptime"
+          );
+
+        const updatedElement =
+          document.getElementById(
+            "liveBotUpdatedAt"
+          );
+
+        /*
+          Si la persona salió de esta página,
+          detenemos el intervalo.
+        */
+
+        if (
+          !connectionElement ||
+          !latencyElement ||
+          !uptimeElement ||
+          !updatedElement
+        ) {
+          stopPublicBotStatusUpdates();
+
+          return;
+        }
+
+        try {
+          const response =
+            await fetch(
+              `${API_URL}/api/bot/status`,
+              {
+                method:
+                  "GET",
+
+                headers: {
+                  Accept:
+                    "application/json",
+                },
+
+                cache:
+                  "no-store",
+
+                credentials:
+                  "include",
+              }
+            );
+
+          const result =
+            await response.json();
+
+          if (
+            !response.ok ||
+            !result.success
+          ) {
+            throw new Error(
+              result.message ||
+              "No se pudo consultar el bot."
+            );
+          }
+
+          const bot =
+            result.data ||
+            {};
+
+          const online =
+            bot.status ===
+              "online" ||
+            bot.online ===
+              true;
+
+          connectionElement.textContent =
+            online
+              ? "En línea"
+              : "Desconectado";
+
+          connectionElement.classList.toggle(
+            "live-status-online",
+            online
+          );
+
+          connectionElement.classList.toggle(
+            "live-status-offline",
+            !online
+          );
+
+       /*
+  La latencia se actualiza mediante
+  actualizarLatenciaRapida().
+*/
+          uptimeElement.textContent =
+            bot.uptime ||
+            "Sin datos";
+
+          updatedElement.textContent =
+            new Date()
+              .toLocaleTimeString(
+                "es-AR"
+              );
+        } catch (error) {
+          console.error(
+            "Error actualizando el estado del bot:",
+            error
+          );
+
+          connectionElement.textContent =
+            "Sin conexión";
+
+          connectionElement.classList.remove(
+            "live-status-online"
+          );
+
+          connectionElement.classList.add(
+            "live-status-offline"
+          );
+
+          updatedElement.textContent =
+            "Error";
+        }
+      }
+
+      updatePublicBotStatus();
+
+
+publicBotStatusInterval =
+  setInterval(
+    updatePublicBotStatus,
+    500
+  );
+         }
+  );
+
+document
+  .getElementById(
+    "publicSupport"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+  stopPublicBotStatusUpdates();
+      document.body.classList.add(
+        "servers-selection-mode"
+      );
+
+      pageContent.innerHTML = `
+        <div class="dynamic-page">
+          <section class="section-header">
+            <div>
+              <span>
+                AYUDA
+              </span>
+
+              <h1>
+                Centro de soporte
+              </h1>
+
+              <p>
+                Encontrá ayuda para configurar y administrar Nebula.
+              </p>
+            </div>
+          </section>
+
+          <section class="public-support-grid">
+            <article class="public-info-card">
+              <span>
+                CONFIGURACIÓN
+              </span>
+
+              <strong>
+                Primeros pasos
+              </strong>
+
+              <p>
+                Elegí un servidor y presioná Administrar.
+              </p>
+            </article>
+
+        <article
+  class="public-info-card public-support-discord"
+  id="publicDiscordSupport"
+>
+  <span>
+    DISCORD
+  </span>
+
+  <strong>
+    Nuestro servidor de Discord
+  </strong>
+
+  <p>
+    Entrá para recibir ayuda, comunicar errores y hacer consultas.
+  </p>
+
+  <button
+    class="public-support-button"
+    type="button"
+  >
+    Unirme al Discord
+    <b>↗</b>
+  </button>
+</article>
+
+            <article class="public-info-card">
+              <span>
+                SEGURIDAD
+              </span>
+
+              <strong>
+                Acceso protegido
+              </strong>
+
+              <p>
+                Solo podés administrar servidores donde tengas permisos.
+              </p>
+            </article>
+          </section>
+        </div>
+      `;
+document
+  .getElementById(
+    "publicDiscordSupport"
+  )
+  ?.addEventListener(
+    "click",
+    () => {
+      window.open(
+        "https://discord.gg/ue5c56nyCr",
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  );
+    }
+  );
+
+document
+  .getElementById(
+    "publicLogout"
+  )
+  ?.addEventListener(
+    "click",
+    async () => {
+      stopPublicBotStatusUpdates();
+
+      try {
+        await fetch(
+          "/auth/discord/logout",
+          {
+            method: "POST",
+            credentials: "include",
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Error cerrando sesión:",
+          error
+        );
+      }
+
+      localStorage.removeItem(
+        "nebulaSelectedServerId"
+      );
+
+      window.location.replace(
+        "/auth/dashboard"
+      );
+    }
+  );
 
 const sidebar = document.getElementById("sidebar");
 document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));
@@ -331,40 +1924,132 @@ document.addEventListener("keydown", e => {
   }
 });
 
-const canvas = document.getElementById("space");
-const ctx = canvas.getContext("2d");
-let stars = [];
+/* =========================================================
+   FONDO ANIMADO OPCIONAL
+   ========================================================= */
 
-function resize() {
-  canvas.width = innerWidth * devicePixelRatio;
-  canvas.height = innerHeight * devicePixelRatio;
-  canvas.style.width = innerWidth + "px";
-  canvas.style.height = innerHeight + "px";
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  stars = Array.from({length: 90}, () => ({
-    x: Math.random()*innerWidth,
-    y: Math.random()*innerHeight,
-    r: Math.random()*1.3+.2,
-    a: Math.random()*.45+.05,
-    s: Math.random()*.12+.02
-  }));
-}
-function animate() {
-  ctx.clearRect(0,0,innerWidth,innerHeight);
-  stars.forEach(star => {
-    star.y -= star.s;
-    if (star.y < 0) star.y = innerHeight;
-    ctx.beginPath();
-    ctx.arc(star.x,star.y,star.r,0,Math.PI*2);
-    ctx.fillStyle = `rgba(167,139,250,${star.a})`;
-    ctx.fill();
-  });
-  requestAnimationFrame(animate);
-}
-resize();
-animate();
-addEventListener("resize",resize);
+const canvas =
+  document.getElementById(
+    "space"
+  );
 
+if (canvas) {
+  const ctx =
+    canvas.getContext(
+      "2d"
+    );
+
+  let stars = [];
+
+  function resize() {
+    canvas.width =
+      innerWidth *
+      devicePixelRatio;
+
+    canvas.height =
+      innerHeight *
+      devicePixelRatio;
+
+    canvas.style.width =
+      innerWidth +
+      "px";
+
+    canvas.style.height =
+      innerHeight +
+      "px";
+
+    ctx.setTransform(
+      devicePixelRatio,
+      0,
+      0,
+      devicePixelRatio,
+      0,
+      0
+    );
+
+    stars =
+      Array.from(
+        {
+          length: 90,
+        },
+        () => ({
+          x:
+            Math.random() *
+            innerWidth,
+
+          y:
+            Math.random() *
+            innerHeight,
+
+          r:
+            Math.random() *
+              1.3 +
+            0.2,
+
+          a:
+            Math.random() *
+              0.45 +
+            0.05,
+
+          s:
+            Math.random() *
+              0.12 +
+            0.02,
+        })
+      );
+  }
+
+  function animate() {
+    ctx.clearRect(
+      0,
+      0,
+      innerWidth,
+      innerHeight
+    );
+
+    stars.forEach(
+      star => {
+        star.y -=
+          star.s;
+
+        if (
+          star.y <
+          0
+        ) {
+          star.y =
+            innerHeight;
+        }
+
+        ctx.beginPath();
+
+        ctx.arc(
+          star.x,
+          star.y,
+          star.r,
+          0,
+          Math.PI * 2
+        );
+
+        ctx.fillStyle =
+          `rgba(255,255,255,${star.a})`;
+
+        ctx.fill();
+      }
+    );
+
+    requestAnimationFrame(
+      animate
+    );
+  }
+
+  resize();
+  animate();
+
+  addEventListener(
+    "resize",
+    resize
+  );
+}
 
 /* =========================================================
    ETAPA 1 — NAVEGACIÓN REAL DEL PANEL
@@ -383,7 +2068,22 @@ while (sibling) {
 }
 mainElement.appendChild(pageContent);
 
-const dashboardHTML = pageContent.innerHTML;
+const dashboardHTML =
+  pageContent.innerHTML;
+
+pageContent.innerHTML = `
+  <div class="dynamic-page">
+    <div class="servers-loading">
+      <div class="loading-spinner"></div>
+
+      <strong>
+        Cargando tu cuenta de Discord...
+      </strong>
+    </div>
+  </div>
+`;
+
+loadDashboardSession();
 
 const pageDefinitions = {
   "Servidores": {
@@ -861,15 +2561,71 @@ function buildPage(type) {
 }
 
 async function renderPage(label) {
-  if (label === "Dashboard") {
-    pageContent.innerHTML = dashboardHTML;
-    initializeInteractiveButtons();
-    cargarDatosDashboard();
+ if (label === "Dashboard") {
+  document.body.classList.remove(
+    "servers-selection-mode"
+  );
+
+  pageContent.innerHTML =
+    dashboardHTML;
+
+  initializeInteractiveButtons();
+
+
+  updateDashboardUser(
+    dashboardSessionUser
+  );
+
+  renderServerDropdown();
+
+  cargarDatosDashboard();
+
+  return;
+}
+
+if (
+  label === "Servidores" ||
+  label === "Servidor actual"
+) {
+
+  if (!selectedServerId) {
+    showSessionServersPage();
+
+    window.history.replaceState(
+      {},
+      "",
+      "/?view=servers"
+    );
+
     return;
   }
 
-if (label === "Servidores") {
-  await cargarServidoresReales();
+  const selectedServer =
+    dashboardServers.find(
+      server =>
+        String(server.id) ===
+        String(selectedServerId)
+    );
+
+  if (
+    !selectedServer ||
+    !selectedServer.botPresent
+  ) {
+    showSessionServersPage();
+
+    window.history.replaceState(
+      {},
+      "",
+      "/?view=servers"
+    );
+
+    return;
+  }
+
+  await abrirPanelServidor(
+    selectedServerId
+  );
+
   return;
 }
 
@@ -888,6 +2644,7 @@ if (label === "Servidores") {
     </div>
   `;
   initializeInteractiveButtons();
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -911,8 +2668,6 @@ document.querySelectorAll(".side-item").forEach(button => {
    CONEXIÓN DEL DASHBOARD CON LA API
    ========================================================= */
 
-const API_URL = window.location.origin;
-
 async function cargarDatosDashboard() {
   try {
     const respuesta = await fetch(`${API_URL}/api/dashboard`);
@@ -927,10 +2682,29 @@ async function cargarDatosDashboard() {
       throw new Error("La API respondió con un error");
     }
 
-    const datos = resultado.data;
+ const datos =
+    resultado.data;
 
-    actualizarEstadisticas(datos.statistics);
-    actualizarEstadoBot(datos.bot);
+dashboardBotData = {
+  name:
+    datos?.bot?.name ||
+    "Nebula Bot",
+
+  avatar:
+    datos?.bot?.avatar ||
+    "",
+};
+
+    actualizarEstadisticas
+
+(datos.statistics
+
+);
+    actualizarEstadoBot
+
+(datos.bot
+
+);
     actualizarEstadoSistema(datos.system);
 
     console.log("Datos recibidos desde la API:", datos);
@@ -1023,13 +2797,15 @@ function actualizarEstadoBot(bot) {
     );
   }
 
-  const latencias = document.querySelectorAll(
+ /*
+  La latencia inferior se actualiza
+  mediante actualizarLatenciaRapida().
+*/
+
+const latencias =
+  document.querySelectorAll(
     ".footer-status strong"
   );
-
-  if (latencias[0]) {
-    latencias[0].textContent = `${bot.latency} ms`;
-  }
 
   if (latencias[3]) {
     latencias[3].textContent = bot.uptime;
@@ -1078,6 +2854,202 @@ function mostrarErrorConexion() {
 }
 
 cargarDatosDashboard();
+/* =========================================================
+   LATENCIA RÁPIDA — ESTADO Y BARRA INFERIOR
+   ========================================================= */
+
+let latencyRequestRunning =
+  false;
+
+async function actualizarLatenciaRapida() {
+  /*
+    Evita iniciar otra consulta mientras
+    la anterior todavía sigue funcionando.
+  */
+
+  if (latencyRequestRunning) {
+    return;
+  }
+
+  latencyRequestRunning = true;
+
+  /*
+    Guardamos el instante exacto antes
+    de enviar la solicitud.
+  */
+
+  const requestStartedAt =
+    performance.now();
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/bot/status?t=${Date.now()}`,
+        {
+          method: "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    /*
+      Calculamos cuánto tardó realmente
+      el navegador en consultar el servidor.
+    */
+
+    const requestFinishedAt =
+      performance.now();
+
+    const webLatency =
+      Math.max(
+        0,
+        Math.round(
+          requestFinishedAt -
+          requestStartedAt
+        )
+      );
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo consultar el estado."
+      );
+    }
+
+    /*
+      Latencia real de Discord.
+      Esta puede tardar varios segundos
+      en cambiar porque depende del heartbeat.
+    */
+
+    const discordLatency =
+      Math.max(
+        0,
+        Math.round(
+          Number(
+            result.data?.latency ||
+            0
+          )
+        )
+      );
+
+    /*
+      Actualizamos la tarjeta de Estado del bot
+      con la latencia web, que cambia rápidamente.
+    */
+
+    const liveLatency =
+      document.getElementById(
+        "liveBotLatency"
+      );
+
+    if (liveLatency) {
+      liveLatency.textContent =
+        `${webLatency} ms`;
+
+      liveLatency.title =
+        `Discord: ${discordLatency} ms`;
+    }
+
+    /*
+      Actualizamos también la parte inferior
+      del dashboard.
+    */
+
+    const footerLatency =
+      document.querySelector(
+        ".footer-status > div:first-child strong"
+      );
+
+    if (footerLatency) {
+      footerLatency.textContent =
+        `${webLatency} ms`;
+
+      footerLatency.title =
+        `Discord: ${discordLatency} ms`;
+    }
+
+    const updatedAt =
+      document.getElementById(
+        "liveBotUpdatedAt"
+      );
+
+    if (updatedAt) {
+      updatedAt.textContent =
+        new Date()
+          .toLocaleTimeString(
+            "es-AR",
+            {
+              hour:
+                "2-digit",
+
+              minute:
+                "2-digit",
+
+              second:
+                "2-digit",
+            }
+          );
+    }
+  } catch (error) {
+    console.error(
+      "Error actualizando la latencia:",
+      error
+    );
+
+    const liveLatency =
+      document.getElementById(
+        "liveBotLatency"
+      );
+
+    if (liveLatency) {
+      liveLatency.textContent =
+        "Sin conexión";
+    }
+
+    const footerLatency =
+      document.querySelector(
+        ".footer-status > div:first-child strong"
+      );
+
+    if (footerLatency) {
+      footerLatency.textContent =
+        "Sin conexión";
+    }
+  } finally {
+    latencyRequestRunning = false;
+  }
+}
+
+/*
+  Primera actualización inmediata.
+*/
+
+actualizarLatenciaRapida();
+
+/*
+  Se actualiza dos veces por segundo.
+*/
+
+setInterval(
+  actualizarLatenciaRapida,
+  500
+);
 /* =========================================================
    ACTUALIZACIÓN EN TIEMPO REAL CON SOCKET.IO
    ========================================================= */
@@ -1289,6 +3261,11 @@ document.querySelectorAll(".manage-real-server").forEach(button => {
    ========================================================= */
 
 async function abrirPanelServidor(serverId) {
+stopPublicBotStatusUpdates();
+
+  document.body.classList.remove(
+    "servers-selection-mode"
+  );
   pageContent.innerHTML = `
     <div class="dynamic-page">
       <div class="servers-loading">
@@ -1331,10 +3308,21 @@ async function abrirPanelServidor(serverId) {
       </div>
     `;
 
-    document
-      .getElementById("backToServers")
-      ?.addEventListener("click", cargarServidoresReales);
-  }
+document
+  .getElementById("backToServers")
+  ?.addEventListener(
+    "click",
+    () => {
+      showSessionServersPage();
+
+      window.history.replaceState(
+        {},
+        "",
+        "/?view=servers"
+      );
+    }
+  );
+     }
 }
 
 function mostrarPanelServidor(servidor) {
@@ -1609,10 +3597,21 @@ function mostrarPanelServidor(servidor) {
     </div>
   `;
 
-  document
-    .getElementById("backToServers")
-    ?.addEventListener("click", cargarServidoresReales);
 document
+  .getElementById("backToServers")
+  ?.addEventListener(
+    "click",
+    () => {
+      showSessionServersPage();
+
+      window.history.replaceState(
+        {},
+        "",
+        "/?view=servers"
+      );
+    }
+  );
+  document
   .querySelector('[data-tool="welcome"]')
   ?.addEventListener("click", () => {
     abrirConfiguracionBienvenida(servidor);
@@ -1868,6 +3867,73 @@ function mostrarConfiguracionVerificacion(
   };
 
 const currentAppearance = {
+
+  cardDesign:
+    "classic",
+
+  splitImageUrl:
+    "",
+
+  splitImagePosition:
+    "left",
+
+  splitImageFit:
+    "cover",
+
+  splitImageDarkness:
+    45,
+
+  splitImageWidth:
+    48,
+
+  splitShowImage:
+    true,
+
+  splitShowDate:
+    true,
+
+  splitShowAccess:
+    true,
+
+  terminalTitle:
+    "NEBULA SECURITY TERMINAL",
+
+  terminalPrefix:
+    ">",
+
+  terminalStatusText:
+    "Sistema preparado",
+
+  terminalBackgroundColor:
+    "#020703",
+
+  terminalTextColor:
+    "#d9ffe0",
+
+  terminalAccentColor:
+    "#22c55e",
+
+  terminalBorderColor:
+    "#14532d",
+
+  terminalShowCursor:
+    true,
+
+  terminalShowLines:
+    true,
+
+  terminalShowServer:
+    true,
+
+  terminalShowRole:
+    true,
+
+  terminalGlow:
+    25,
+
+  terminalRadius:
+    10,
+
   pageName:
     "Trade Room Verification",
 
@@ -2101,6 +4167,13 @@ const currentAppearance = {
         >
           🛡 Seguridad
         </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="configuration"
+        >
+          ⚙ Configuración
+        </button>
       </nav>
 
       <div class="verify-tab-content">
@@ -2158,6 +4231,7 @@ const currentAppearance = {
                 <span>ROL A ENTREGAR</span>
 
                 <select id="verifyRole">
+
                   <option value="">
                     Seleccionar rol...
                   </option>
@@ -2266,14 +4340,24 @@ const currentAppearance = {
 
       <article class="section-panel">
 
-        <div class="section-panel-head">
-          <div>
-            <span>PANEL DE DISCORD</span>
-            <h3>
-              Configuración del embed
-            </h3>
-          </div>
-        </div>
+    <div class="section-panel-head">
+  <div>
+    <span>PANEL DE DISCORD</span>
+
+    <h3>
+      Configuración del embed
+    </h3>
+  </div>
+
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
 
         <label class="welcome-field">
           <span>TÍTULO DEL EMBED</span>
@@ -2495,26 +4579,7 @@ const currentAppearance = {
 
       </article>
 
-      <article class="section-panel verify-panel-variables">
-
-        <div class="section-panel-head">
-          <div>
-            <span>VARIABLES DISPONIBLES</span>
-            <h3>Textos dinámicos</h3>
-          </div>
-        </div>
-
-        <div class="verify-variable-list">
-          <code>{server}</code>
-          <span>Nombre del servidor</span>
-
-          <code>{date}</code>
-          <span>Fecha actual</span>
-
-          <code>{time}</code>
-          <span>Hora actual</span>
-        </div>
-
+    
       </article>
 
     </div>
@@ -2745,20 +4810,32 @@ const currentAppearance = {
           data-verify-panel="logs"
         >
           <article class="section-panel">
-            <div class="section-panel-head">
-              <div>
-                <span>CANAL DE REGISTROS</span>
-                <h3>Logs de verificación</h3>
-              </div>
-            </div>
+<div class="section-panel-head">
+  <div>
+    <span>CANAL DE REGISTROS</span>
 
-            <label class="welcome-field">
-              <span>CANAL DE LOGS</span>
+    <h3>
+      Logs de verificación
+    </h3>
+  </div>
 
-              <select id="verifyLogs">
-                <option value="">
-                  Seleccionar canal...
-                </option>
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
+            
+        <label class="welcome-field">
+          <span>CANAL DE LOGS</span>
+
+          <select id="verifyLogs">
+            <option value="">
+                Seleccionar canal...
+              </option>
 
                 ${logsOptions}
               </select>
@@ -3009,9 +5086,421 @@ const currentAppearance = {
 
     <div class="appearance-editor-controls">
 
+
       <!-- IDENTIDAD -->
 
-      <article class="section-panel">
+<!-- DISEÑOS -->
+
+<article class="section-panel appearance-design-section">
+  <div class="section-panel-head">
+    <div>
+      <span>ESTILO DE LA TARJETA</span>
+      <h3>Diseños</h3>
+    </div>
+  </div>
+
+  <div class="appearance-design-grid">
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="classic"
+        ${
+          currentAppearance.cardDesign === "classic"
+            ? "checked"
+            : ""
+        }
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          ◫
+        </span>
+
+        <strong>
+          Clásico
+        </strong>
+
+        <p>
+          Diseño actual de Nebula.
+        </p>
+      </div>
+    </label>
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="split"
+        ${
+          currentAppearance.cardDesign === "split"
+            ? "checked"
+            : ""
+        }
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          ◧
+        </span>
+
+        <strong>
+          Split Premium
+        </strong>
+
+        <p>
+          Imagen a la izquierda y datos a la derecha.
+        </p>
+      </div>
+    </label>
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="terminal"
+        ${
+          currentAppearance.cardDesign === "terminal"
+            ? "checked"
+            : ""
+        }
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          &gt;_
+        </span>
+
+        <strong>
+          Terminal
+        </strong>
+
+        <p>
+          Diseño serio con estilo de consola.
+        </p>
+      </div>
+    </label>
+
+  </div>
+</article>
+<!-- OPCIONES ESPECÍFICAS DE SPLIT PREMIUM -->
+
+<div
+  class="design-settings-panel"
+  data-design-settings="split"
+>
+  <article class="section-panel">
+
+    <div class="section-panel-head">
+      <div>
+        <span>SPLIT PREMIUM</span>
+
+        <h3>
+          Imagen y distribución
+        </h3>
+      </div>
+    </div>
+
+    <div class="appearance-form-grid">
+
+      <label class="welcome-field appearance-wide">
+        <span>
+          URL DE LA IMAGEN LATERAL
+        </span>
+
+        <input
+          id="verifySplitImageUrl"
+          maxlength="1000"
+          placeholder="https://..."
+          value="${escapeHtmlAttribute(
+            currentAppearance.splitImageUrl ||
+            ""
+          )}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          POSICIÓN DE LA IMAGEN
+        </span>
+
+        <select id="verifySplitImagePosition">
+
+          <option
+            value="left"
+            ${
+              currentAppearance.splitImagePosition !==
+              "right"
+                ? "selected"
+                : ""
+            }
+          >
+            Izquierda
+          </option>
+
+          <option
+            value="right"
+            ${
+              currentAppearance.splitImagePosition ===
+              "right"
+                ? "selected"
+                : ""
+            }
+          >
+            Derecha
+          </option>
+
+        </select>
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          AJUSTE DE LA IMAGEN
+        </span>
+
+        <select id="verifySplitImageFit">
+
+          <option
+            value="cover"
+            ${
+              currentAppearance.splitImageFit !==
+              "contain"
+                ? "selected"
+                : ""
+            }
+          >
+            Cubrir
+          </option>
+
+          <option
+            value="contain"
+            ${
+              currentAppearance.splitImageFit ===
+              "contain"
+                ? "selected"
+                : ""
+            }
+          >
+            Contener
+          </option>
+
+        </select>
+      </label>
+
+    </div>
+
+    <div class="appearance-range-grid">
+
+      ${appearanceRangeControl(
+        "verifySplitImageDarkness",
+        "OSCURIDAD DE LA IMAGEN",
+        currentAppearance.splitImageDarkness ?? 45,
+        0,
+        90,
+        "%"
+      )}
+
+      ${appearanceRangeControl(
+        "verifySplitImageWidth",
+        "ANCHO DE LA IMAGEN",
+        currentAppearance.splitImageWidth ?? 48,
+        35,
+        65,
+        "%"
+      )}
+
+    </div>
+
+    <div class="verify-options-grid">
+
+      ${createToggle(
+        "verifySplitShowImage",
+        "Mostrar imagen lateral",
+        "Activa o desactiva la imagen del diseño.",
+        currentAppearance.splitShowImage !== false
+      )}
+
+      ${createToggle(
+        "verifySplitShowDate",
+        "Mostrar fecha",
+        "Muestra la fecha actual dentro de la tarjeta.",
+        currentAppearance.splitShowDate !== false
+      )}
+
+      ${createToggle(
+        "verifySplitShowAccess",
+        "Mostrar acceso",
+        "Muestra el estado de acceso instantáneo.",
+        currentAppearance.splitShowAccess !== false
+      )}
+
+    </div>
+
+  </article>
+</div>
+
+<!-- OPCIONES ESPECÍFICAS DE TERMINAL -->
+
+<div
+  class="design-settings-panel"
+  data-design-settings="terminal"
+>
+  <article class="section-panel">
+
+    <div class="section-panel-head">
+      <div>
+        <span>TERMINAL</span>
+
+        <h3>
+          Consola de seguridad
+        </h3>
+      </div>
+    </div>
+
+    <div class="appearance-form-grid">
+
+      <label class="welcome-field appearance-wide">
+        <span>
+          TÍTULO DE LA TERMINAL
+        </span>
+
+        <input
+          id="verifyTerminalTitle"
+          maxlength="100"
+          value="${escapeHtmlAttribute(
+            currentAppearance.terminalTitle ||
+            "NEBULA SECURITY TERMINAL"
+          )}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          PREFIJO DE LAS LÍNEAS
+        </span>
+
+        <input
+          id="verifyTerminalPrefix"
+          maxlength="5"
+          value="${escapeHtmlAttribute(
+            currentAppearance.terminalPrefix ||
+            ">"
+          )}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          TEXTO DE ESTADO
+        </span>
+
+        <input
+          id="verifyTerminalStatusText"
+          maxlength="80"
+          value="${escapeHtmlAttribute(
+            currentAppearance.terminalStatusText ||
+            "Sistema preparado"
+          )}"
+        >
+      </label>
+
+    </div>
+
+    <div class="appearance-colors-grid">
+
+      ${appearanceColorControl(
+        "verifyTerminalBackgroundColor",
+        "COLOR DEL FONDO",
+        currentAppearance.terminalBackgroundColor ||
+        "#020703"
+      )}
+
+      ${appearanceColorControl(
+        "verifyTerminalTextColor",
+        "COLOR DEL TEXTO",
+        currentAppearance.terminalTextColor ||
+        "#d9ffe0"
+      )}
+
+      ${appearanceColorControl(
+        "verifyTerminalAccentColor",
+        "COLOR PRINCIPAL",
+        currentAppearance.terminalAccentColor ||
+        "#22c55e"
+      )}
+
+      ${appearanceColorControl(
+        "verifyTerminalBorderColor",
+        "COLOR DEL BORDE",
+        currentAppearance.terminalBorderColor ||
+        "#14532d"
+      )}
+
+    </div>
+
+    <div class="verify-options-grid">
+
+      ${createToggle(
+        "verifyTerminalShowCursor",
+        "Cursor parpadeante",
+        "Muestra un cursor discreto al final de la terminal.",
+        currentAppearance.terminalShowCursor !== false
+      )}
+
+      ${createToggle(
+        "verifyTerminalShowLines",
+        "Líneas separadoras",
+        "Muestra divisiones con estilo de consola.",
+        currentAppearance.terminalShowLines !== false
+      )}
+
+      ${createToggle(
+        "verifyTerminalShowServer",
+        "Mostrar servidor",
+        "Muestra el nombre del servidor.",
+        currentAppearance.terminalShowServer !== false
+      )}
+
+      ${createToggle(
+        "verifyTerminalShowRole",
+        "Mostrar rol",
+        "Muestra el rol que recibirá el usuario.",
+        currentAppearance.terminalShowRole !== false
+      )}
+
+    </div>
+
+    <div class="appearance-range-grid">
+
+      ${appearanceRangeControl(
+        "verifyTerminalGlow",
+        "INTENSIDAD DEL BRILLO",
+        currentAppearance.terminalGlow ?? 25,
+        0,
+        70,
+        "%"
+      )}
+
+      ${appearanceRangeControl(
+        "verifyTerminalRadius",
+        "BORDES REDONDEADOS",
+        currentAppearance.terminalRadius ?? 10,
+        0,
+        30,
+        "px"
+      )}
+
+    </div>
+
+  </article>
+</div>
+
+
+     <article
+  class="section-panel"
+  data-appearance-section="identity"
+>
         <div class="section-panel-head">
           <div>
             <span>IDENTIDAD</span>
@@ -3074,8 +5563,11 @@ const currentAppearance = {
 
       <!-- COLORES -->
 
-      <article class="section-panel">
-        <div class="section-panel-head">
+<article
+  class="section-panel"
+  data-appearance-section="palette"
+>
+          <div class="section-panel-head">
           <div>
             <span>PALETA</span>
             <h3>Colores de la página</h3>
@@ -3137,8 +5629,11 @@ const currentAppearance = {
 
       <!-- FONDO -->
 
-      <article class="section-panel">
-        <div class="section-panel-head">
+<article
+  class="section-panel"
+  data-appearance-section="background"
+>
+            <div class="section-panel-head">
           <div>
             <span>FONDO</span>
             <h3>Diseño del escenario</h3>
@@ -3243,7 +5738,10 @@ const currentAppearance = {
 
       <!-- ANIMACIONES -->
 
-      <article class="section-panel">
+     <article
+  class="section-panel"
+  data-appearance-section="animations"
+>
         <div class="section-panel-head">
           <div>
             <span>EFECTOS</span>
@@ -3307,8 +5805,11 @@ const currentAppearance = {
 
       <!-- TARJETA -->
 
-      <article class="section-panel">
-        <div class="section-panel-head">
+<article
+  class="section-panel"
+  data-appearance-section="card"
+>
+           <div class="section-panel-head">
           <div>
             <span>CONTENEDOR</span>
             <h3>Tarjeta principal</h3>
@@ -3358,7 +5859,10 @@ const currentAppearance = {
 
       <!-- BOTÓN -->
 
-      <article class="section-panel">
+      <article
+  class="section-panel"
+  data-appearance-section="button"
+>
         <div class="section-panel-head">
           <div>
             <span>ACCIÓN PRINCIPAL</span>
@@ -3485,7 +5989,10 @@ const currentAppearance = {
 
       <!-- SONIDOS -->
 
-      <article class="section-panel">
+      <article
+  class="section-panel"
+  data-appearance-section="sounds"
+>
         <div class="section-panel-head">
           <div>
             <span>AUDIO</span>
@@ -3652,11 +6159,825 @@ const currentAppearance = {
             </label>
           </article>
         </section>
+<!-- CONFIGURACIÓN -->
+
+<section
+  class="verify-tab-panel"
+  data-verify-panel="configuration"
+>
+  <div class="configuration-flow">
+
+    <!-- ===================================================
+         1. MENSAJE DEL BOTÓN DE INTERACCIÓN
+         =================================================== -->
+
+    <article
+      class="section-panel configuration-flow-card"
+      id="interactionMessageConfiguration"
+      ${
+        config.verificationMethod === "interaction_button"
+          ? ""
+          : 'style="display:none;"'
+      }
+    >
+     <div class="verification-section-heading">
+  <div>
+    <h2>
+      1. Mensaje del botón de interacción
+    </h2>
+
+    <p>
+      Este es el mensaje privado que el bot enviará al usuario cuando presione el botón de verificación.
+    </p>
+  </div>
+
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifyInteractionTitle"
+              maxlength="256"
+              value="${escapeHtmlAttribute(
+                config.interactionTitle ||
+                "🔒 Verificá tu cuenta"
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifyInteractionMessage"
+              rows="8"
+              maxlength="2000"
+            >${escapeHtml(
+              config.interactionMessage ||
+              `¡Hola {usuario}! 👋
+
+Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.
+
+El enlace es personal y solo puede utilizarse una vez.
+
+Si no solicitaste esto, ignorá este mensaje.`
+            )}</textarea>
+          </label>
+
+          <div class="configuration-variable-help">
+            <span>Variables disponibles:</span>
+
+            <code>{usuario}</code>
+            <code>{servidor}</code>
+            <code>{rol}</code>
+            <code>{fecha}</code>
+            <code>{hora}</code>
+          </div>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR DEL EMBED</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifyInteractionColor"
+                type="color"
+                value="${
+                  config.interactionColor ||
+                  "#8b5cf6"
+                }"
+              >
+
+              <input
+                id="verifyInteractionColorText"
+                maxlength="7"
+                value="${escapeHtmlAttribute(
+                  config.interactionColor ||
+                  "#8b5cf6"
+                )}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>IMAGEN OPCIONAL</span>
+
+            <input
+              id="verifyInteractionImage"
+              placeholder="https://i.imgur.com/imagen.png"
+              value="${escapeHtmlAttribute(
+                config.interactionImage ||
+                ""
+              )}"
+            >
+          </label>
+
+ <div class="configuration-button-fields">
+
+  <label class="welcome-field">
+    <span>EMOJI DEL BOTÓN</span>
+
+    <input
+      id="verifyInteractionButtonEmoji"
+      maxlength="16"
+      placeholder="🛡️"
+      value="${escapeHtmlAttribute(
+        config.interactionButtonEmoji ||
+        "🛡️"
+      )}"
+    >
+  </label>
+
+  <label class="welcome-field">
+    <span>NOMBRE DEL BOTÓN</span>
+
+    <input
+      id="verifyInteractionButtonText"
+      maxlength="80"
+      placeholder="Continuar verificación"
+      value="${escapeHtmlAttribute(
+        config.interactionButtonText ||
+        "Continuar verificación"
+      )}"
+    >
+  </label>
+
+</div>
+
+<div class="configuration-link-button-note">
+  <span>↗</span>
+
+  <p>
+    Este botón se mostrará como un enlace externo de Discord.
+  </p>
+</div>
+
+             </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA DEL MENSAJE
+          </span>
+
+          <div
+            class="configuration-discord-preview"
+            id="interactionMessagePreview"
+          >
+            <div
+              class="configuration-preview-embed"
+              id="interactionMessagePreviewEmbed"
+              style="--preview-color:${
+                config.interactionColor ||
+                "#8b5cf6"
+              };"
+            >
+              <strong id="interactionPreviewTitle">
+                ${
+                  escapeHtml(
+                    config.interactionTitle ||
+                    "🔒 Verificá tu cuenta"
+                  )
+                }
+              </strong>
+
+              <p id="interactionPreviewMessage">${
+                escapeHtml(
+                  config.interactionMessage ||
+                  `¡Hola Usuario! 👋
+
+Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.
+
+El enlace es personal y solo puede utilizarse una vez.
+
+Si no solicitaste esto, ignorá este mensaje.`
+                )
+              }</p>
+
+              <img
+                id="interactionPreviewImage"
+                class="configuration-preview-image"
+                src="${escapeHtmlAttribute(
+                  config.interactionImage ||
+                  ""
+                )}"
+                alt=""
+                ${
+                  config.interactionImage
+                    ? ""
+                    : 'style="display:none;"'
+                }
+              >
+            </div>
+
+            <button
+              class="configuration-preview-button"
+              id="interactionPreviewButton"
+              type="button"
+            >
+              ${
+                escapeHtml(
+                  config.interactionButtonText ||
+                  "Verificar mi cuenta"
+                )
+              }
+            </button>
+          </div>
+        </div>
 
       </div>
+    </article>
+
+    <!-- ===================================================
+         2. MENSAJE DESPUÉS DE VERIFICAR
+         =================================================== -->
+
+    <article class="section-panel configuration-flow-card">
+      <div class="configuration-flow-header">
+        <div>
+          <h3>
+            2. Mensaje después de verificar
+          </h3>
+
+          <p>
+            Este es el mensaje que verá el usuario en la página web
+            cuando complete correctamente la verificación.
+          </p>
+        </div>
+      </div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifySuccessTitle"
+              maxlength="256"
+              value="${escapeHtmlAttribute(
+                config.successTitle ||
+                "✅ Verificación completada"
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifySuccessMessage"
+              rows="7"
+              maxlength="1000"
+            >${escapeHtml(
+              config.successMessage ||
+              `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`
+            )}</textarea>
+          </label>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifySuccessColor"
+                type="color"
+                value="${
+                  config.successColor ||
+                  "#22c55e"
+                }"
+              >
+
+              <input
+                id="verifySuccessColorText"
+                maxlength="7"
+                value="${escapeHtmlAttribute(
+                  config.successColor ||
+                  "#22c55e"
+                )}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>ANIMACIÓN DE ÉXITO</span>
+
+            <select id="verifySuccessAnimation">
+              <option value="check">
+                Confirmación
+              </option>
+
+              <option value="confetti">
+                Confeti
+              </option>
+
+              <option value="none">
+                Sin animación
+              </option>
+            </select>
+          </label>
+
+          ${createToggle(
+            "verifyShowCountdown",
+            "Mostrar cuenta regresiva",
+            "Muestra los segundos antes de cerrar o redirigir.",
+            config.showCountdown !== false
+          )}
+
+          ${createToggle(
+            "verifyClosePageEnabled",
+            "Cerrar página automáticamente",
+            "Intenta cerrar la página al finalizar.",
+            Boolean(config.closePageEnabled)
+          )}
+
+        </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA
+          </span>
+
+          <div class="configuration-success-preview">
+            <div
+              class="configuration-success-icon"
+              id="successPreviewIcon"
+            >
+              ✓
+            </div>
+
+            <strong id="successPreviewTitle">
+              ${
+                escapeHtml(
+                  config.successTitle ||
+                  "Verificación completada"
+                )
+              }
+            </strong>
+
+            <p id="successPreviewMessage">${
+              escapeHtml(
+                config.successMessage ||
+                `Tu cuenta fue verificada correctamente.
+
+¡Bienvenido al servidor!
+
+Ya podés acceder a todos los canales.`
+              )
+            }</p>
+
+            <small>
+              Redirigiendo en 3 segundos...
+            </small>
+
+            <div class="configuration-progress-track">
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- ===================================================
+         3. MENSAJE PRIVADO DESPUÉS DE VERIFICAR
+         =================================================== -->
+
+    <article class="section-panel configuration-flow-card">
+      <div class="configuration-flow-header">
+        <div class="configuration-flow-title-row">
+          <div>
+            <h3>
+              3. Mensaje privado (MD)
+            </h3>
+
+            <p>
+              Este mensaje se enviará por privado al usuario
+              después de verificar correctamente su cuenta.
+            </p>
+          </div>
+
+          <span class="configuration-condition-badge">
+            OPCIONAL
+          </span>
+        </div>
+      </div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          ${createToggle(
+            "verifySuccessDmEnabled",
+            "Enviar mensaje privado",
+            "Envía un MD cuando el usuario completa la verificación.",
+            Boolean(config.successDmEnabled)
+          )}
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifySuccessDmTitle"
+              maxlength="256"
+              value="${escapeHtmlAttribute(
+                config.successDmTitle ||
+                "🎉 ¡Verificado!"
+              )}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifySuccessDmMessage"
+              rows="7"
+              maxlength="2000"
+            >${escapeHtml(
+              config.successDmMessage ||
+              `¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`
+            )}</textarea>
+          </label>
+
+          <div class="configuration-variable-help">
+            <span>Variables disponibles:</span>
+
+            <code>{usuario}</code>
+            <code>{servidor}</code>
+            <code>{rol}</code>
+            <code>{fecha}</code>
+            <code>{hora}</code>
+          </div>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR DEL EMBED</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifySuccessDmColor"
+                type="color"
+                value="${
+                  config.successDmColor ||
+                  "#3b82f6"
+                }"
+              >
+
+              <input
+                id="verifySuccessDmColorText"
+                maxlength="7"
+                value="${escapeHtmlAttribute(
+                  config.successDmColor ||
+                  "#3b82f6"
+                )}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>THUMBNAIL OPCIONAL</span>
+
+            <input
+              id="verifySuccessDmThumbnail"
+              placeholder="https://i.imgur.com/imagen.png"
+              value="${escapeHtmlAttribute(
+                config.successDmThumbnail ||
+                ""
+              )}"
+            >
+          </label>
+
+        </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA DEL MD
+          </span>
+
+          <div class="configuration-discord-preview">
+            <div
+              class="configuration-preview-embed"
+              id="successDmPreviewEmbed"
+              style="--preview-color:${
+                config.successDmColor ||
+                "#3b82f6"
+              };"
+            >
+              <div class="configuration-dm-preview-head">
+                <div>
+                  <strong id="successDmPreviewTitle">
+                    ${
+                      escapeHtml(
+                        config.successDmTitle ||
+                        "🎉 ¡Verificado!"
+                      )
+                    }
+                  </strong>
+
+                  <p id="successDmPreviewMessage">${
+                    escapeHtml(
+                      config.successDmMessage ||
+                      `¡Hola Usuario! 🎉
+
+Tu cuenta fue verificada correctamente en el servidor.
+
+Gracias por formar parte de nuestra comunidad.`
+                    )
+                  }</p>
+                </div>
+
+                <img
+                  id="successDmPreviewThumbnail"
+                  class="configuration-preview-thumbnail"
+                  src="${escapeHtmlAttribute(
+                    config.successDmThumbnail ||
+                    ""
+                  )}"
+                  alt=""
+                  ${
+                    config.successDmThumbnail
+                      ? ""
+                      : 'style="display:none;"'
+                  }
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+  </div>
+</section>
+      </div>
+
+      <div
+  class="variables-modal"
+  id="variablesModal"
+  aria-hidden="true"
+>
+  <div
+    class="variables-modal-backdrop"
+    data-close-variables
+  ></div>
+
+  <section
+    class="variables-modal-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="variablesModalTitle"
+  >
+    <header class="variables-modal-header">
+      <div>
+        <span>
+          VARIABLES DISPONIBLES
+        </span>
+
+        <h2 id="variablesModalTitle">
+          Textos dinámicos
+        </h2>
+
+        <p>
+          Presioná una variable para copiarla.
+        </p>
+      </div>
+
+      <button
+        class="variables-modal-close"
+        data-close-variables
+        type="button"
+        aria-label="Cerrar variables"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="variables-modal-search">
+      <span>⌕</span>
+
+      <input
+        id="variablesSearch"
+        type="search"
+        placeholder="Buscar una variable..."
+        autocomplete="off"
+      >
+    </div>
+
+<div class="variables-modal-content">
+
+  <aside class="variables-categories">
+
+    <button
+      type="button"
+      class="variables-category active"
+      data-variable-category="user"
+    >
+      <span>👤</span>
+      Usuario
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="server"
+    >
+      <span>🌍</span>
+      Servidor
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="roles"
+    >
+      <span>🛡️</span>
+      Roles
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="channel"
+    >
+      <span>📢</span>
+      Canal
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="bot"
+    >
+      <span>🤖</span>
+      Bot
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="date"
+    >
+      <span>📅</span>
+      Fecha y hora
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="verification"
+    >
+      <span>✅</span>
+      Verificación
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="tickets"
+    >
+      <span>🎫</span>
+      Tickets
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="moderation"
+    >
+      <span>👮</span>
+      Moderación
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="web"
+    >
+      <span>🌐</span>
+      Web
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="messages"
+    >
+      <span>💬</span>
+      Mensajes
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="invites"
+    >
+      <span>🎉</span>
+      Invitaciones
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="emojis"
+    >
+      <span>😀</span>
+      Emojis
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="system"
+    >
+      <span>⚙️</span>
+      Sistema
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="stats"
+    >
+      <span>📊</span>
+      Estadísticas
+    </button>
+
+  </aside>
+
+  <section class="variables-results">
+
+    <div
+      class="variables-modal-list"
+      id="variablesModalList"
+    >
+    </div>
+
+  </section>
+
+</div>
+
+<div
+  class="variables-modal-empty"
+  id="variablesModalEmpty"
+  hidden
+>
+  No se encontraron variables.
+</div>
+
+<footer class="variables-modal-footer">
+
+  <span>
+    Después de copiar, pegala usando
+    <kbd>Ctrl</kbd> + <kbd>V</kbd>
+  </span>
+
+  <button
+    data-close-variables
+    type="button"
+  >
+    Cerrar
+  </button>
+</footer>
+
+  </section>
+</div>
 
       <div class="verify-sticky-actions">
-        <button
+
+         <button
           id="sendVerificationPanel"
           class="welcome-test-button"
           type="button"
@@ -3677,6 +6998,1530 @@ const currentAppearance = {
 
   const getElement =
     id => document.getElementById(id);
+async function copiarVariable(
+  variable,
+  button
+) {
+  try {
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+      await navigator.clipboard.writeText(
+        variable
+      );
+    } else {
+      const temporaryInput =
+        document.createElement(
+          "textarea"
+        );
+
+      temporaryInput.value =
+        variable;
+
+      temporaryInput.setAttribute(
+        "readonly",
+        ""
+      );
+
+      temporaryInput.style.position =
+        "fixed";
+
+      temporaryInput.style.opacity =
+        "0";
+
+      document.body.appendChild(
+        temporaryInput
+      );
+
+      temporaryInput.select();
+
+      const copied =
+        document.execCommand(
+          "copy"
+        );
+
+      temporaryInput.remove();
+
+      if (!copied) {
+        throw new Error(
+          "No se pudo copiar."
+        );
+      }
+    }
+
+    const buttonText =
+      button.querySelector("b");
+
+    button.classList.add(
+      "copied"
+    );
+
+    if (buttonText) {
+      buttonText.textContent =
+        "Copiado ✓";
+    }
+
+    showMessage(
+      "Variable copiada",
+      `${variable} se copió correctamente.`
+    );
+
+    setTimeout(
+      () => {
+        button.classList.remove(
+          "copied"
+        );
+
+        if (buttonText) {
+          buttonText.textContent =
+            "Copiar";
+        }
+      },
+      1500
+    );
+  } catch (error) {
+    console.error(
+      "Error copiando variable:",
+      error
+    );
+
+    showMessage(
+      "No se pudo copiar",
+      `Copiá manualmente ${variable}.`
+    );
+  }
+}
+
+const verificationVariables = [
+  /* =========================
+     USUARIO
+     ========================= */
+  {
+    category: "user",
+    key: "{user}",
+    label: "Nombre del usuario",
+  },
+  {
+    category: "user",
+    key: "{username}",
+    label: "Nombre de usuario",
+  },
+  {
+    category: "user",
+    key: "{displayname}",
+    label: "Nombre visible",
+  },
+  {
+    category: "user",
+    key: "{globalname}",
+    label: "Nombre global",
+  },
+  {
+    category: "user",
+    key: "{nickname}",
+    label: "Apodo en el servidor",
+  },
+  {
+    category: "user",
+    key: "{mention}",
+    label: "Mención del usuario",
+  },
+  {
+    category: "user",
+    key: "{userid}",
+    label: "ID del usuario",
+  },
+  {
+    category: "user",
+    key: "{avatar}",
+    label: "Avatar del usuario",
+  },
+  {
+    category: "user",
+    key: "{banner}",
+    label: "Banner del usuario",
+  },
+  {
+    category: "user",
+    key: "{created}",
+    label: "Fecha de creación de la cuenta",
+  },
+  {
+    category: "user",
+    key: "{joined}",
+    label: "Fecha de ingreso al servidor",
+  },
+  {
+    category: "user",
+    key: "{joinedrelative}",
+    label: "Tiempo desde que ingresó",
+  },
+  {
+    category: "user",
+    key: "{status}",
+    label: "Estado del usuario",
+  },
+  {
+    category: "user",
+    key: "{activity}",
+    label: "Actividad actual",
+  },
+  {
+    category: "user",
+    key: "{roles}",
+    label: "Roles del usuario",
+  },
+  {
+    category: "user",
+    key: "{rolecount}",
+    label: "Cantidad de roles",
+  },
+  {
+    category: "user",
+    key: "{highestrole}",
+    label: "Rol más alto",
+  },
+  {
+    category: "user",
+    key: "{permissions}",
+    label: "Permisos del usuario",
+  },
+  {
+    category: "user",
+    key: "{boosting}",
+    label: "Estado de boost",
+  },
+
+  /* =========================
+     SERVIDOR
+     ========================= */
+  {
+    category: "server",
+    key: "{server}",
+    label: "Nombre del servidor",
+  },
+  {
+    category: "server",
+    key: "{serverid}",
+    label: "ID del servidor",
+  },
+  {
+    category: "server",
+    key: "{servericon}",
+    label: "Icono del servidor",
+  },
+  {
+    category: "server",
+    key: "{serverbanner}",
+    label: "Banner del servidor",
+  },
+  {
+    category: "server",
+    key: "{serverdescription}",
+    label: "Descripción del servidor",
+  },
+  {
+    category: "server",
+    key: "{owner}",
+    label: "Propietario del servidor",
+  },
+  {
+    category: "server",
+    key: "{ownerid}",
+    label: "ID del propietario",
+  },
+  {
+    category: "server",
+    key: "{membercount}",
+    label: "Cantidad de miembros",
+  },
+  {
+    category: "server",
+    key: "{members}",
+    label: "Cantidad de miembros",
+  },
+  {
+    category: "server",
+    key: "{bots}",
+    label: "Cantidad de bots",
+  },
+  {
+    category: "server",
+    key: "{humans}",
+    label: "Cantidad de usuarios reales",
+  },
+  {
+    category: "server",
+    key: "{online}",
+    label: "Miembros conectados",
+  },
+  {
+    category: "server",
+    key: "{offline}",
+    label: "Miembros desconectados",
+  },
+  {
+    category: "server",
+    key: "{boosts}",
+    label: "Cantidad de boosts",
+  },
+  {
+    category: "server",
+    key: "{boostlevel}",
+    label: "Nivel de boost",
+  },
+  {
+    category: "server",
+    key: "{verificationlevel}",
+    label: "Nivel de verificación",
+  },
+  {
+    category: "server",
+    key: "{channels}",
+    label: "Cantidad de canales",
+  },
+  {
+    category: "server",
+    key: "{textchannels}",
+    label: "Canales de texto",
+  },
+  {
+    category: "server",
+    key: "{voicechannels}",
+    label: "Canales de voz",
+  },
+  {
+    category: "server",
+    key: "{categories}",
+    label: "Cantidad de categorías",
+  },
+  {
+    category: "server",
+    key: "{rolescount}",
+    label: "Cantidad de roles",
+  },
+  {
+    category: "server",
+    key: "{emojis}",
+    label: "Cantidad de emojis",
+  },
+  {
+    category: "server",
+    key: "{stickers}",
+    label: "Cantidad de stickers",
+  },
+  {
+    category: "server",
+    key: "{createdserver}",
+    label: "Fecha de creación del servidor",
+  },
+
+  /* =========================
+     ROLES
+     ========================= */
+  {
+    category: "roles",
+    key: "{role}",
+    label: "Nombre del rol entregado",
+  },
+  {
+    category: "roles",
+    key: "{roleid}",
+    label: "ID del rol entregado",
+  },
+  {
+    category: "roles",
+    key: "{rolename}",
+    label: "Nombre del rol",
+  },
+  {
+    category: "roles",
+    key: "{rolecolor}",
+    label: "Color del rol",
+  },
+  {
+    category: "roles",
+    key: "{roleicon}",
+    label: "Icono del rol",
+  },
+  {
+    category: "roles",
+    key: "{highestrole}",
+    label: "Rol más alto",
+  },
+  {
+    category: "roles",
+    key: "{lowestrole}",
+    label: "Rol más bajo",
+  },
+  {
+    category: "roles",
+    key: "{autorole}",
+    label: "Rol automático",
+  },
+
+  /* =========================
+     CANAL
+     ========================= */
+  {
+    category: "channel",
+    key: "{channel}",
+    label: "Canal actual",
+  },
+  {
+    category: "channel",
+    key: "{channelid}",
+    label: "ID del canal",
+  },
+  {
+    category: "channel",
+    key: "{channelmention}",
+    label: "Mención del canal",
+  },
+  {
+    category: "channel",
+    key: "{channeltopic}",
+    label: "Tema del canal",
+  },
+  {
+    category: "channel",
+    key: "{category}",
+    label: "Categoría del canal",
+  },
+  {
+    category: "channel",
+    key: "{categoryid}",
+    label: "ID de la categoría",
+  },
+  {
+    category: "channel",
+    key: "{thread}",
+    label: "Nombre del hilo",
+  },
+  {
+    category: "channel",
+    key: "{threadid}",
+    label: "ID del hilo",
+  },
+  {
+    category: "channel",
+    key: "{slowmode}",
+    label: "Modo lento",
+  },
+  {
+    category: "channel",
+    key: "{channeltype}",
+    label: "Tipo de canal",
+  },
+
+  /* =========================
+     BOT
+     ========================= */
+  {
+    category: "bot",
+    key: "{bot}",
+    label: "Nombre del bot",
+  },
+  {
+    category: "bot",
+    key: "{botid}",
+    label: "ID del bot",
+  },
+  {
+    category: "bot",
+    key: "{botavatar}",
+    label: "Avatar del bot",
+  },
+  {
+    category: "bot",
+    key: "{botversion}",
+    label: "Versión del bot",
+  },
+  {
+    category: "bot",
+    key: "{latency}",
+    label: "Latencia del bot",
+  },
+  {
+    category: "bot",
+    key: "{ping}",
+    label: "Ping del bot",
+  },
+  {
+    category: "bot",
+    key: "{uptime}",
+    label: "Tiempo activo",
+  },
+  {
+    category: "bot",
+    key: "{commands}",
+    label: "Cantidad de comandos",
+  },
+  {
+    category: "bot",
+    key: "{servers}",
+    label: "Cantidad de servidores",
+  },
+  {
+    category: "bot",
+    key: "{users}",
+    label: "Cantidad de usuarios",
+  },
+  {
+    category: "bot",
+    key: "{memory}",
+    label: "Memoria usada",
+  },
+  {
+    category: "bot",
+    key: "{cpu}",
+    label: "Uso del procesador",
+  },
+  {
+    category: "bot",
+    key: "{node}",
+    label: "Versión de Node.js",
+  },
+  {
+    category: "bot",
+    key: "{library}",
+    label: "Librería utilizada",
+  },
+
+  /* =========================
+     FECHA Y HORA
+     ========================= */
+  {
+    category: "date",
+    key: "{date}",
+    label: "Fecha actual",
+  },
+  {
+    category: "date",
+    key: "{time}",
+    label: "Hora actual",
+  },
+  {
+    category: "date",
+    key: "{datetime}",
+    label: "Fecha y hora actual",
+  },
+  {
+    category: "date",
+    key: "{timestamp}",
+    label: "Marca de tiempo",
+  },
+  {
+    category: "date",
+    key: "{year}",
+    label: "Año actual",
+  },
+  {
+    category: "date",
+    key: "{month}",
+    label: "Número del mes",
+  },
+  {
+    category: "date",
+    key: "{monthname}",
+    label: "Nombre del mes",
+  },
+  {
+    category: "date",
+    key: "{day}",
+    label: "Día actual",
+  },
+  {
+    category: "date",
+    key: "{weekday}",
+    label: "Día de la semana",
+  },
+  {
+    category: "date",
+    key: "{hour}",
+    label: "Hora",
+  },
+  {
+    category: "date",
+    key: "{minute}",
+    label: "Minuto",
+  },
+  {
+    category: "date",
+    key: "{second}",
+    label: "Segundo",
+  },
+  {
+    category: "date",
+    key: "{timezone}",
+    label: "Zona horaria",
+  },
+  {
+    category: "date",
+    key: "{unix}",
+    label: "Tiempo Unix",
+  },
+  {
+    category: "date",
+    key: "{shortdate}",
+    label: "Fecha corta",
+  },
+  {
+    category: "date",
+    key: "{longdate}",
+    label: "Fecha completa",
+  },
+
+  /* =========================
+     VERIFICACIÓN
+     ========================= */
+  {
+    category: "verification",
+    key: "{verifylink}",
+    label: "Enlace de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationcode}",
+    label: "Código de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationid}",
+    label: "ID de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationmethod}",
+    label: "Método de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationrole}",
+    label: "Rol de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationchannel}",
+    label: "Canal de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationtime}",
+    label: "Hora de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verificationdate}",
+    label: "Fecha de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verifyexpires}",
+    label: "Vencimiento del enlace",
+  },
+  {
+    category: "verification",
+    key: "{verified}",
+    label: "Estado de verificación",
+  },
+  {
+    category: "verification",
+    key: "{verifybrowser}",
+    label: "Navegador utilizado",
+  },
+  {
+    category: "verification",
+    key: "{verifyos}",
+    label: "Sistema operativo",
+  },
+  {
+    category: "verification",
+    key: "{verifydevice}",
+    label: "Dispositivo utilizado",
+  },
+  {
+    category: "verification",
+    key: "{verifycountry}",
+    label: "País aproximado",
+  },
+  {
+    category: "verification",
+    key: "{verifycity}",
+    label: "Ciudad aproximada",
+  },
+  {
+    category: "verification",
+    key: "{verifylanguage}",
+    label: "Idioma del navegador",
+  },
+  {
+    category: "verification",
+    key: "{verifyisp}",
+    label: "Proveedor de internet",
+  },
+
+  /* =========================
+     TICKETS
+     ========================= */
+  {
+    category: "tickets",
+    key: "{ticket}",
+    label: "Nombre del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketid}",
+    label: "ID del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketnumber}",
+    label: "Número del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketowner}",
+    label: "Creador del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketownerid}",
+    label: "ID del creador",
+  },
+  {
+    category: "tickets",
+    key: "{ticketcategory}",
+    label: "Categoría del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketreason}",
+    label: "Motivo del ticket",
+  },
+  {
+    category: "tickets",
+    key: "{ticketcreated}",
+    label: "Fecha de creación",
+  },
+  {
+    category: "tickets",
+    key: "{ticketclosed}",
+    label: "Fecha de cierre",
+  },
+  {
+    category: "tickets",
+    key: "{ticketclosedby}",
+    label: "Cerrado por",
+  },
+  {
+    category: "tickets",
+    key: "{ticketmessages}",
+    label: "Cantidad de mensajes",
+  },
+  {
+    category: "tickets",
+    key: "{ticketclaim}",
+    label: "Miembro del staff asignado",
+  },
+  {
+    category: "tickets",
+    key: "{ticketpriority}",
+    label: "Prioridad",
+  },
+  {
+    category: "tickets",
+    key: "{ticketstatus}",
+    label: "Estado del ticket",
+  },
+
+  /* =========================
+     MODERACIÓN
+     ========================= */
+  {
+    category: "moderation",
+    key: "{moderator}",
+    label: "Moderador responsable",
+  },
+  {
+    category: "moderation",
+    key: "{moderatorid}",
+    label: "ID del moderador",
+  },
+  {
+    category: "moderation",
+    key: "{reason}",
+    label: "Motivo",
+  },
+  {
+    category: "moderation",
+    key: "{duration}",
+    label: "Duración",
+  },
+  {
+    category: "moderation",
+    key: "{case}",
+    label: "Número de caso",
+  },
+  {
+    category: "moderation",
+    key: "{warns}",
+    label: "Cantidad de advertencias",
+  },
+  {
+    category: "moderation",
+    key: "{bans}",
+    label: "Cantidad de baneos",
+  },
+  {
+    category: "moderation",
+    key: "{kicks}",
+    label: "Cantidad de expulsiones",
+  },
+  {
+    category: "moderation",
+    key: "{timeouts}",
+    label: "Cantidad de aislamientos",
+  },
+  {
+    category: "moderation",
+    key: "{punishment}",
+    label: "Tipo de sanción",
+  },
+  {
+    category: "moderation",
+    key: "{appeal}",
+    label: "Apelación",
+  },
+  {
+    category: "moderation",
+    key: "{appealid}",
+    label: "ID de apelación",
+  },
+  {
+    category: "moderation",
+    key: "{appealstatus}",
+    label: "Estado de apelación",
+  },
+
+  /* =========================
+     WEB
+     ========================= */
+  {
+    category: "web",
+    key: "{ip}",
+    label: "Dirección IP",
+  },
+  {
+    category: "web",
+    key: "{country}",
+    label: "País aproximado",
+  },
+  {
+    category: "web",
+    key: "{city}",
+    label: "Ciudad aproximada",
+  },
+  {
+    category: "web",
+    key: "{region}",
+    label: "Región aproximada",
+  },
+  {
+    category: "web",
+    key: "{timezone}",
+    label: "Zona horaria",
+  },
+  {
+    category: "web",
+    key: "{browser}",
+    label: "Navegador",
+  },
+  {
+    category: "web",
+    key: "{browserversion}",
+    label: "Versión del navegador",
+  },
+  {
+    category: "web",
+    key: "{os}",
+    label: "Sistema operativo",
+  },
+  {
+    category: "web",
+    key: "{osversion}",
+    label: "Versión del sistema",
+  },
+  {
+    category: "web",
+    key: "{device}",
+    label: "Dispositivo",
+  },
+  {
+    category: "web",
+    key: "{platform}",
+    label: "Plataforma",
+  },
+  {
+    category: "web",
+    key: "{language}",
+    label: "Idioma",
+  },
+  {
+    category: "web",
+    key: "{resolution}",
+    label: "Resolución de pantalla",
+  },
+  {
+    category: "web",
+    key: "{isp}",
+    label: "Proveedor de internet",
+  },
+
+  /* =========================
+     MENSAJES
+     ========================= */
+  {
+    category: "messages",
+    key: "{message}",
+    label: "Contenido del mensaje",
+  },
+  {
+    category: "messages",
+    key: "{messageid}",
+    label: "ID del mensaje",
+  },
+  {
+    category: "messages",
+    key: "{author}",
+    label: "Autor del mensaje",
+  },
+  {
+    category: "messages",
+    key: "{authorid}",
+    label: "ID del autor",
+  },
+  {
+    category: "messages",
+    key: "{reply}",
+    label: "Mensaje respondido",
+  },
+  {
+    category: "messages",
+    key: "{attachments}",
+    label: "Cantidad de archivos",
+  },
+  {
+    category: "messages",
+    key: "{embeds}",
+    label: "Cantidad de embeds",
+  },
+  {
+    category: "messages",
+    key: "{mentions}",
+    label: "Menciones",
+  },
+  {
+    category: "messages",
+    key: "{wordcount}",
+    label: "Cantidad de palabras",
+  },
+  {
+    category: "messages",
+    key: "{characters}",
+    label: "Cantidad de caracteres",
+  },
+  {
+    category: "messages",
+    key: "{lines}",
+    label: "Cantidad de líneas",
+  },
+  {
+    category: "messages",
+    key: "{jumpurl}",
+    label: "Enlace al mensaje",
+  },
+
+  /* =========================
+     INVITACIONES
+     ========================= */
+  {
+    category: "invites",
+    key: "{invite}",
+    label: "Enlace de invitación",
+  },
+  {
+    category: "invites",
+    key: "{invitecode}",
+    label: "Código de invitación",
+  },
+  {
+    category: "invites",
+    key: "{inviter}",
+    label: "Creador de la invitación",
+  },
+  {
+    category: "invites",
+    key: "{inviterid}",
+    label: "ID del creador",
+  },
+  {
+    category: "invites",
+    key: "{uses}",
+    label: "Cantidad de usos",
+  },
+  {
+    category: "invites",
+    key: "{maxuses}",
+    label: "Máximo de usos",
+  },
+  {
+    category: "invites",
+    key: "{expires}",
+    label: "Fecha de vencimiento",
+  },
+  {
+    category: "invites",
+    key: "{temporary}",
+    label: "Invitación temporal",
+  },
+
+  /* =========================
+     EMOJIS
+     ========================= */
+  {
+    category: "emojis",
+    key: "{emoji}",
+    label: "Emoji",
+  },
+  {
+    category: "emojis",
+    key: "{emojiid}",
+    label: "ID del emoji",
+  },
+  {
+    category: "emojis",
+    key: "{emojiurl}",
+    label: "URL del emoji",
+  },
+  {
+    category: "emojis",
+    key: "{success}",
+    label: "Emoji de éxito",
+  },
+  {
+    category: "emojis",
+    key: "{error}",
+    label: "Emoji de error",
+  },
+  {
+    category: "emojis",
+    key: "{warning}",
+    label: "Emoji de advertencia",
+  },
+  {
+    category: "emojis",
+    key: "{info}",
+    label: "Emoji de información",
+  },
+
+  /* =========================
+     SISTEMA
+     ========================= */
+  {
+    category: "system",
+    key: "{newline}",
+    label: "Salto de línea",
+  },
+  {
+    category: "system",
+    key: "{space}",
+    label: "Espacio",
+  },
+  {
+    category: "system",
+    key: "{separator}",
+    label: "Separador",
+  },
+  {
+    category: "system",
+    key: "{tab}",
+    label: "Tabulación",
+  },
+  {
+    category: "system",
+    key: "{version}",
+    label: "Versión",
+  },
+  {
+    category: "system",
+    key: "{dashboardversion}",
+    label: "Versión del dashboard",
+  },
+  {
+    category: "system",
+    key: "{build}",
+    label: "Versión de compilación",
+  },
+  {
+    category: "system",
+    key: "{environment}",
+    label: "Entorno",
+  },
+  {
+    category: "system",
+    key: "{random}",
+    label: "Texto aleatorio",
+  },
+  {
+    category: "system",
+    key: "{randomnumber}",
+    label: "Número aleatorio",
+  },
+  {
+    category: "system",
+    key: "{randomcolor}",
+    label: "Color aleatorio",
+  },
+  {
+    category: "system",
+    key: "{uuid}",
+    label: "Identificador único",
+  },
+  {
+    category: "system",
+    key: "{domain}",
+    label: "Dominio del dashboard",
+  },
+  {
+    category: "system",
+    key: "{url}",
+    label: "URL actual",
+  },
+
+  /* =========================
+     ESTADÍSTICAS
+     ========================= */
+  {
+    category: "stats",
+    key: "{totalusers}",
+    label: "Usuarios totales",
+  },
+  {
+    category: "stats",
+    key: "{totalservers}",
+    label: "Servidores totales",
+  },
+  {
+    category: "stats",
+    key: "{totalchannels}",
+    label: "Canales totales",
+  },
+  {
+    category: "stats",
+    key: "{totalroles}",
+    label: "Roles totales",
+  },
+  {
+    category: "stats",
+    key: "{totalbots}",
+    label: "Bots totales",
+  },
+  {
+    category: "stats",
+    key: "{verificationstoday}",
+    label: "Verificaciones de hoy",
+  },
+  {
+    category: "stats",
+    key: "{verificationstotal}",
+    label: "Verificaciones totales",
+  },
+  {
+    category: "stats",
+    key: "{ticketsopen}",
+    label: "Tickets abiertos",
+  },
+  {
+    category: "stats",
+    key: "{ticketsclosed}",
+    label: "Tickets cerrados",
+  },
+  {
+    category: "stats",
+    key: "{commandsused}",
+    label: "Comandos utilizados",
+  },
+  {
+    category: "stats",
+    key: "{joins}",
+    label: "Ingresos",
+  },
+  {
+    category: "stats",
+    key: "{leaves}",
+    label: "Salidas",
+  },
+  {
+    category: "stats",
+    key: "{uptimepercent}",
+    label: "Porcentaje de actividad",
+  },
+];
+
+const variablesModal =
+  getElement(
+    "variablesModal"
+  );
+
+const variablesSearch =
+  getElement(
+    "variablesSearch"
+  );
+
+const variablesModalEmpty =
+  getElement(
+    "variablesModalEmpty"
+  );
+
+const variablesModalList =
+  getElement(
+    "variablesModalList"
+  );
+
+const variableCategoryButtons =
+  document.querySelectorAll(
+    "[data-variable-category]"
+  );
+
+let activeVariableCategory =
+  "user";
+
+function renderVariablesModal() {
+  if (!variablesModalList) {
+    return;
+  }
+
+  const search =
+    String(
+      variablesSearch?.value ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const filteredVariables =
+    verificationVariables.filter(
+      variable => {
+        const sameCategory =
+          variable.category ===
+          activeVariableCategory;
+
+        const searchText =
+          `${variable.key} ${variable.label}`
+            .toLowerCase();
+
+        const matchesSearch =
+          !search ||
+          searchText.includes(
+            search
+          );
+
+        return (
+          sameCategory &&
+          matchesSearch
+        );
+      }
+    );
+
+  variablesModalList.innerHTML =
+    filteredVariables
+      .map(variable => `
+        <button
+          class="verify-variable-button"
+          data-copy-variable="${escapeHtmlAttribute(
+            variable.key
+          )}"
+          data-variable-search="${escapeHtmlAttribute(
+            `${variable.key} ${variable.label}`
+          )}"
+          type="button"
+        >
+          <code>
+            ${escapeHtml(variable.key)}
+          </code>
+
+          <span>
+            ${escapeHtml(variable.label)}
+          </span>
+
+          <b>
+            Copiar
+          </b>
+        </button>
+      `)
+      .join("");
+
+  const hasResults =
+    filteredVariables.length > 0;
+
+  if (variablesModalEmpty) {
+    variablesModalEmpty.hidden =
+      hasResults;
+
+    variablesModalEmpty.classList.toggle(
+      "visible",
+      !hasResults
+    );
+  }
+}
+
+function filtrarVariables(value) {
+  if (variablesSearch) {
+    variablesSearch.value =
+      String(value || "");
+  }
+
+  renderVariablesModal();
+}
+
+variableCategoryButtons.forEach(
+  button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        activeVariableCategory =
+          button.dataset
+            .variableCategory ||
+          "user";
+
+        variableCategoryButtons.forEach(
+          categoryButton => {
+            categoryButton.classList.toggle(
+              "active",
+              categoryButton ===
+                button
+            );
+          }
+        );
+
+        renderVariablesModal();
+      }
+    );
+  }
+);
+
+variablesModalList?.addEventListener(
+  "click",
+  event => {
+    const button =
+      event.target.closest(
+        "[data-copy-variable]"
+      );
+
+    if (!button) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    copiarVariable(
+      button.dataset.copyVariable,
+      button
+    );
+  }
+);
+
+renderVariablesModal();
+
+/* Evita que la rueda del mouse desplace la página del fondo */
+variablesModal?.addEventListener(
+  "wheel",
+  event => {
+    const scrollArea =
+      event.target.closest(
+        ".variables-categories, .variables-results"
+      );
+
+    if (!scrollArea) {
+      event.preventDefault();
+      return;
+    }
+
+    const scrollingUp =
+      event.deltaY < 0;
+
+    const scrollingDown =
+      event.deltaY > 0;
+
+    const atTop =
+      scrollArea.scrollTop <= 0;
+
+    const atBottom =
+      Math.ceil(
+        scrollArea.scrollTop +
+        scrollArea.clientHeight
+      ) >= scrollArea.scrollHeight;
+
+    if (
+      (scrollingUp && atTop) ||
+      (scrollingDown && atBottom)
+    ) {
+      event.preventDefault();
+    }
+  },
+  {
+    passive: false,
+  }
+);
+
+function abrirVariablesModal() {
+  if (!variablesModal) {
+    return;
+  }
+
+  variablesModal.classList.add(
+    "open"
+  );
+
+  variablesModal.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  document.body.classList.add(
+    "variables-modal-open"
+  );
+
+ if (variablesSearch) {
+  variablesSearch.value = "";
+}
+
+activeVariableCategory =
+  "user";
+
+variableCategoryButtons.forEach(
+  button => {
+    button.classList.toggle(
+      "active",
+      button.dataset
+        .variableCategory ===
+        "user"
+    );
+  }
+);
+
+renderVariablesModal();
+
+if (variablesSearch) {
+
+    setTimeout(
+      () => {
+        variablesSearch.focus();
+      },
+      150
+    );
+  }
+}
+
+function cerrarVariablesModal() {
+  if (!variablesModal) {
+    return;
+  }
+
+  variablesModal.classList.remove(
+    "open"
+  );
+
+  variablesModal.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  document.body.classList.remove(
+    "variables-modal-open"
+  );
+}
+
+document
+  .querySelectorAll(
+    "[data-open-variables]"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        abrirVariablesModal();
+      }
+    );
+  });
+
+document
+  .querySelectorAll(
+    "[data-close-variables]"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        cerrarVariablesModal();
+      }
+    );
+  });
+
+document
+  .querySelectorAll(
+    "[data-copy-variable]"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        copiarVariable(
+          button.dataset.copyVariable,
+          button
+        );
+      }
+    );
+  });
+
+variablesSearch
+  ?.addEventListener(
+    "input",
+    event => {
+      filtrarVariables(
+        event.target.value
+      );
+    }
+  );
+
+document.addEventListener(
+  "keydown",
+  event => {
+    if (
+      event.key === "Escape" &&
+      variablesModal?.classList.contains(
+        "open"
+      )
+    ) {
+      cerrarVariablesModal();
+    }
+  }
+);
 
   const showMessage = (
     title,
@@ -3692,6 +8537,33 @@ const currentAppearance = {
 
     showToast();
   };
+
+document
+  .querySelectorAll(
+    "[data-copy-variable]"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const variable =
+          button.dataset
+            .copyVariable;
+
+        if (!variable) {
+          return;
+        }
+
+        copiarVariable(
+          variable,
+          button
+        );
+      }
+    );
+  });
 
   const getSelectedMethod = () =>
     document.querySelector(
@@ -3714,30 +8586,9 @@ const currentAppearance = {
   };
 
 const replacePanelVariables = value => {
-  const now = new Date();
-
-  return String(value || "")
-    .replaceAll(
-      "{server}",
-      servidor.name
-    )
-    .replaceAll(
-      "{date}",
-      now.toLocaleDateString(
-        "es-AR"
-      )
-    )
-    .replaceAll(
-      "{time}",
-      now.toLocaleTimeString(
-        "es-AR",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-        }
-      )
-    )
-    .replaceAll("**", "");
+  return resolvePreviewVariables(
+    value
+  );
 };
 
 const updateDiscordPanelPreview = () => {
@@ -4011,6 +8862,459 @@ const updateDiscordPanelPreview = () => {
   }
 };
 
+const actualizarVistaPreviaExito =
+  () => {
+    const titleInput =
+      document.getElementById(
+        "verifySuccessTitle"
+      );
+
+    const messageInput =
+      document.getElementById(
+        "verifySuccessMessage"
+      );
+
+    const colorInput =
+      document.getElementById(
+        "verifySuccessColor"
+      );
+
+    const animationInput =
+      document.getElementById(
+        "verifySuccessAnimation"
+      );
+
+    const countdownToggle =
+      document.getElementById(
+        "verifyShowCountdown"
+      );
+
+    const closePageToggle =
+      document.getElementById(
+        "verifyClosePageEnabled"
+      );
+
+    const preview =
+      document.querySelector(
+        ".configuration-success-preview"
+      );
+
+    const previewTitle =
+      document.getElementById(
+        "successPreviewTitle"
+      );
+
+    const previewMessage =
+      document.getElementById(
+        "successPreviewMessage"
+      );
+
+    const previewIcon =
+      document.getElementById(
+        "successPreviewIcon"
+      );
+
+    const countdownText =
+      preview?.querySelector(
+        "small"
+      );
+
+    const progressTrack =
+      preview?.querySelector(
+        ".configuration-progress-track"
+      );
+
+    if (
+      !titleInput ||
+      !messageInput ||
+      !colorInput ||
+      !preview ||
+      !previewTitle ||
+      !previewMessage ||
+      !previewIcon
+    ) {
+      return;
+    }
+
+    const serverName =
+      servidor?.name ||
+      "servidor";
+
+    previewTitle.textContent =
+      titleInput.value.trim() ||
+      "Verificación completada";
+
+    previewMessage.textContent =
+      (
+        messageInput.value.trim() ||
+        "Tu cuenta fue verificada correctamente."
+      )
+        .replaceAll(
+          "{servidor}",
+          serverName
+        )
+        .replaceAll(
+          "{server}",
+          serverName
+        );
+
+    const successColor =
+      /^#[0-9a-f]{6}$/i.test(
+        colorInput.value
+      )
+        ? colorInput.value
+        : "#22c55e";
+
+    preview.style.setProperty(
+      "--success-color",
+      successColor
+    );
+
+ previewIcon.style.setProperty(
+  "background-color",
+  successColor,
+  "important"
+);
+
+previewIcon.style.setProperty(
+  "border-color",
+  successColor,
+  "important"
+);
+
+previewIcon.style.setProperty(
+  "box-shadow",
+  `0 0 28px ${successColor}88`,
+  "important"
+);
+
+previewIcon.style.color =
+  "#ffffff";
+const progressBar =
+  preview.querySelector(
+    ".configuration-progress-track span"
+  );
+
+if (progressBar) {
+  progressBar.style.setProperty(
+    "background-color",
+    successColor,
+    "important"
+  );
+}
+
+    const animation =
+      animationInput?.value ||
+      "check";
+
+    preview.dataset.animation =
+      animation;
+
+    if (animation === "none") {
+      previewIcon.style.display =
+        "none";
+    } else {
+      previewIcon.style.display =
+        "grid";
+
+      previewIcon.textContent =
+        animation === "confetti"
+          ? "🎉"
+          : "✓";
+    }
+
+    const showCountdown =
+      countdownToggle?.checked !==
+      false;
+
+    if (countdownText) {
+      countdownText.style.display =
+        showCountdown
+          ? ""
+          : "none";
+
+      countdownText.textContent =
+        closePageToggle?.checked
+          ? "Cerrando en 3 segundos..."
+          : "Redirigiendo en 3 segundos...";
+    }
+
+    if (progressTrack) {
+      progressTrack.style.display =
+        showCountdown
+          ? ""
+          : "none";
+    }
+  };
+
+[
+  "verifySuccessTitle",
+  "verifySuccessMessage",
+  "verifySuccessColor",
+].forEach(id => {
+  document
+    .getElementById(id)
+    ?.addEventListener(
+      "input",
+      actualizarVistaPreviaExito
+    );
+});
+
+[
+  "verifySuccessAnimation",
+  "verifyShowCountdown",
+  "verifyClosePageEnabled",
+].forEach(id => {
+  document
+    .getElementById(id)
+    ?.addEventListener(
+      "change",
+      actualizarVistaPreviaExito
+    );
+});
+
+actualizarVistaPreviaExito();
+/* =========================================================
+   VISTA PREVIA EN TIEMPO REAL DEL MENSAJE PRIVADO
+   ========================================================= */
+
+const reemplazarVariablesVistaPreviaDm = texto => {
+  return String(texto || "")
+    .replaceAll(
+      "{usuario}",
+      "Usuario de ejemplo"
+    )
+.replaceAll(
+  "{servidor}",
+  "Servidor de ejemplo"
+)
+
+       .replaceAll(
+      "{rol}",
+      "✓ Verificado"
+    )
+    .replaceAll(
+      "{fecha}",
+      new Date().toLocaleDateString(
+        "es-AR"
+      )
+    )
+    .replaceAll(
+      "{hora}",
+      new Date().toLocaleTimeString(
+        "es-AR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
+    );
+};
+
+const actualizarVistaPreviaDm = () => {
+  const enabledInput =
+    document.getElementById(
+      "verifySuccessDmEnabled"
+    );
+
+  const titleInput =
+    document.getElementById(
+      "verifySuccessDmTitle"
+    );
+
+  const messageInput =
+    document.getElementById(
+      "verifySuccessDmMessage"
+    );
+
+  const colorInput =
+    document.getElementById(
+      "verifySuccessDmColor"
+    );
+
+  const colorTextInput =
+    document.getElementById(
+      "verifySuccessDmColorText"
+    );
+
+  const thumbnailInput =
+    document.getElementById(
+      "verifySuccessDmThumbnail"
+    );
+
+  const previewEmbed =
+    document.getElementById(
+      "successDmPreviewEmbed"
+    );
+
+  const previewTitle =
+    document.getElementById(
+      "successDmPreviewTitle"
+    );
+
+  const previewMessage =
+    document.getElementById(
+      "successDmPreviewMessage"
+    );
+
+  const previewThumbnail =
+    document.getElementById(
+      "successDmPreviewThumbnail"
+    );
+
+  if (
+    !previewEmbed ||
+    !previewTitle ||
+    !previewMessage ||
+    !previewThumbnail
+  ) {
+    return;
+  }
+
+  const title =
+    titleInput?.value ||
+    "🎉 ¡Verificado!";
+
+  const message =
+    messageInput?.value ||
+    `¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`;
+
+  const color =
+    colorInput?.value ||
+    "#3b82f6";
+
+  const thumbnail =
+    String(
+      thumbnailInput?.value ||
+      ""
+    ).trim();
+
+  previewTitle.textContent =
+    reemplazarVariablesVistaPreviaDm(
+      title
+    );
+
+  previewMessage.textContent =
+    reemplazarVariablesVistaPreviaDm(
+      message
+    );
+
+  previewEmbed.style.setProperty(
+    "--preview-color",
+    color
+  );
+
+  if (colorTextInput) {
+    colorTextInput.value =
+      color;
+  }
+
+  if (
+    thumbnail &&
+    /^https?:\/\//i.test(
+      thumbnail
+    )
+  ) {
+    previewThumbnail.src =
+      thumbnail;
+
+    previewThumbnail.style.display =
+      "";
+  } else {
+    previewThumbnail.removeAttribute(
+      "src"
+    );
+
+    previewThumbnail.style.display =
+      "none";
+  }
+
+  previewEmbed.style.opacity =
+    enabledInput?.checked
+      ? "1"
+      : "0.45";
+};
+
+[
+  "verifySuccessDmTitle",
+  "verifySuccessDmMessage",
+  "verifySuccessDmThumbnail",
+].forEach(id => {
+  document
+    .getElementById(id)
+    ?.addEventListener(
+      "input",
+      actualizarVistaPreviaDm
+    );
+});
+
+document
+  .getElementById(
+    "verifySuccessDmEnabled"
+  )
+  ?.addEventListener(
+    "change",
+    actualizarVistaPreviaDm
+  );
+
+document
+  .getElementById(
+    "verifySuccessDmColor"
+  )
+  ?.addEventListener(
+    "input",
+    event => {
+      const colorTextInput =
+        document.getElementById(
+          "verifySuccessDmColorText"
+        );
+
+      if (colorTextInput) {
+        colorTextInput.value =
+          event.target.value;
+      }
+
+      actualizarVistaPreviaDm();
+    }
+  );
+
+document
+  .getElementById(
+    "verifySuccessDmColorText"
+  )
+  ?.addEventListener(
+    "input",
+    event => {
+      const value =
+        event.target.value.trim();
+
+      if (
+        /^#[0-9a-f]{6}$/i.test(
+          value
+        )
+      ) {
+        const colorInput =
+          document.getElementById(
+            "verifySuccessDmColor"
+          );
+
+        if (colorInput) {
+          colorInput.value =
+            value;
+        }
+
+        actualizarVistaPreviaDm();
+      }
+    }
+  );
+
+actualizarVistaPreviaDm();
+
+
   const buildPayload = () => ({
     enabled:
       getElement("verifyEnabled").checked,
@@ -4046,6 +9350,91 @@ const updateDiscordPanelPreview = () => {
 
     reactionEmoji:
       getElement("verifyReactionEmoji").value,
+
+interactionTitle:
+  getElement(
+    "verifyInteractionTitle"
+  ).value,
+
+interactionMessage:
+  getElement(
+    "verifyInteractionMessage"
+  ).value,
+
+interactionColor:
+  getElement(
+    "verifyInteractionColor"
+  ).value,
+
+interactionImage:
+  getElement(
+    "verifyInteractionImage"
+  ).value,
+
+interactionButtonEmoji:
+  getElement(
+    "verifyInteractionButtonEmoji"
+  ).value,
+
+interactionButtonText:
+  getElement(
+    "verifyInteractionButtonText"
+  ).value,
+
+successTitle:
+  getElement(
+    "verifySuccessTitle"
+  ).value,
+
+successMessage:
+  getElement(
+    "verifySuccessMessage"
+  ).value,
+
+successColor:
+  getElement(
+    "verifySuccessColor"
+  ).value,
+
+successAnimation:
+  getElement(
+    "verifySuccessAnimation"
+  ).value,
+
+showCountdown:
+  getElement(
+    "verifyShowCountdown"
+  ).checked,
+
+closePageEnabled:
+  getElement(
+    "verifyClosePageEnabled"
+  ).checked,
+
+successDmEnabled:
+  getElement(
+    "verifySuccessDmEnabled"
+  ).checked,
+
+successDmTitle:
+  getElement(
+    "verifySuccessDmTitle"
+  ).value,
+
+successDmMessage:
+  getElement(
+    "verifySuccessDmMessage"
+  ).value,
+
+successDmColor:
+  getElement(
+    "verifySuccessDmColor"
+  ).value,
+
+successDmThumbnail:
+  getElement(
+    "verifySuccessDmThumbnail"
+  ).value,
 
 embedFieldName:
   getElement(
@@ -4182,6 +9571,8 @@ const panelPreviewInputIds = [
   "verifyShowCustomThumbnail",
   "verifyShowEmbedImage",
   "verifyShowTimestamp",
+  "verifyRole",
+  "verifyChannel",
 ];
 
 panelPreviewInputIds.forEach(id => {
@@ -4238,9 +9629,673 @@ getElement("verifyEmbedColorText")
     }
   );
 
+
 updateDiscordPanelPreview();
 
+/* =========================================================
+   MOSTRAR U OCULTAR MENSAJE DEL BOTÓN DE INTERACCIÓN
+   ========================================================= */
+
+const interactionMessageConfiguration =
+  getElement(
+    "interactionMessageConfiguration"
+  );
+
+const verificationMethodInputs =
+  document.querySelectorAll(
+    'input[name="verificationMethod"]'
+  );
+
+function updateInteractionMessageVisibility() {
+  const selectedMethod =
+    document.querySelector(
+      'input[name="verificationMethod"]:checked'
+    )?.value || "oauth_link";
+
+  if (!interactionMessageConfiguration) {
+    return;
+  }
+
+  interactionMessageConfiguration.style.display =
+    selectedMethod === "interaction_button"
+      ? ""
+      : "none";
+}
+
+verificationMethodInputs.forEach(input => {
+  input.addEventListener(
+    "change",
+    updateInteractionMessageVisibility
+  );
+});
+
+updateInteractionMessageVisibility();
+
+/* =========================================================
+   VISTA PREVIA — MENSAJE DEL BOTÓN DE INTERACCIÓN
+   ========================================================= */
+
+const interactionTitleInput =
+  getElement("verifyInteractionTitle");
+
+const interactionMessageInput =
+  getElement("verifyInteractionMessage");
+
+const interactionColorInput =
+  getElement("verifyInteractionColor");
+
+const interactionColorTextInput =
+  getElement("verifyInteractionColorText");
+
+const interactionImageInput =
+  getElement("verifyInteractionImage");
+
+const interactionButtonEmojiInput =
+  getElement("verifyInteractionButtonEmoji");
+
+const interactionButtonTextInput =
+  getElement("verifyInteractionButtonText");
+
+const interactionPreviewTitle =
+  getElement("interactionPreviewTitle");
+
+const interactionPreviewMessage =
+  getElement("interactionPreviewMessage");
+
+const interactionPreviewEmbed =
+  getElement("interactionMessagePreviewEmbed");
+
+const interactionPreviewImage =
+  getElement("interactionPreviewImage");
+
+const interactionPreviewButton =
+  getElement("interactionPreviewButton");
+
+function resolvePreviewVariables(text) {
+  const now =
+    new Date();
+
+  const selectedRole =
+    getElement("verifyRole")
+      ?.selectedOptions?.[0]
+      ?.textContent
+      ?.trim() ||
+    "Miembro verificado";
+
+  const selectedChannel =
+    getElement("verifyChannel")
+      ?.selectedOptions?.[0]
+      ?.textContent
+      ?.trim() ||
+    "#verificación";
+
+  const serverName =
+    servidor?.name ||
+    "Servidor de ejemplo";
+
+  const serverId =
+    String(
+      servidor?.id ||
+      "123456789012345678"
+    );
+
+  const ownerId =
+    String(
+      servidor?.ownerId ||
+      "123456789012345678"
+    );
+
+  const memberCount =
+    Number(
+      servidor?.memberCount ||
+      servidor?.members ||
+      1248
+    ).toLocaleString(
+      "es-AR"
+    );
+
+  const previewValues = {
+    /* Alias anteriores */
+    "{usuario}":
+      "Usuario",
+    "{servidor}":
+      serverName,
+    "{rol}":
+      selectedRole,
+    "{fecha}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+    "{hora}":
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour:
+            "2-digit",
+          minute:
+            "2-digit",
+        }
+      ),
+
+    /* Usuario */
+    "{user}":
+      "Usuario",
+    "{username}":
+      "usuario",
+    "{displayname}":
+      "Usuario de ejemplo",
+    "{globalname}":
+      "Usuario de ejemplo",
+    "{nickname}":
+      "Usuario",
+    "{mention}":
+      "@Usuario",
+    "{userid}":
+      "123456789012345678",
+    "{avatar}":
+      "https://cdn.discordapp.com/avatar.png",
+    "{banner}":
+      "https://cdn.discordapp.com/banner.png",
+    "{created}":
+      "15/03/2024",
+    "{joined}":
+      "10/07/2026",
+    "{joinedrelative}":
+      "hace 7 días",
+    "{status}":
+      "En línea",
+    "{activity}":
+      "Usando Nebula",
+    "{roles}":
+      `${selectedRole}, Miembro`,
+    "{rolecount}":
+      "2",
+    "{highestrole}":
+      selectedRole,
+    "{lowestrole}":
+      "Miembro",
+    "{permissions}":
+      "Ver canales, enviar mensajes",
+    "{boosting}":
+      "No",
+
+    /* Servidor */
+    "{server}":
+      serverName,
+    "{serverid}":
+      serverId,
+    "{servericon}":
+      servidor?.icon ||
+      "Icono del servidor",
+    "{serverbanner}":
+      servidor?.banner ||
+      "Banner del servidor",
+    "{serverdescription}":
+      servidor?.description ||
+      "Comunidad protegida por Nebula",
+    "{owner}":
+      "Propietario",
+    "{ownerid}":
+      ownerId,
+    "{membercount}":
+      memberCount,
+    "{members}":
+      memberCount,
+    "{bots}":
+      "24",
+    "{humans}":
+      "1.224",
+    "{online}":
+      "386",
+    "{offline}":
+      "862",
+    "{boosts}":
+      "18",
+    "{boostlevel}":
+      "Nivel 2",
+    "{verificationlevel}":
+      "Medio",
+    "{channels}":
+      "48",
+    "{textchannels}":
+      "32",
+    "{voicechannels}":
+      "10",
+    "{categories}":
+      "6",
+    "{rolescount}":
+      "14",
+    "{emojis}":
+      "42",
+    "{stickers}":
+      "8",
+    "{createdserver}":
+      "20/05/2024",
+
+    /* Roles */
+    "{role}":
+      selectedRole,
+    "{roleid}":
+      "123456789012345678",
+    "{rolename}":
+      selectedRole,
+    "{rolecolor}":
+      "#ffffff",
+    "{roleicon}":
+      "🛡️",
+    "{autorole}":
+      selectedRole,
+
+    /* Canal */
+    "{channel}":
+      selectedChannel,
+    "{channelid}":
+      "123456789012345678",
+    "{channelmention}":
+      selectedChannel,
+    "{channeltopic}":
+      "Canal de verificación",
+    "{category}":
+      "INFORMACIÓN",
+    "{categoryid}":
+      "123456789012345678",
+    "{thread}":
+      "Hilo de ejemplo",
+    "{threadid}":
+      "123456789012345678",
+    "{slowmode}":
+      "Desactivado",
+    "{channeltype}":
+      "Canal de texto",
+
+    /* Bot */
+    "{bot}":
+      "Nebula Bot",
+    "{botid}":
+      "123456789012345678",
+    "{botavatar}":
+      "Avatar de Nebula",
+    "{botversion}":
+      "2.0.0",
+    "{latency}":
+      "38 ms",
+    "{ping}":
+      "38 ms",
+    "{uptime}":
+      "30 días",
+    "{commands}":
+      "24",
+    "{servers}":
+      "12",
+    "{users}":
+      "8.745",
+    "{memory}":
+      "86 MB",
+    "{cpu}":
+      "2.3%",
+    "{node}":
+      "Node.js 22",
+    "{library}":
+      "Discord.js v14",
+
+    /* Fecha */
+    "{date}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+    "{time}":
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour:
+            "2-digit",
+          minute:
+            "2-digit",
+        }
+      ),
+    "{datetime}":
+      now.toLocaleString(
+        "es-AR"
+      ),
+    "{timestamp}":
+      String(
+        now.getTime()
+      ),
+    "{year}":
+      String(
+        now.getFullYear()
+      ),
+    "{month}":
+      String(
+        now.getMonth() + 1
+      ),
+    "{monthname}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          month:
+            "long",
+        }
+      ),
+    "{day}":
+      String(
+        now.getDate()
+      ),
+    "{weekday}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          weekday:
+            "long",
+        }
+      ),
+    "{hour}":
+      String(
+        now.getHours()
+      ).padStart(
+        2,
+        "0"
+      ),
+    "{minute}":
+      String(
+        now.getMinutes()
+      ).padStart(
+        2,
+        "0"
+      ),
+    "{second}":
+      String(
+        now.getSeconds()
+      ).padStart(
+        2,
+        "0"
+      ),
+    "{timezone}":
+      Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone,
+    "{unix}":
+      String(
+        Math.floor(
+          now.getTime() /
+          1000
+        )
+      ),
+    "{shortdate}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+    "{longdate}":
+      now.toLocaleDateString(
+        "es-AR",
+        {
+          weekday:
+            "long",
+          year:
+            "numeric",
+          month:
+            "long",
+          day:
+            "numeric",
+        }
+      ),
+
+    /* Verificación */
+    "{verifylink}":
+      `${window.location.origin}/verify`,
+    "{verificationcode}":
+      "NEBULA-4821",
+    "{verificationid}":
+      "VER-123456",
+    "{verificationmethod}":
+      "Botón de enlace",
+    "{verificationrole}":
+      selectedRole,
+    "{verificationchannel}":
+      selectedChannel,
+    "{verificationtime}":
+      now.toLocaleTimeString(
+        "es-AR"
+      ),
+    "{verificationdate}":
+      now.toLocaleDateString(
+        "es-AR"
+      ),
+    "{verifyexpires}":
+      "20 minutos",
+    "{verified}":
+      "Verificado",
+    "{verifybrowser}":
+      "Chrome",
+    "{verifyos}":
+      "Windows 11",
+    "{verifydevice}":
+      "Computadora",
+    "{verifycountry}":
+      "Argentina",
+    "{verifycity}":
+      "El Colorado",
+    "{verifylanguage}":
+      navigator.language ||
+      "es-AR",
+    "{verifyisp}":
+      "Proveedor de internet",
+
+    /* Sistema */
+    "{newline}":
+      "\n",
+    "{space}":
+      " ",
+    "{separator}":
+      "────────────",
+    "{tab}":
+      "    ",
+    "{version}":
+      "2.0.0",
+    "{dashboardversion}":
+      "2.0.0",
+    "{build}":
+      "Producción",
+    "{environment}":
+      "Dashboard",
+    "{random}":
+      "Nebula",
+    "{randomnumber}":
+      String(
+        Math.floor(
+          Math.random() *
+          1000
+        )
+      ),
+    "{randomcolor}":
+      "#ffffff",
+    "{uuid}":
+      "550e8400-e29b-41d4-a716-446655440000",
+    "{domain}":
+      window.location.hostname,
+    "{url}":
+      window.location.href,
+  };
+
+  /*
+    Garantiza que ninguna variable del
+    catálogo quede escrita sin reemplazar.
+  */
+
+  verificationVariables.forEach(
+    variable => {
+      const normalizedKey =
+        variable.key.toLowerCase();
+
+      if (
+        previewValues[
+          normalizedKey
+        ] === undefined
+      ) {
+        previewValues[
+          normalizedKey
+        ] =
+          `${variable.label} — ejemplo`;
+      }
+    }
+  );
+
+  return String(
+    text || ""
+  ).replace(
+    /\{[a-z0-9]+\}/gi,
+    variable => {
+      return (
+        previewValues[
+          variable.toLowerCase()
+        ] ??
+        variable
+      );
+    }
+  );
+}
+
+function isValidHexColor(value) {
+  return /^#[0-9A-Fa-f]{6}$/.test(
+    String(value || "")
+  );
+}
+
+function updateInteractionMessagePreview() {
+  if (
+    !interactionPreviewTitle ||
+    !interactionPreviewMessage ||
+    !interactionPreviewEmbed ||
+    !interactionPreviewButton
+  ) {
+    return;
+  }
+
+  const title =
+    resolvePreviewVariables(
+      interactionTitleInput?.value ||
+      "🔒 Verificá tu cuenta"
+    );
+
+  const message =
+    resolvePreviewVariables(
+      interactionMessageInput?.value ||
+      "Presioná el botón para verificarte."
+    );
+
+  interactionPreviewTitle.textContent =
+    title;
+
+  interactionPreviewMessage.textContent =
+    message;
+
+  const selectedColor =
+    interactionColorInput?.value ||
+    "#ffffff";
+
+  interactionPreviewEmbed.style.setProperty(
+    "--preview-color",
+    selectedColor
+  );
+
+  if (
+    interactionColorTextInput &&
+    interactionColorTextInput.value !== selectedColor
+  ) {
+    interactionColorTextInput.value =
+      selectedColor;
+  }
+
+  const imageUrl =
+    interactionImageInput?.value.trim() ||
+    "";
+
+  if (interactionPreviewImage) {
+    if (imageUrl) {
+      interactionPreviewImage.src =
+        imageUrl;
+
+      interactionPreviewImage.style.display =
+        "block";
+    } else {
+      interactionPreviewImage.removeAttribute(
+        "src"
+      );
+
+      interactionPreviewImage.style.display =
+        "none";
+    }
+  }
+
+const buttonEmoji =
+  interactionButtonEmojiInput?.value.trim() ||
+  "";
+
+const buttonText =
+  interactionButtonTextInput?.value.trim() ||
+  "Continuar verificación";
+
+interactionPreviewButton.innerHTML = `
+  ${
+    buttonEmoji
+      ? `<span class="configuration-link-button-emoji">${escapeHtml(
+          buttonEmoji
+        )}</span>`
+      : ""
+  }
+
+  <span class="configuration-link-button-text">
+    ${escapeHtml(buttonText)}
+  </span>
+
+  <span class="configuration-link-button-arrow">
+    ↗
+  </span>
+`;
+
+}
+
+[
+  interactionTitleInput,
+  interactionMessageInput,
+  interactionImageInput,
+  interactionButtonEmojiInput,
+  interactionButtonTextInput,
+].forEach(element => {
+
+  element?.addEventListener(
+    "input",
+    updateInteractionMessagePreview
+  );
+});
+
+interactionColorInput?.addEventListener(
+  "input",
+  updateInteractionMessagePreview
+);
+
+interactionColorTextInput?.addEventListener(
+  "input",
+  () => {
+    const color =
+      interactionColorTextInput.value.trim();
+
+    if (
+      isValidHexColor(color) &&
+      interactionColorInput
+    ) {
+      interactionColorInput.value =
+        color;
+
+      updateInteractionMessagePreview();
+    }
+  }
+);
+
+updateInteractionMessagePreview();
+
   getElement("backToServerPanel")
+
     ?.addEventListener("click", () => {
       abrirPanelServidor(servidor.id);
     });
@@ -4345,6 +10400,140 @@ updateDiscordPanelPreview();
   );
 function obtenerAparienciaDesdeFormulario() {
   return {
+    splitImageUrl:
+      document.getElementById(
+        "verifySplitImageUrl"
+      )?.value.trim() || "",
+
+    splitImagePosition:
+      document.getElementById(
+        "verifySplitImagePosition"
+      )?.value || "left",
+
+    splitImageFit:
+      document.getElementById(
+        "verifySplitImageFit"
+      )?.value || "cover",
+
+    splitImageDarkness:
+      Number(
+        document.getElementById(
+          "verifySplitImageDarkness"
+        )?.value || 45
+      ),
+
+    splitImageWidth:
+      Number(
+        document.getElementById(
+          "verifySplitImageWidth"
+        )?.value || 48
+      ),
+
+    splitShowImage:
+      document.getElementById(
+        "verifySplitShowImage"
+      )?.checked !== false,
+
+    splitShowDate:
+      document.getElementById(
+        "verifySplitShowDate"
+      )?.checked !== false,
+
+    splitShowAccess:
+      document.getElementById(
+        "verifySplitShowAccess"
+      )?.checked !== false,
+    cardDesign:
+      document.querySelector(
+        'input[name="verificationCardDesign"]:checked'
+      )?.value || "classic",
+
+    terminalTitle:
+      document.getElementById(
+        "verifyTerminalTitle"
+      )?.value.trim() ||
+      "NEBULA SECURITY TERMINAL",
+
+    terminalPrefix:
+      document.getElementById(
+        "verifyTerminalPrefix"
+      )?.value.trim() ||
+      ">",
+
+    terminalStatusText:
+      document.getElementById(
+        "verifyTerminalStatusText"
+      )?.value.trim() ||
+      "Sistema preparado",
+
+    terminalBackgroundColor:
+      document.getElementById(
+        "verifyTerminalBackgroundColorText"
+      )?.value ||
+      "#020703",
+
+    terminalTextColor:
+      document.getElementById(
+        "verifyTerminalTextColorText"
+      )?.value ||
+      "#d9ffe0",
+
+    terminalAccentColor:
+      document.getElementById(
+        "verifyTerminalAccentColorText"
+      )?.value ||
+      "#22c55e",
+
+    terminalBorderColor:
+      document.getElementById(
+        "verifyTerminalBorderColorText"
+      )?.value ||
+      "#14532d",
+
+    terminalShowCursor:
+      Boolean(
+        document.getElementById(
+          "verifyTerminalShowCursor"
+        )?.checked
+      ),
+
+    terminalShowLines:
+      Boolean(
+        document.getElementById(
+          "verifyTerminalShowLines"
+        )?.checked
+      ),
+
+    terminalShowServer:
+      Boolean(
+        document.getElementById(
+          "verifyTerminalShowServer"
+        )?.checked
+      ),
+
+    terminalShowRole:
+      Boolean(
+        document.getElementById(
+          "verifyTerminalShowRole"
+        )?.checked
+      ),
+
+    terminalGlow:
+      Number(
+        document.getElementById(
+          "verifyTerminalGlow"
+        )?.value ||
+        25
+      ),
+
+    terminalRadius:
+      Number(
+        document.getElementById(
+          "verifyTerminalRadius"
+        )?.value ||
+        10
+      ),
+
     pageName:
       document.getElementById(
         "verifyPageName"
@@ -4642,6 +10831,95 @@ verificationPreviewFrame?.addEventListener(
   }
 );
 
+function actualizarPanelesDeDiseno() {
+  const selectedDesign =
+    document.querySelector(
+      'input[name="verificationCardDesign"]:checked'
+    )?.value || "classic";
+
+  /*
+    Paneles exclusivos:
+    Split y Terminal.
+  */
+
+  document
+    .querySelectorAll(
+      "[data-design-settings]"
+    )
+    .forEach(panel => {
+      panel.classList.toggle(
+        "active",
+        panel.dataset.designSettings ===
+          selectedDesign
+      );
+    });
+
+  /*
+    Apartados generales visibles
+    para cada diseño.
+  */
+
+  const visibleSections = {
+    classic: [
+      "identity",
+      "palette",
+      "background",
+      "animations",
+      "card",
+      "button",
+      "sounds",
+    ],
+
+    split: [
+      "identity",
+      "palette",
+      "background",
+      "button",
+    ],
+
+    terminal: [
+      "identity",
+      "background",
+      "button",
+    ],
+  };
+
+  const allowedSections =
+    visibleSections[selectedDesign] ||
+    visibleSections.classic;
+
+  document
+    .querySelectorAll(
+      "[data-appearance-section]"
+    )
+    .forEach(section => {
+      const sectionName =
+        section.dataset
+          .appearanceSection;
+
+      section.hidden =
+        !allowedSections.includes(
+          sectionName
+        );
+    });
+}
+
+document
+  .querySelectorAll(
+    'input[name="verificationCardDesign"]'
+  )
+  .forEach(input => {
+    input.addEventListener(
+      "change",
+      () => {
+        actualizarPanelesDeDiseno();
+        actualizarVistaPreviaApariencia();
+      }
+    );
+  });
+
+actualizarPanelesDeDiseno();
+
 const appearanceInputIds = [
   "verifyPageName",
   "verifyPageDescription",
@@ -4701,6 +10979,39 @@ const appearanceInputIds = [
   "verifyVerificationSound",
   "verifyErrorSound",
   "verifySoundVolume",
+
+  "verifySplitImageUrl",
+  "verifySplitImagePosition",
+  "verifySplitImageFit",
+  "verifySplitImageDarkness",
+  "verifySplitImageWidth",
+  "verifySplitShowImage",
+  "verifySplitShowDate",
+  "verifySplitShowAccess",
+  "verifyTerminalTitle",
+  "verifyTerminalPrefix",
+  "verifyTerminalStatusText",
+
+  "verifyTerminalBackgroundColor",
+  "verifyTerminalBackgroundColorText",
+
+  "verifyTerminalTextColor",
+  "verifyTerminalTextColorText",
+
+  "verifyTerminalAccentColor",
+  "verifyTerminalAccentColorText",
+
+  "verifyTerminalBorderColor",
+  "verifyTerminalBorderColorText",
+
+  "verifyTerminalShowCursor",
+  "verifyTerminalShowLines",
+  "verifyTerminalShowServer",
+  "verifyTerminalShowRole",
+
+  "verifyTerminalGlow",
+  "verifyTerminalRadius",
+
 ];
 
 appearanceInputIds.forEach(id => {
@@ -4754,6 +11065,25 @@ const appearanceColorPairs = [
   [
     "verifyGradientEnd",
     "verifyGradientEndText",
+  ],
+  [
+    "verifyTerminalBackgroundColor",
+    "verifyTerminalBackgroundColorText",
+  ],
+
+  [
+    "verifyTerminalTextColor",
+    "verifyTerminalTextColorText",
+  ],
+
+  [
+    "verifyTerminalAccentColor",
+    "verifyTerminalAccentColorText",
+  ],
+
+  [
+    "verifyTerminalBorderColor",
+    "verifyTerminalBorderColorText",
   ],
 ];
 
@@ -5056,12 +11386,25 @@ function mostrarConfiguracionBienvenida(
       <div class="welcome-layout">
 
         <article class="section-panel">
-          <div class="section-panel-head">
-            <div>
-              <span>CONFIGURACIÓN</span>
-              <h3>Mensaje de ingreso</h3>
-            </div>
-          </div>
+         <div class="section-panel-head">
+  <div>
+    <span>CONFIGURACIÓN</span>
+
+    <h3>
+      Mensaje de ingreso
+    </h3>
+  </div>
+
+<button
+  id="openWelcomeVariables"
+  class="open-variables-button"
+  data-open-welcome-variables
+  type="button"
+>
+  <span>⌘</span>
+  Variables
+</button>
+ </div>
 
           <div class="welcome-enabled-row">
             <div>
@@ -5269,15 +11612,23 @@ function mostrarConfiguracionBienvenida(
             </div>
           </div>
 
-          <div class="welcome-discord-preview">
-            <div class="preview-bot-avatar">N</div>
+        <div class="welcome-discord-preview">
+  <div
+    class="preview-bot-avatar"
+    id="welcomePreviewBotAvatar"
+  >
+    N
+  </div>
 
-            <div class="preview-message-content">
-              <div class="preview-author">
-                Nebula Bot
-                <small>BOT</small>
-                <time>Ahora</time>
-              </div>
+  <div class="preview-message-content">
+    <div class="preview-author">
+      <span id="welcomePreviewBotName">
+        Nebula Bot
+      </span>
+
+      <small>BOT</small>
+      <time>Ahora</time>
+    </div>
 
               <div
                 class="preview-embed"
@@ -5286,14 +11637,10 @@ function mostrarConfiguracionBienvenida(
                 <strong id="welcomePreviewTitle"></strong>
                 <p id="welcomePreviewMessage"></p>
 
-                <div class="preview-member">
-                  <div>AM</div>
-
-                  <span>
-                    <strong>Alvi Moreyra</strong>
-                    Nuevo miembro
-                  </span>
-                </div>
+               <div
+  id="welcomePreviewUserAvatar"
+  class="preview-user-thumbnail"
+></div>
 
                 <small>
                   ${servidor.name} · Miembro número
@@ -5314,14 +11661,22 @@ function mostrarConfiguracionBienvenida(
   </div>
 
   <div class="welcome-discord-preview dm-preview">
-    <div class="preview-bot-avatar">N</div>
+  <div
+    class="preview-bot-avatar"
+    id="welcomeDmPreviewBotAvatar"
+  >
+    N
+  </div>
 
-    <div class="preview-message-content">
-      <div class="preview-author">
+  <div class="preview-message-content">
+    <div class="preview-author">
+      <span id="welcomeDmPreviewBotName">
         Nebula Bot
-        <small>BOT</small>
-        <time>Ahora</time>
-      </div>
+      </span>
+
+      <small>BOT</small>
+      <time>Ahora</time>
+    </div>
 
       <div
         class="preview-embed"
@@ -5331,17 +11686,10 @@ function mostrarConfiguracionBienvenida(
 
         <p id="welcomeDmPreviewMessage"></p>
 
-        <div
-          id="welcomeDmPreviewAvatar"
-          class="preview-member"
-        >
-          <div>AM</div>
-
-          <span>
-            <strong>Alvi Moreyra</strong>
-            Mensaje privado
-          </span>
-        </div>
+       <div
+  id="welcomeDmPreviewAvatar"
+  class="preview-user-thumbnail"
+></div>
 
         <small>
           Mensaje enviado por ${servidor.name}
@@ -5351,6 +11699,7 @@ function mostrarConfiguracionBienvenida(
   </div>
 </div>
 
+
 <div class="welcome-help">
   <strong>Ejemplo de variables</strong>
 
@@ -5358,6 +11707,119 @@ function mostrarConfiguracionBienvenida(
     <code>{user}</code> menciona al usuario y
     <code>{server}</code> escribe el nombre del servidor.
   </p>
+</div>
+
+<div
+  id="welcomeVariablesModal"
+  class="variables-modal"
+  aria-hidden="true"
+>
+  <div
+    class="variables-modal-backdrop"
+    data-close-welcome-variables
+  ></div>
+
+  <section
+    class="variables-modal-window"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="welcomeVariablesTitle"
+  >
+    <header class="variables-modal-header">
+      <div>
+        <span>TEXTOS DINÁMICOS</span>
+
+        <h2 id="welcomeVariablesTitle">
+          Variables de Bienvenida
+        </h2>
+
+        <p>
+          Elegí una categoría y copiá la variable que necesites.
+        </p>
+      </div>
+
+      <button
+        class="variables-modal-close"
+        data-close-welcome-variables
+        type="button"
+        aria-label="Cerrar"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="variables-modal-search">
+      <span>⌕</span>
+
+      <input
+        id="welcomeVariablesSearch"
+        type="search"
+        placeholder="Buscar una variable..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="variables-modal-content">
+      <aside class="variables-categories">
+
+        <button
+          type="button"
+          class="variables-category active"
+          data-welcome-variable-category="user"
+        >
+          <span>👤</span>
+          Usuario
+        </button>
+
+        <button
+          type="button"
+          class="variables-category"
+          data-welcome-variable-category="server"
+        >
+          <span>🌍</span>
+          Servidor
+        </button>
+
+        <button
+          type="button"
+          class="variables-category"
+          data-welcome-variable-category="date"
+        >
+          <span>📅</span>
+          Fecha y hora
+        </button>
+
+      </aside>
+
+      <section class="variables-results">
+        <div
+          id="welcomeVariablesModalList"
+          class="variables-modal-list"
+        ></div>
+      </section>
+    </div>
+
+    <div
+      id="welcomeVariablesModalEmpty"
+      class="variables-modal-empty"
+      hidden
+    >
+      No se encontraron variables.
+    </div>
+
+    <footer class="variables-modal-footer">
+      <span>
+        Presioná una variable para copiarla.
+      </span>
+
+      <button
+        data-close-welcome-variables
+        type="button"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </section>
 </div>
 
 </article>
@@ -5399,14 +11861,125 @@ const dmShowAvatarInput =
 const dmPreviewSection =
   document.getElementById("welcomeDmPreviewSection");
 
+const previewBotName =
+  dashboardBotData?.name ||
+  "Nebula Bot";
+
+const previewDashboardUser =
+  dashboardSessionUser || {};
+
+const previewUserName =
+  previewDashboardUser.displayName ||
+  previewDashboardUser.globalName ||
+  previewDashboardUser.username ||
+  "Usuario";
+
+const previewUserAvatar =
+  previewDashboardUser.avatar ||
+  "";
+
+const publicUserAvatarElement =
+  document.getElementById(
+    "welcomePreviewUserAvatar"
+  );
+
+const dmUserAvatarElement =
+  document.getElementById(
+    "welcomeDmPreviewAvatar"
+  );
+
+const userAvatarHtml =
+  previewUserAvatar
+    ? `
+      <img
+        src="${previewUserAvatar}"
+        alt="${previewUserName}"
+      >
+    `
+    : `
+      <span>
+        ${getServerInitials(
+          previewUserName
+        )}
+      </span>
+    `;
+
+if (publicUserAvatarElement) {
+  publicUserAvatarElement.innerHTML =
+    userAvatarHtml;
+}
+
+if (dmUserAvatarElement) {
+  dmUserAvatarElement.innerHTML =
+    userAvatarHtml;
+}
+
+const previewBotAvatar =
+  dashboardBotData?.avatar ||
+  "";
+
+const publicBotNameElement =
+  document.getElementById(
+    "welcomePreviewBotName"
+  );
+
+const dmBotNameElement =
+  document.getElementById(
+    "welcomeDmPreviewBotName"
+  );
+
+const publicBotAvatarElement =
+  document.getElementById(
+    "welcomePreviewBotAvatar"
+  );
+
+const dmBotAvatarElement =
+  document.getElementById(
+    "welcomeDmPreviewBotAvatar"
+  );
+
+if (publicBotNameElement) {
+  publicBotNameElement.textContent =
+    previewBotName;
+}
+
+if (dmBotNameElement) {
+  dmBotNameElement.textContent =
+    previewBotName;
+}
+
+const botAvatarHtml =
+  previewBotAvatar
+    ? `
+      <img
+        src="${previewBotAvatar}"
+        alt="${previewBotName}"
+      >
+    `
+    : previewBotName
+        .charAt(0)
+        .toUpperCase();
+
+if (publicBotAvatarElement) {
+  publicBotAvatarElement.innerHTML =
+    botAvatarHtml;
+}
+
+if (dmBotAvatarElement) {
+  dmBotAvatarElement.innerHTML =
+    botAvatarHtml;
+}
+
  function updatePreview() {
   // Vista previa pública
-  const title = replacePreviewVariables(
+const title =
+  replacePreviewVariables(
     titleInput.value,
     servidor
   );
 
-  const message = replacePreviewVariables(
+const message =
+  replacePreviewVariables(
     messageInput.value,
     servidor
   );
@@ -5423,22 +11996,27 @@ const dmPreviewSection =
     "welcomePreviewEmbed"
   ).style.borderLeftColor = colorInput.value;
 
-  const publicAvatar = document.querySelector(
-    "#welcomePreviewEmbed .preview-member"
+ const publicAvatar =
+  document.getElementById(
+    "welcomePreviewUserAvatar"
   );
 
-  if (publicAvatar) {
-    publicAvatar.style.display =
-      showAvatarInput.checked ? "flex" : "none";
-  }
+if (publicAvatar) {
+  publicAvatar.style.display =
+    showAvatarInput.checked
+      ? "block"
+      : "none";
+}
 
   // Vista previa del mensaje privado
-  const dmTitle = replacePreviewVariables(
+ const dmTitle =
+  replacePreviewVariables(
     dmTitleInput.value,
     servidor
   );
 
-  const dmMessage = replacePreviewVariables(
+const dmMessage =
+  replacePreviewVariables(
     dmMessageInput.value,
     servidor
   );
@@ -5455,15 +12033,22 @@ const dmPreviewSection =
     "welcomeDmPreviewEmbed"
   ).style.borderLeftColor = dmColorInput.value;
 
+
+const dmUserAvatar =
   document.getElementById(
     "welcomeDmPreviewAvatar"
-  ).style.display =
+  );
+
+if (dmUserAvatar) {
+  dmUserAvatar.style.display =
     dmShowAvatarInput.checked
-      ? "flex"
+      ? "block"
       : "none";
 }
 
-  colorInput.addEventListener("input", () => {
+}
+
+colorInput.addEventListener("input", () => {
     colorTextInput.value = colorInput.value;
     updatePreview();
   });
@@ -5547,13 +12132,424 @@ dmColorTextInput.addEventListener("input", () => {
         updatePreview();
       });
     });
+/* =========================================================
+   VENTANA DE VARIABLES DE BIENVENIDA
+   ========================================================= */
 
-  document
-    .getElementById("backToServerPanel")
-    .addEventListener("click", () => {
-      abrirPanelServidor(servidor.id);
+const welcomeVariablesModal =
+  document.getElementById(
+    "welcomeVariablesModal"
+  );
+
+const welcomeVariablesSearch =
+  document.getElementById(
+    "welcomeVariablesSearch"
+  );
+
+const welcomeVariablesModalList =
+  document.getElementById(
+    "welcomeVariablesModalList"
+  );
+
+const welcomeVariablesModalEmpty =
+  document.getElementById(
+    "welcomeVariablesModalEmpty"
+  );
+
+const welcomeVariableCategoryButtons =
+  document.querySelectorAll(
+    "[data-welcome-variable-category]"
+  );
+
+let activeWelcomeVariableCategory =
+  "user";
+
+let activeWelcomeVariableTarget =
+  null;
+
+const welcomeVariables = [
+  {
+    key: "{user}",
+    label: "Nombre corto del usuario",
+    category: "user",
+  },
+  {
+    key: "{mention}",
+    label: "Mención del usuario",
+    category: "user",
+  },
+  {
+    key: "{username}",
+    label: "Nombre de usuario",
+    category: "user",
+  },
+  {
+    key: "{displayname}",
+    label: "Nombre visible",
+    category: "user",
+  },
+  {
+    key: "{userid}",
+    label: "ID del usuario",
+    category: "user",
+  },
+  {
+    key: "{joindate}",
+    label: "Fecha de ingreso",
+    category: "user",
+  },
+
+  {
+    key: "{server}",
+    label: "Nombre del servidor",
+    category: "server",
+  },
+  {
+    key: "{serverid}",
+    label: "ID del servidor",
+    category: "server",
+  },
+  {
+    key: "{members}",
+    label: "Cantidad de miembros",
+    category: "server",
+  },
+  {
+    key: "{membercount}",
+    label: "Cantidad de miembros",
+    category: "server",
+  },
+
+  {
+    key: "{date}",
+    label: "Fecha actual",
+    category: "date",
+  },
+  {
+    key: "{time}",
+    label: "Hora actual",
+    category: "date",
+  },
+];
+
+function renderWelcomeVariables() {
+  if (!welcomeVariablesModalList) {
+    return;
+  }
+
+  const search =
+    String(
+      welcomeVariablesSearch?.value ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const filteredVariables =
+    welcomeVariables.filter(
+      variable => {
+        const sameCategory =
+          variable.category ===
+          activeWelcomeVariableCategory;
+
+        const searchableText =
+          `${variable.key} ${variable.label}`
+            .toLowerCase();
+
+        const matchesSearch =
+          !search ||
+          searchableText.includes(
+            search
+          );
+
+        return (
+          sameCategory &&
+          matchesSearch
+        );
+      }
+    );
+
+  welcomeVariablesModalList.innerHTML =
+    filteredVariables
+      .map(
+        variable => `
+          <button
+            class="verify-variable-button"
+            data-copy-welcome-variable="${variable.key}"
+            type="button"
+          >
+            <code>
+              ${variable.key}
+            </code>
+
+            <span>
+              ${variable.label}
+            </span>
+
+            <b>
+              Copiar
+            </b>
+          </button>
+        `
+      )
+      .join("");
+
+  const hasResults =
+    filteredVariables.length > 0;
+
+  if (
+    welcomeVariablesModalEmpty
+  ) {
+    welcomeVariablesModalEmpty.hidden =
+      hasResults;
+
+    welcomeVariablesModalEmpty
+      .classList.toggle(
+        "visible",
+        !hasResults
+      );
+  }
+}
+
+function openWelcomeVariablesModal(
+  target = null
+) {
+
+  if (!welcomeVariablesModal) {
+    return;
+  }
+
+activeWelcomeVariableTarget =
+  target;
+
+  welcomeVariablesModal.classList.add(
+    "open"
+  );
+
+  welcomeVariablesModal.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  document.body.classList.add(
+    "variables-modal-open"
+  );
+
+  activeWelcomeVariableCategory =
+    "user";
+
+  if (welcomeVariablesSearch) {
+    welcomeVariablesSearch.value =
+      "";
+  }
+
+  welcomeVariableCategoryButtons
+    .forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset
+          .welcomeVariableCategory ===
+          "user"
+      );
     });
-async function guardarConfiguracionBienvenida() {
+
+  renderWelcomeVariables();
+
+  setTimeout(
+    () => {
+      welcomeVariablesSearch
+        ?.focus();
+    },
+    100
+  );
+}
+
+function closeWelcomeVariablesModal() {
+  if (!welcomeVariablesModal) {
+    return;
+  }
+
+  welcomeVariablesModal.classList.remove(
+    "open"
+  );
+
+  welcomeVariablesModal.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  document.body.classList.remove(
+    "variables-modal-open"
+  );
+}
+
+document
+  .querySelector(
+    "[data-open-welcome-variables]"
+  )
+  ?.addEventListener(
+    "click",
+    event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      openWelcomeVariablesModal(
+        messageInput
+      );
+    }
+  );
+
+document
+  .querySelectorAll(
+    "[data-close-welcome-variables]"
+  )
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        closeWelcomeVariablesModal();
+      }
+    );
+  });
+
+welcomeVariableCategoryButtons
+  .forEach(button => {
+    button.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        activeWelcomeVariableCategory =
+          button.dataset
+            .welcomeVariableCategory ||
+          "user";
+
+        welcomeVariableCategoryButtons
+          .forEach(
+            categoryButton => {
+              categoryButton
+                .classList.toggle(
+                  "active",
+                  categoryButton ===
+                    button
+                );
+            }
+          );
+
+        renderWelcomeVariables();
+      }
+    );
+  });
+
+welcomeVariablesSearch
+  ?.addEventListener(
+    "input",
+    renderWelcomeVariables
+  );
+
+welcomeVariablesModalList
+  ?.addEventListener(
+    "click",
+    async event => {
+      const button =
+        event.target.closest(
+          "[data-copy-welcome-variable]"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const variable =
+        button.dataset
+          .copyWelcomeVariable;
+
+      if (!variable) {
+        return;
+      }
+
+      try {
+        await navigator.clipboard
+          .writeText(variable);
+
+        const previousText =
+          button.querySelector("b")
+            ?.textContent;
+
+        const status =
+          button.querySelector("b");
+
+        if (status) {
+          status.textContent =
+            "Copiado ✓";
+
+          setTimeout(
+            () => {
+              status.textContent =
+                previousText ||
+                "Copiar";
+            },
+            1200
+          );
+        }
+      } catch (error) {
+        console.error(
+          "No se pudo copiar la variable:",
+          error
+        );
+      }
+    }
+  );
+
+welcomeVariablesModal
+  ?.addEventListener(
+    "wheel",
+    event => {
+      const scrollArea =
+        event.target.closest(
+          ".variables-categories, .variables-results"
+        );
+
+      if (!scrollArea) {
+        event.preventDefault();
+      }
+    },
+    {
+      passive: false,
+    }
+  );
+
+document.addEventListener(
+  "keydown",
+  event => {
+    if (
+      event.key === "Escape" &&
+      welcomeVariablesModal
+        ?.classList.contains(
+          "open"
+        )
+    ) {
+      closeWelcomeVariablesModal();
+    }
+  }
+);
+
+renderWelcomeVariables();
+
+document
+  .getElementById("backToServerPanel")
+  .addEventListener("click", () => {
+    abrirPanelServidor(servidor.id);
+  });
+
+ async function guardarConfiguracionBienvenida() {
   const saveButton =
     document.getElementById("saveWelcome");
 
@@ -5685,29 +12681,96 @@ document
   updatePreview();
 }
 
-function replacePreviewVariables(text, servidor) {
+function replacePreviewVariables(
+  text,
+  servidor
+) {
+  const now =
+    new Date();
+
+const previewUser =
+  dashboardSessionUser || {};
+
+const username =
+  previewUser.username ||
+  "usuario";
+
+const displayName =
+  previewUser.displayName ||
+  previewUser.globalName ||
+  username;
+
+const userId =
+  previewUser.id ||
+  "000000000000000000";
+
   return String(text)
-    .replaceAll("{user}", "@Alvi Moreyra")
-    .replaceAll("{mention}", "@Alvi Moreyra")
-    .replaceAll("{username}", "Alvi")
-    .replaceAll("{displayname}", "Alvi Moreyra")
-    .replaceAll(
-      "{userid}",
-      "123456789012345678"
+
+.replaceAll(
+  "{user}",
+  username
+)
+.replaceAll(
+  "{mention}",
+  `@${username}`
+)
+.replaceAll(
+  "{username}",
+  username
+)
+.replaceAll(
+  "{displayname}",
+  displayName
+)
+.replaceAll(
+  "{userid}",
+  userId
+)
+     .replaceAll(
+      "{server}",
+      servidor.name
     )
-    .replaceAll("{server}", servidor.name)
-    .replaceAll("{serverid}", servidor.id)
+    .replaceAll(
+      "{serverid}",
+      servidor.id
+    )
     .replaceAll(
       "{members}",
-      servidor.members.toLocaleString("es-AR")
+      Number(
+        servidor.members || 0
+      ).toLocaleString(
+        "es-AR"
+      )
     )
     .replaceAll(
       "{membercount}",
-      servidor.members.toLocaleString("es-AR")
+      Number(
+        servidor.members || 0
+      ).toLocaleString(
+        "es-AR"
+      )
     )
     .replaceAll(
       "{joindate}",
-      new Date().toLocaleDateString("es-AR")
+      now.toLocaleDateString(
+        "es-AR"
+      )
+    )
+    .replaceAll(
+      "{date}",
+      now.toLocaleDateString(
+        "es-AR"
+      )
+    )
+    .replaceAll(
+      "{time}",
+      now.toLocaleTimeString(
+        "es-AR",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+        }
+      )
     );
 }
 
@@ -5725,3 +12788,4 @@ function escapeHtmlAttribute(text) {
     .replaceAll("'", "&#039;");
 }
 initializeInteractiveButtons();
+
