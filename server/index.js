@@ -2274,7 +2274,7 @@ app.get("/", (request, response) => {
   sin recibir un error 404.
 */
 app.get(
-  /^\/(?!api|auth|verify|verify-assets|socket\.io).*/,
+  /^\/(?!api|auth|verify|verify-assets|socket\.io|health).*/,
   (request, response) => {
     response.sendFile(
       path.join(
