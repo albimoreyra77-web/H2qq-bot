@@ -2720,15 +2720,27 @@ function showVerificationError(
     return;
   }
 
+  const activeDesign =
+    currentPreviewAppearance
+      ?.cardDesign ||
+    document.body.dataset
+      .cardDesign ||
+    "classic";
+
   verificationCard.classList.remove(
-    "verification-processing-state"
+    "verification-processing-state",
+    "verification-success-state"
   );
 
   verificationCard.classList.add(
     "verification-error-state"
   );
 
-  verificationCard.innerHTML = `
+  verificationCard.dataset
+    .activeDesign =
+    activeDesign;
+
+  const errorContent = `
     <div class="verification-result verification-error-result">
 
       <div class="error-animation">
@@ -2745,7 +2757,7 @@ function showVerificationError(
         No se pudo verificar
       </h2>
 
-      <p>
+      <p class="verification-error-message">
         ${escapeVerificationText(
           message
         )}
@@ -2758,15 +2770,118 @@ function showVerificationError(
       >
         <span>↻</span>
 
-        VOLVER A INTENTAR
+        <strong>
+          VOLVER A INTENTAR
+        </strong>
+
+        <b>›</b>
       </button>
 
-      <small>
-        Revisá tu sesión de Discord y los permisos del servidor.
+      <small class="verification-error-help">
+        Revisá tu cuenta de Discord y volvé a intentar.
       </small>
 
     </div>
   `;
+
+  if (
+    activeDesign === "split" ||
+    activeDesign === "split_premium"
+  ) {
+    const splitImageUrl =
+      String(
+        currentPreviewAppearance
+          ?.splitImageUrl ||
+        ""
+      ).trim();
+
+    const splitImageFit =
+      currentPreviewAppearance
+        ?.splitImageFit ||
+      "cover";
+
+    const splitImageDarkness =
+      Math.min(
+        100,
+        Math.max(
+          0,
+          Number(
+            currentPreviewAppearance
+              ?.splitImageDarkness ??
+            45
+          )
+        )
+      ) / 100;
+
+    verificationCard.innerHTML = `
+      <div class="split-error-layout">
+
+        <div class="split-error-image">
+          ${
+            splitImageUrl
+              ? `
+                <img
+                  class="split-error-background-image"
+                  src="${escapeHtmlAttribute(
+                    splitImageUrl
+                  )}"
+                  alt=""
+                  onerror="
+                    this.style.display='none';
+                    this.parentElement.classList.add('image-load-failed');
+                  "
+                >
+              `
+              : `
+                <div class="split-error-fallback"></div>
+              `
+          }
+
+          <div class="split-error-overlay"></div>
+
+          <div class="split-error-image-copy">
+            <span>
+              ACCESO RECHAZADO
+            </span>
+
+            <strong>
+              Verificación bloqueada
+            </strong>
+
+            <small>
+              Nebula Security protegió el acceso al servidor.
+            </small>
+          </div>
+        </div>
+
+        <div class="split-error-content">
+          ${errorContent}
+        </div>
+
+      </div>
+    `;
+
+    const errorImage =
+      verificationCard.querySelector(
+        ".split-error-background-image"
+      );
+
+    if (errorImage) {
+      errorImage.style.objectFit =
+        splitImageFit;
+
+      errorImage.style.filter =
+        `brightness(${
+          Math.max(
+            0,
+            1 - splitImageDarkness
+          )
+        })`;
+    }
+  } else {
+    verificationCard.innerHTML =
+      errorContent;
+  }
 
   document
     .getElementById(
