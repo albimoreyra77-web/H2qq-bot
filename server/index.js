@@ -3089,129 +3089,7 @@ app.get(
 /* =========================================================
    API DEL DASHBOARD
    ========================================================= */
-/* =========================================================
-   OBTENER CANALES DE TEXTO PARA LOGS DE LICENCIAS
-   ========================================================= */
 
-app.get(
-  "/api/servers/:guildId/text-channels",
-  async (request, response) => {
-    try {
-      const dashboardUser =
-        request.session?.dashboardUser;
-
-      if (!dashboardUser?.id) {
-        return response
-          .status(401)
-          .json({
-            success: false,
-            message:
-              "Tenés que iniciar sesión.",
-          });
-      }
-
-      if (!dashboardUser.isOwner) {
-        return response
-          .status(403)
-          .json({
-            success: false,
-            message:
-              "No tenés permisos para ver esta configuración.",
-          });
-      }
-
-      const guildId =
-        String(
-          request.params.guildId ||
-          ""
-        ).trim();
-
-      if (!guildId) {
-        return response
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "No se recibió el servidor.",
-          });
-      }
-
-      const guild =
-        client.guilds.cache.get(
-          guildId
-        );
-
-      if (!guild) {
-        return response
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "El bot no está conectado a ese servidor.",
-          });
-      }
-
-      /*
-        Actualizamos la caché de canales
-        antes de crear la lista.
-      */
-
-      await guild.channels.fetch();
-
-      const channels =
-        guild.channels.cache
-          .filter(channel => {
-            if (!channel) {
-              return false;
-            }
-
-            if (
-              typeof channel.isThread ===
-                "function" &&
-              channel.isThread()
-            ) {
-              return false;
-            }
-
-            return (
-              typeof channel.isTextBased ===
-                "function" &&
-              channel.isTextBased()
-            );
-          })
-          .sort(
-            (channelA, channelB) =>
-              channelA.rawPosition -
-              channelB.rawPosition
-          )
-          .map(channel => ({
-            id: channel.id,
-            name: channel.name,
-            position:
-              channel.rawPosition || 0,
-          }));
-
-      return response.json({
-        success: true,
-        data: channels,
-        channels,
-      });
-    } catch (error) {
-      console.error(
-        "Error cargando canales para logs de licencias:",
-        error
-      );
-
-      return response
-        .status(500)
-        .json({
-          success: false,
-          message:
-            "No se pudieron cargar los canales del servidor.",
-        });
-    }
-  }
-);
 
 /* =========================================================
    OBTENER CONFIGURACIÓN DE LICENCIAS
@@ -4590,57 +4468,75 @@ if (!guild) {
 
 app.get(
   "/api/servers/:guildId/text-channels",
-  (request, response) => {
-    if (!client.isReady()) {
+  async (request, response) => {
+    try {
+      if (!client.isReady()) {
+        return response
+          .status(503)
+          .json({
+            success: false,
+            message:
+              "El bot todavía no está conectado.",
+          });
+      }
+
+      const guildId =
+        String(
+          request.params.guildId || ""
+        ).trim();
+
+      const guild =
+        client.guilds.cache.get(
+          guildId
+        );
+
+      if (!guild) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "El bot no está conectado a ese servidor.",
+          });
+      }
+
+      const channels =
+        guild.channels.cache
+          .filter(
+            channel =>
+              channel.type ===
+              ChannelType.GuildText
+          )
+          .sort(
+            (channelA, channelB) =>
+              channelA.rawPosition -
+              channelB.rawPosition
+          )
+          .map(channel => ({
+            id: channel.id,
+            name: channel.name,
+          }));
+
+      return response.json({
+        success: true,
+        data: channels,
+        channels,
+      });
+    } catch (error) {
+      console.error(
+        "Error obteniendo canales de texto:",
+        error
+      );
+
       return response
-        .status(503)
+        .status(500)
         .json({
           success: false,
-
           message:
-            "El bot todavía no está conectado",
+            error.message ||
+            "No se pudieron cargar los canales.",
         });
     }
-
-    const { guildId } =
-      request.params;
-
-    const guild =
-      client.guilds.cache.get(guildId);
-
-    if (!guild) {
-      return response
-        .status(404)
-        .json({
-          success: false,
-
-          message:
-            "Servidor no encontrado",
-        });
-    }
-
-    const channels =
-      guild.channels.cache
-        .filter(
-          channel =>
-            channel.type ===
-            ChannelType.GuildText
-        )
-        .sort(
-          (channelA, channelB) =>
-            channelA.position -
-            channelB.position
-        )
-        .map(channel => ({
-          id: channel.id,
-
-          name: channel.name,
-        }));
-
-    response.json({
-      success: true,
-      data: channels,
-    });
   }
 );
 
