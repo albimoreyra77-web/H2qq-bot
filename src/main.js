@@ -1076,18 +1076,31 @@ function showExpiredLicenseScreen() {
     overlay
   );
 
-  document
-    .getElementById(
-      "expiredLicenseReturnButton"
-    )
-    .addEventListener(
-      "click",
-      () => {
-        window.location.href =
-          "/view-access";
+document
+  .getElementById(
+    "expiredLicenseReturnButton"
+  )
+  .addEventListener(
+    "click",
+    () => {
+      overlay.remove();
+
+      if (dashboardSessionUser) {
+        dashboardSessionUser.hasAccess =
+          false;
       }
-    );
-}
+
+      hideKeyCountdown();
+
+      showAccessPage();
+
+      window.history.replaceState(
+        {},
+        "",
+        "/?view=access"
+      );
+    }
+  );
 
 async function loadCurrentLicense() {
   try {
@@ -1139,6 +1152,28 @@ if (
     ) <= Date.now()
   )
 ) {
+  const currentView =
+    new URLSearchParams(
+      window.location.search
+    ).get("view");
+
+  if (dashboardSessionUser) {
+    dashboardSessionUser.hasAccess =
+      false;
+  }
+
+  if (currentView === "access") {
+    hideKeyCountdown();
+
+    document
+      .getElementById(
+        "expiredLicenseOverlay"
+      )
+      ?.remove();
+
+    return;
+  }
+
   if (keyTimeCard) {
     keyTimeCard.hidden =
       false;
@@ -1275,7 +1310,10 @@ const hasDashboardAccess =
       );
 
 
-if (!hasDashboardAccess) {
+if (
+  query.get("view") === "access" ||
+  !hasDashboardAccess
+) {
   showAccessPage();
 
   window.history.replaceState(
@@ -1285,8 +1323,9 @@ if (!hasDashboardAccess) {
   );
 } else if (
   query.get("view") ===
-  "servers"
+    "servers"
 ) {
+
   showSessionServersPage();
 } else {
   pageContent.innerHTML =
