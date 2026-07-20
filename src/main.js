@@ -925,6 +925,9 @@ function startKeyCountdown(
     clearInterval(
       keyCountdownInterval
     );
+
+    keyCountdownInterval =
+      null;
   }
 
   keyTimeCard.hidden =
@@ -988,15 +991,7 @@ function startKeyCountdown(
         Date.now();
 
       if (remaining <= 0) {
-        keyTimeCountdown.textContent =
-          "00d 00h 00m 00s";
-
-        keyTimeExpiration.textContent =
-          "Key vencida";
-
-        if (
-          keyCountdownInterval
-        ) {
+        if (keyCountdownInterval) {
           clearInterval(
             keyCountdownInterval
           );
@@ -1004,6 +999,14 @@ function startKeyCountdown(
           keyCountdownInterval =
             null;
         }
+
+        keyTimeCountdown.textContent =
+          "00d 00h 00m 00s";
+
+        keyTimeExpiration.textContent =
+          "Key vencida";
+
+        showExpiredLicenseScreen();
 
         return;
       }
@@ -1020,6 +1023,69 @@ function startKeyCountdown(
     setInterval(
       updateCountdown,
       1000
+    );
+}
+
+function showExpiredLicenseScreen() {
+  if (
+    document.getElementById(
+      "expiredLicenseOverlay"
+    )
+  ) {
+    return;
+  }
+
+  const overlay =
+    document.createElement(
+      "div"
+    );
+
+  overlay.id =
+    "expiredLicenseOverlay";
+
+  overlay.innerHTML = `
+    <div class="expired-license-card">
+      <div class="expired-license-icon">
+        🔐
+      </div>
+
+      <span class="expired-license-label">
+        NEBULA DASHBOARD
+      </span>
+
+      <h1>
+        Key vencida
+      </h1>
+
+      <p>
+        Tu licencia ya expiró.
+        Solicitá una nueva Key en nuestro Discord
+        para continuar usando el dashboard.
+      </p>
+
+      <button
+        id="expiredLicenseReturnButton"
+        type="button"
+      >
+        Volver al inicio
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(
+    overlay
+  );
+
+  document
+    .getElementById(
+      "expiredLicenseReturnButton"
+    )
+    .addEventListener(
+      "click",
+      () => {
+        window.location.href =
+          "/view-access";
+      }
     );
 }
 
@@ -1057,15 +1123,50 @@ async function loadCurrentLicense() {
       return;
     }
 
-    if (
-      result.isOwner === true ||
-      result.hasLicense !== true ||
-      !result.license
-    ) {
-      hideKeyCountdown();
+ if (result.isOwner === true) {
+  hideKeyCountdown();
 
-      return;
-    }
+  return;
+}
+
+if (
+  result.license?.status ===
+    "expired" ||
+  (
+    result.license?.expiresAt &&
+    Number(
+      result.license.expiresAt
+    ) <= Date.now()
+  )
+) {
+  if (keyTimeCard) {
+    keyTimeCard.hidden =
+      false;
+  }
+
+  if (keyTimeCountdown) {
+    keyTimeCountdown.textContent =
+      "00d 00h 00m 00s";
+  }
+
+  if (keyTimeExpiration) {
+    keyTimeExpiration.textContent =
+      "Key vencida";
+  }
+
+  showExpiredLicenseScreen();
+
+  return;
+}
+
+if (
+  result.hasLicense !== true ||
+  !result.license
+) {
+  hideKeyCountdown();
+
+  return;
+}
 
     startKeyCountdown(
       result.license
