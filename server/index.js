@@ -4043,9 +4043,9 @@ app.post(
   license.activatedAt =
     activatedAt;
 
-      const durationMilliseconds =
+     const durationMilliseconds =
   Number(
-    license.durationMilliseconds
+    license.durationMilliseconds || 0
   );
 
 license.expiresAt =
@@ -4079,6 +4079,41 @@ license.expiresAt =
               });
           }
 
+          return response.json({
+            success: true,
+
+            message:
+              "Key activada correctamente.",
+
+            data: {
+              hasAccess:
+                true,
+
+              expiresAt:
+                license.expiresAt,
+            },
+          });
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Error activando la Key:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo validar la Key.",
+        });
+    }
+
+  }
+);
+
+
 
 /* =========================================================
    LICENCIA ACTIVA DEL USUARIO CONECTADO
@@ -4101,9 +4136,6 @@ app.get(
           });
       }
 
-      /*
-        El dueño del dashboard no necesita Key.
-      */
       if (dashboardUser.isOwner === true) {
         return response.json({
           success: true,
@@ -4158,9 +4190,7 @@ app.get(
         license.status =
           "expired";
 
-        saveTokens(
-          tokens
-        );
+        saveTokens(tokens);
       }
 
       return response.json({
@@ -4208,36 +4238,6 @@ app.get(
   }
 );
 
-          return response.json({
-            success: true,
-
-            message:
-              "Key activada correctamente.",
-
-            data: {
-              hasAccess:
-                true,
-
-              expiresAt:
-                license.expiresAt,
-            },
-          });
-        }
-      );
-    } catch (error) {
-      console.error(
-        "Error activando la Key:",
-        error
-      );
-
-      return response
-        .status(500)
-        .json({
-          success: false,
-          message:
-            "No se pudo validar la Key.",
-        });
-    }
   }
 );
 
