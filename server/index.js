@@ -25,6 +25,8 @@ import {
   EmbedBuilder,
   Events,
   GatewayIntentBits,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
 } from "discord.js";
 
 dotenv.config();
@@ -155,6 +157,212 @@ const client = new Client({
 });
 
 /* =========================================================
+   COMANDO /KEYBOT
+   ========================================================= */
+
+const keyBotCommand =
+  new SlashCommandBuilder()
+    .setName(
+      "keybot"
+    )
+    .setDescription(
+      "Administrar las licencias de Nebula."
+    )
+    .setDefaultMemberPermissions(
+      PermissionFlagsBits.Administrator
+    )
+    .addSubcommand(
+      subcommand =>
+        subcommand
+          .setName(
+            "generate"
+          )
+          .setDescription(
+            "Generar una nueva licencia."
+          )
+          .addIntegerOption(
+            option =>
+              option
+                .setName(
+                  "dias"
+                )
+                .setDescription(
+                  "Cantidad de días."
+                )
+                .setMinValue(
+                  0
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addIntegerOption(
+            option =>
+              option
+                .setName(
+                  "horas"
+                )
+                .setDescription(
+                  "Cantidad de horas."
+                )
+                .setMinValue(
+                  0
+                )
+                .setMaxValue(
+                  23
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addIntegerOption(
+            option =>
+              option
+                .setName(
+                  "minutos"
+                )
+                .setDescription(
+                  "Cantidad de minutos."
+                )
+                .setMinValue(
+                  0
+                )
+                .setMaxValue(
+                  59
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addIntegerOption(
+            option =>
+              option
+                .setName(
+                  "segundos"
+                )
+                .setDescription(
+                  "Cantidad de segundos."
+                )
+                .setMinValue(
+                  0
+                )
+                .setMaxValue(
+                  59
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addBooleanOption(
+            option =>
+              option
+                .setName(
+                  "permanente"
+                )
+                .setDescription(
+                  "Crear una licencia sin vencimiento."
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addIntegerOption(
+            option =>
+              option
+                .setName(
+                  "cantidad"
+                )
+                .setDescription(
+                  "Cantidad de Keys que se generarán."
+                )
+                .setMinValue(
+                  1
+                )
+                .setMaxValue(
+                  10
+                )
+                .setRequired(
+                  false
+                )
+          )
+          .addStringOption(
+            option =>
+              option
+                .setName(
+                  "descripcion"
+                )
+                .setDescription(
+                  "Descripción opcional de la licencia."
+                )
+                .setMaxLength(
+                  500
+                )
+                .setRequired(
+                  false
+                )
+          )
+
+.addUserOption(
+  option =>
+    option
+      .setName(
+        "entregar_a"
+      )
+      .setDescription(
+        "Usuario que recibirá la licencia por mensaje privado."
+      )
+      .setRequired(
+        false
+      )
+)
+
+    );
+
+async function registerKeyBotCommand(
+  guild
+) {
+  try {
+    const commands =
+      await guild.commands.fetch();
+
+    const existingCommand =
+      commands.find(
+        command =>
+          command.name ===
+          "keybot"
+      );
+
+    if (existingCommand) {
+      await guild.commands.edit(
+        existingCommand.id,
+        keyBotCommand.toJSON()
+      );
+
+      console.log(
+        `Comando /keybot actualizado en ${guild.name}`
+      );
+
+      return;
+    }
+
+    await guild.commands.create(
+      keyBotCommand.toJSON()
+    );
+
+    console.log(
+      `Comando /keybot registrado en ${guild.name}`
+    );
+
+  } catch (error) {
+    console.error(
+      `No se pudo registrar /keybot en ${guild.name}:`,
+      error
+    );
+  }
+}
+
+
+/* =========================================================
    DATOS INTERNOS DEL DASHBOARD
    ========================================================= */
 
@@ -182,10 +390,49 @@ const VERIFY_FOLDER = path.join(
   "verify"
 );
 
+const TOKENS_FOLDER = path.join(
+  process.cwd(),
+  "server",
+  "data",
+  "tokens"
+);
+
+const LICENSES_FOLDER = path.join(
+  process.cwd(),
+  "server",
+  "data",
+  "licenses"
+);
+
+const TOKENS_FILE = path.join(
+  TOKENS_FOLDER,
+  "tokens.json"
+);
+
 if (!fs.existsSync(VERIFY_FOLDER)) {
   fs.mkdirSync(VERIFY_FOLDER, {
     recursive: true,
   });
+}
+
+if (!fs.existsSync(TOKENS_FOLDER)) {
+  fs.mkdirSync(TOKENS_FOLDER, {
+    recursive: true,
+  });
+}
+
+if (!fs.existsSync(LICENSES_FOLDER)) {
+  fs.mkdirSync(LICENSES_FOLDER, {
+    recursive: true,
+  });
+}
+
+if (!fs.existsSync(TOKENS_FILE)) {
+  fs.writeFileSync(
+    TOKENS_FILE,
+    "[]",
+    "utf8"
+  );
 }
 
 if (!fs.existsSync(WELCOME_FOLDER)) {
@@ -193,6 +440,49 @@ if (!fs.existsSync(WELCOME_FOLDER)) {
     recursive: true,
   });
 }
+
+function loadTokens() {
+  try {
+    return JSON.parse(
+      fs.readFileSync(
+        TOKENS_FILE,
+        "utf8"
+      )
+    );
+  } catch (error) {
+    console.error(
+      "Error cargando tokens:",
+      error
+    );
+
+    return [];
+  }
+}
+
+function saveTokens(tokens) {
+  fs.writeFileSync(
+    TOKENS_FILE,
+    JSON.stringify(tokens, null, 2),
+    "utf8"
+  );
+}
+
+function generateLicenseKey() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  const random = (length) => {
+    let result = "";
+
+    for (let i = 0; i < length; i++) {
+      result += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    return result;
+  };
+
+  return `NEBULA-${random(4)}-${random(4)}-${random(4)}`;
+}
+
 function saveWelcomeConfig(guildId, config) {
   const file = path.join(
     WELCOME_FOLDER,
@@ -306,6 +596,493 @@ function getVerifyConfig(guildId) {
     );
 
     return defaults;
+  }
+}
+
+function getDefaultLicenseConfig() {
+  return {
+    logsChannelId: "",
+    creation: true,
+    activation: true,
+    expiration: true,
+    deletion: true,
+    revocation: true,
+  };
+}
+
+function saveLicenseConfig(
+  guildId,
+  config
+) {
+  const file = path.join(
+    LICENSES_FOLDER,
+    `${guildId}.json`
+  );
+
+  fs.writeFileSync(
+    file,
+    JSON.stringify(
+      config,
+      null,
+      2
+    ),
+    "utf8"
+  );
+}
+
+function loadLicenseConfig(
+  guildId
+) {
+  const file = path.join(
+    LICENSES_FOLDER,
+    `${guildId}.json`
+  );
+
+  if (!fs.existsSync(file)) {
+    return null;
+  }
+
+  return JSON.parse(
+    fs.readFileSync(
+      file,
+      "utf8"
+    )
+  );
+}
+
+function getLicenseConfig(
+  guildId
+) {
+  const defaults =
+    getDefaultLicenseConfig();
+
+  try {
+    const savedConfig =
+      loadLicenseConfig(
+        guildId
+      );
+
+    if (!savedConfig) {
+      return defaults;
+    }
+
+    return {
+      ...defaults,
+      ...savedConfig,
+    };
+  } catch (error) {
+    console.error(
+      `No se pudo leer la configuración de licencias de ${guildId}:`,
+      error
+    );
+
+    return defaults;
+  }
+}
+
+async function sendLicenseLog(
+  guildId,
+  eventType,
+  license,
+  extraData = {}
+) {
+  try {
+    if (!guildId) {
+      return false;
+    }
+
+    const guild =
+      client.guilds.cache.get(
+        String(guildId)
+      );
+
+    if (!guild) {
+      console.log(
+        `No se encontró el servidor ${guildId} para enviar el log.`
+      );
+
+      return false;
+    }
+
+    const config =
+      getLicenseConfig(
+        guild.id
+      );
+
+    if (!config.logsChannelId) {
+      return false;
+    }
+
+    const eventEnabled = {
+      creation:
+        config.creation,
+
+      activation:
+        config.activation,
+
+      expiration:
+        config.expiration,
+
+      deletion:
+        config.deletion,
+
+      revocation:
+        config.revocation,
+    };
+
+    if (
+      eventEnabled[eventType] !==
+      true
+    ) {
+      return false;
+    }
+
+    const channel =
+      guild.channels.cache.get(
+        config.logsChannelId
+      );
+
+    if (
+      !channel ||
+      !channel.isTextBased()
+    ) {
+      console.log(
+        `El canal de logs de licencias no es válido en ${guild.name}.`
+      );
+
+      return false;
+    }
+
+    const eventStyles = {
+      creation: {
+        title:
+          "🔑 Licencia creada",
+
+        color:
+          "#ffffff",
+
+        description:
+          "Se creó una nueva licencia.",
+      },
+
+      activation: {
+        title:
+          "✅ Licencia activada",
+
+        color:
+          "#22c55e",
+
+        description:
+          "Una licencia fue activada correctamente.",
+      },
+
+      expiration: {
+        title:
+          "⌛ Licencia expirada",
+
+        color:
+          "#f59e0b",
+
+        description:
+          "Una licencia llegó a su fecha de vencimiento.",
+      },
+
+      deletion: {
+        title:
+          "🗑️ Licencia eliminada",
+
+        color:
+          "#ef4444",
+
+        description:
+          "Una licencia fue eliminada del sistema.",
+      },
+
+      revocation: {
+        title:
+          "🚫 Licencia revocada",
+
+        color:
+          "#dc2626",
+
+        description:
+          "Una licencia fue revocada.",
+      },
+    };
+
+    const style =
+      eventStyles[eventType];
+
+    if (!style) {
+      return false;
+    }
+
+    const permanent =
+      license?.permanent === true ||
+      !license?.expiresAt;
+
+    const expirationText =
+      permanent
+        ? "Permanente"
+        : new Date(
+            Number(
+              license.expiresAt
+            )
+          ).toLocaleString(
+            "es-AR"
+          );
+
+    const createdBy =
+      license?.createdBy
+        ?.displayName ||
+      license?.createdBy
+        ?.username ||
+      extraData.createdBy ||
+      "Administrador";
+
+const sourceTypes = {
+  dashboard: {
+    name:
+      "🖥️ Dashboard Web",
+
+    command: "",
+  },
+
+  discord_command: {
+    name:
+      "🤖 Comando de Discord",
+
+    command:
+      extraData.command ||
+      "/keybot",
+  },
+
+  api: {
+    name:
+      "🌐 API",
+
+    command: "",
+  },
+
+  system: {
+    name:
+      "⚙️ Sistema automático",
+
+    command: "",
+  },
+};
+
+const source =
+  sourceTypes[
+    extraData.source
+  ] ||
+  sourceTypes.dashboard;
+
+const sourceText =
+  source.command
+    ? `${source.name}\nComando: \`${source.command}\``
+    : source.name;
+
+
+    const embed =
+      new EmbedBuilder()
+        .setColor(
+          style.color
+        )
+        .setTitle(
+          style.title
+        )
+        .setDescription(
+          style.description
+        )
+        .addFields(
+  {
+    name:
+      "📍 Origen",
+
+    value:
+      sourceText,
+
+    inline:
+      true,
+  },
+
+  {
+    name:
+      "🏠 Servidor",
+
+    value:
+      `${guild.name}\n\`${guild.id}\``,
+
+    inline:
+      true,
+  },
+
+  {
+    name:
+      "🔐 Clave",
+
+    value:
+      `\`${license?.key || "Sin datos"}\``,
+
+    inline:
+      false,
+  },
+
+          {
+            name:
+              "📊 Estado",
+
+            value:
+              String(
+                license?.status ||
+                "Sin datos"
+              ),
+
+            inline:
+              true,
+          },
+
+          {
+            name:
+              "⏳ Vencimiento",
+
+            value:
+              expirationText,
+
+            inline:
+              true,
+          },
+
+          {
+            name:
+              "👤 Creada por",
+
+            value:
+              createdBy,
+
+            inline:
+              true,
+          },
+
+          {
+            name:
+              "🆔 ID de licencia",
+
+            value:
+              `\`${license?.id || "Sin datos"}\``,
+
+            inline:
+              false,
+          }
+        )
+        .setFooter({
+          text:
+            `${guild.name} • Sistema de Licencias`,
+        })
+        .setTimestamp();
+
+    if (
+      license?.description
+    ) {
+      embed.addFields({
+        name:
+          "📝 Descripción",
+
+        value:
+          String(
+            license.description
+          ).slice(
+            0,
+            1024
+          ),
+
+        inline:
+          false,
+      });
+    }
+
+    if (
+      eventType ===
+      "activation"
+    ) {
+      embed.addFields(
+        {
+          name:
+            "👤 Activada por",
+
+          value:
+            license
+              ?.activatedDisplayName ||
+            license
+              ?.activatedUsername ||
+            extraData.activatedBy ||
+            "Usuario",
+
+          inline:
+            true,
+        },
+
+        {
+          name:
+            "🆔 Usuario de Discord",
+
+          value:
+            license
+              ?.activatedBy
+              ? `<@${license.activatedBy}>`
+              : "Sin datos",
+
+          inline:
+            true,
+        }
+      );
+
+      if (
+        license?.activatedAvatar
+      ) {
+        embed.setThumbnail(
+          license
+            .activatedAvatar
+        );
+      }
+    }
+
+    if (
+      extraData.reason
+    ) {
+      embed.addFields({
+        name:
+          "📌 Motivo",
+
+        value:
+          String(
+            extraData.reason
+          ).slice(
+            0,
+            1024
+          ),
+
+        inline:
+          false,
+      });
+    }
+
+    await channel.send({
+      embeds: [
+        embed,
+      ],
+    });
+
+    return true;
+
+  } catch (error) {
+    console.error(
+      "Error enviando log de licencia:",
+      error
+    );
+
+    return false;
   }
 }
 
@@ -891,13 +1668,14 @@ const verification =
       ? user.createdAt
       : null;
 
-  const avatar =
-    user?.displayAvatarURL
-      ? user.displayAvatarURL({
-          extension: "png",
-          size: 512,
-        })
-      : "";
+ 
+ const avatar =
+  user?.displayAvatarURL
+    ? user.displayAvatarURL({
+        extension: "png",
+        size: 512,
+      })
+    : "";
 
   const banner =
     user?.bannerURL
@@ -1622,7 +2400,7 @@ function replaceWelcomeVariables(
 
 client.once(
   Events.ClientReady,
-  readyClient => {
+  async readyClient => {
     console.log(
       "===================================="
     );
@@ -1645,12 +2423,26 @@ client.once(
         type: ActivityType.Watching,
       }
     );
-for (const guild of readyClient.guilds.cache.values()) {
+
+for (
+  const guild of
+  readyClient.guilds.cache.values()
+) {
   try {
-    const savedConfig = loadWelcomeConfig(guild.id);
+    await registerKeyBotCommand(
+      guild
+    );
+
+    const savedConfig =
+      loadWelcomeConfig(
+        guild.id
+      );
 
     if (savedConfig) {
-      welcomeConfigs.set(guild.id, savedConfig);
+      welcomeConfigs.set(
+        guild.id,
+        savedConfig
+      );
 
       console.log(
         `Configuración cargada: ${guild.name}`
@@ -1663,16 +2455,21 @@ for (const guild of readyClient.guilds.cache.values()) {
     );
   }
 }
+
     emitDashboardUpdate();
   }
 );
 
 client.on(
   Events.GuildCreate,
-  guild => {
+  async guild => {
     console.log(
       `Nuevo servidor conectado: ${guild.name}`
     );
+
+await registerKeyBotCommand(
+  guild
+);
 
     emitDashboardUpdate();
   }
@@ -1824,7 +2621,7 @@ client.on(
         ephemeral: true,
       });
 
-      if (!interaction.guild) {
+         if (!interaction.guild) {
         await interaction.editReply({
           content:
             "❌ Esta verificación solo funciona dentro de un servidor.",
@@ -2287,6 +3084,1046 @@ app.get(
 /* =========================================================
    API DEL DASHBOARD
    ========================================================= */
+
+
+/* =========================================================
+   OBTENER CONFIGURACIÓN DE LICENCIAS
+   ========================================================= */
+
+app.get(
+  "/api/servers/:guildId/license-settings",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Tenés que iniciar sesión.",
+          });
+      }
+
+      const guildId =
+        String(
+          request.params.guildId || ""
+        ).trim();
+
+      if (!guildId) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "No se recibió el servidor.",
+          });
+      }
+
+      const guild =
+        client.guilds.cache.get(
+          guildId
+        );
+
+      if (!guild) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "El bot no está conectado a ese servidor.",
+          });
+      }
+
+      const config =
+        getLicenseConfig(
+          guildId
+        );
+
+      return response.json({
+        success: true,
+        data: config,
+      });
+    } catch (error) {
+      console.error(
+        "Error cargando configuración de licencias:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo cargar la configuración.",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   GUARDAR CONFIGURACIÓN DE LICENCIAS
+   ========================================================= */
+
+app.post(
+  "/api/servers/:guildId/license-settings",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Tenés que iniciar sesión.",
+          });
+      }
+
+      if (!dashboardUser.isOwner) {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "No tenés permisos para modificar esta configuración.",
+          });
+      }
+
+      const guildId =
+        String(
+          request.params.guildId || ""
+        ).trim();
+
+      if (!guildId) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "No se recibió el servidor.",
+          });
+      }
+
+      const guild =
+        client.guilds.cache.get(
+          guildId
+        );
+
+      if (!guild) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "El bot no está conectado a ese servidor.",
+          });
+      }
+
+      const logsChannelId =
+        String(
+          request.body?.logsChannelId ||
+          ""
+        ).trim();
+
+      if (logsChannelId) {
+        const selectedChannel =
+          guild.channels.cache.get(
+            logsChannelId
+          );
+
+        if (
+          !selectedChannel ||
+          !selectedChannel.isTextBased()
+        ) {
+          return response
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "El canal seleccionado no es válido.",
+            });
+        }
+      }
+
+      const config = {
+        logsChannelId,
+
+        creation:
+          request.body?.creation ===
+          true,
+
+        activation:
+          request.body?.activation ===
+          true,
+
+        expiration:
+          request.body?.expiration ===
+          true,
+
+        deletion:
+          request.body?.deletion ===
+          true,
+
+        revocation:
+          request.body?.revocation ===
+          true,
+
+        updatedAt:
+          new Date().toISOString(),
+
+        updatedBy:
+          dashboardUser.username ||
+          dashboardUser.id,
+      };
+
+      saveLicenseConfig(
+        guildId,
+        config
+      );
+
+      console.log(
+        `Configuración de licencias guardada para ${guild.name}`,
+        {
+          guildId,
+          logsChannelId,
+          updatedBy:
+            dashboardUser.username ||
+            dashboardUser.id,
+        }
+      );
+
+      return response.json({
+        success: true,
+        message:
+          "Configuración guardada correctamente.",
+        data: config,
+      });
+    } catch (error) {
+      console.error(
+        "Error guardando configuración de licencias:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo guardar la configuración.",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   OBTENER TODAS LAS LICENCIAS GUARDADAS
+   ========================================================= */
+
+app.get(
+  "/api/licenses",
+  (request, response) => {
+    try {
+      const licenses =
+        loadTokens();
+
+      return response.json({
+        success: true,
+        licenses,
+      });
+    } catch (error) {
+      console.error(
+        "Error obteniendo licencias:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudieron cargar las licencias.",
+          licenses: [],
+        });
+    }
+  }
+);
+/* =========================================================
+   BORRAR TODAS LAS LICENCIAS
+========================================================= */
+
+app.delete(
+  "/api/licenses",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session
+          ?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Tenés que iniciar sesión.",
+          });
+      }
+
+      const code =
+        String(
+          request.body?.code || ""
+        ).trim();
+
+      if (code !== "1912") {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "El código de seguridad es incorrecto.",
+          });
+      }
+
+      const existingLicenses =
+        loadTokens();
+
+      const deletedCount =
+        Array.isArray(
+          existingLicenses
+        )
+          ? existingLicenses.length
+          : 0;
+
+      saveTokens([]);
+
+      console.log(
+        `Se eliminaron ${deletedCount} licencias.`,
+        {
+          deletedBy:
+            dashboardUser.username ||
+            dashboardUser.id,
+        }
+      );
+
+      return response.json({
+        success: true,
+
+        message:
+          "Todas las licencias fueron eliminadas.",
+
+        deletedCount,
+      });
+    } catch (error) {
+      console.error(
+        "Error borrando licencias:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudieron borrar las licencias.",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   BORRAR UNA LICENCIA
+========================================================= */
+
+app.delete(
+  "/api/licenses/:key",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Tenés que iniciar sesión.",
+          });
+      }
+
+      const key =
+        String(
+          request.params.key || ""
+        )
+          .trim()
+          .toUpperCase();
+
+      if (!key) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "No se recibió la Key.",
+          });
+      }
+
+      const licenses =
+        loadTokens();
+
+      const licenseIndex =
+        licenses.findIndex(
+          license =>
+            String(
+              license.key || ""
+            )
+              .trim()
+              .toUpperCase() === key
+        );
+
+      if (licenseIndex === -1) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "La licencia no existe.",
+          });
+      }
+
+      const deletedLicense =
+        licenses.splice(
+          licenseIndex,
+          1
+        )[0];
+
+      saveTokens(licenses);
+
+      console.log(
+        `Licencia eliminada: ${key}`,
+        {
+          deletedBy:
+            dashboardUser.username ||
+            dashboardUser.id,
+        }
+      );
+
+      return response.json({
+        success: true,
+        message:
+          "Licencia eliminada correctamente.",
+        license:
+          deletedLicense,
+      });
+    } catch (error) {
+      console.error(
+        "Error eliminando licencia:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo eliminar la licencia.",
+        });
+    }
+  }
+);
+
+/* =========================================================
+   GENERAR Y GUARDAR UNA LICENCIA
+   ========================================================= */
+
+
+app.post(
+  "/api/licenses/generate",
+  async (request, response) => {
+    try {
+
+const guildId =
+  String(
+    request.body?.guildId || ""
+  ).trim();
+
+if (!guildId) {
+  return response
+    .status(400)
+    .json({
+      success: false,
+      message:
+        "Primero seleccioná un servidor.",
+    });
+}
+
+
+console.log("================================");
+console.log("Guild solicitado:", guildId);
+console.log(
+  "Servidores del bot:",
+  client.guilds.cache.map(g => ({
+    id: g.id,
+    name: g.name,
+  }))
+);
+console.log("================================");
+
+const licenseGuild =
+  client.guilds.cache.get(
+    guildId
+  );
+
+if (!licenseGuild) {
+  return response
+    .status(404)
+    .json({
+      success: false,
+      message:
+        "El bot no está conectado al servidor seleccionado.",
+    });
+}
+
+    const requestedDays =
+  Number(
+    request.body?.days ??
+    request.body?.durationDays ??
+    request.body?.duration ??
+    0
+  );
+
+const requestedHours =
+  Number(
+    request.body?.hours ??
+    0
+  );
+
+const requestedMinutes =
+  Number(
+    request.body?.minutes ??
+    0
+  );
+
+const requestedSeconds =
+  Number(
+    request.body?.seconds ??
+    0
+  );
+
+const durationDays =
+  Number.isFinite(requestedDays)
+    ? Math.min(
+        9999,
+        Math.max(
+          0,
+          Math.floor(requestedDays)
+        )
+      )
+    : 0;
+
+const durationHours =
+  Number.isFinite(requestedHours)
+    ? Math.min(
+        23,
+        Math.max(
+          0,
+          Math.floor(requestedHours)
+        )
+      )
+    : 0;
+
+const durationMinutes =
+  Number.isFinite(requestedMinutes)
+    ? Math.min(
+        59,
+        Math.max(
+          0,
+          Math.floor(requestedMinutes)
+        )
+      )
+    : 0;
+
+const durationSeconds =
+  Number.isFinite(requestedSeconds)
+    ? Math.min(
+        59,
+        Math.max(
+          0,
+          Math.floor(requestedSeconds)
+        )
+      )
+    : 0;
+
+const permanent =
+  request.body?.permanent === true ||
+  durationDays >= 9999;
+
+const durationMilliseconds =
+  permanent
+    ? null
+    : (
+        durationDays *
+        24 *
+        60 *
+        60 *
+        1000
+      ) +
+      (
+        durationHours *
+        60 *
+        60 *
+        1000
+      ) +
+      (
+        durationMinutes *
+        60 *
+        1000
+      ) +
+      (
+        durationSeconds *
+        1000
+      );
+
+if (
+  !permanent &&
+  (
+    !Number.isFinite(
+      durationMilliseconds
+    ) ||
+    durationMilliseconds < 1000
+  )
+) {
+  return response
+    .status(400)
+    .json({
+      success: false,
+      message:
+        "La duración mínima es de 1 segundo.",
+    });
+}
+
+      const description =
+        String(
+          request.body?.description ||
+          ""
+        )
+          .trim()
+          .slice(
+            0,
+            500
+          );
+
+      const requestedAmount =
+        Number(
+          request.body?.amount ??
+          1
+        );
+
+      const amount =
+        Number.isFinite(
+          requestedAmount
+        )
+          ? Math.min(
+              50,
+              Math.max(
+                1,
+                Math.floor(
+                  requestedAmount
+                )
+              )
+            )
+          : 1;
+
+      const licenses =
+        loadTokens();
+
+      const created = [];
+
+      for (
+        let index = 0;
+        index < amount;
+        index += 1
+      ) {
+        const key =
+          generateLicenseKey();
+
+        const createdAt =
+          Date.now();
+
+       const expiresAt =
+  permanent
+    ? null
+    : createdAt +
+      durationMilliseconds;
+
+        const dashboardUser =
+          request.session
+            ?.dashboardUser ||
+          null;
+
+        const license = {
+          id:
+            crypto
+              .randomUUID(),
+
+          key,
+
+          botName:
+            client.user?.username ||
+            "Nebula Bot",
+
+          description,
+
+         duration:
+  durationDays,
+
+durationDays,
+
+durationHours,
+
+durationMinutes,
+
+durationSeconds,
+
+durationMilliseconds,
+
+          permanent,
+
+          createdAt,
+
+          expiresAt,
+
+          createdBy: {
+            id:
+              dashboardUser?.id ||
+              null,
+
+            username:
+              dashboardUser
+                ?.username ||
+              "Administrador",
+
+            displayName:
+              dashboardUser
+                ?.displayName ||
+              dashboardUser
+                ?.globalName ||
+              dashboardUser
+                ?.username ||
+              "Administrador",
+          },
+
+          status:
+            "available",
+
+          activated:
+            false,
+
+          activatedBy:
+            null,
+
+          activatedUsername:
+            null,
+
+          activatedAt:
+            null,
+
+         guildId:
+  guildId,
+
+guildName:
+  licenseGuild.name,
+
+          revoked:
+            false,
+
+          revokedAt:
+            null,
+        };
+
+        licenses.push(
+          license
+        );
+
+        created.push(
+          license
+        );
+      }
+
+      saveTokens(
+        licenses
+      );
+
+
+await Promise.all(
+  created.map(
+    createdLicense =>
+
+sendLicenseLog(
+  guildId,
+  "creation",
+  createdLicense,
+  {
+    source:
+      "dashboard",
+
+    createdBy:
+      request.session
+        ?.dashboardUser
+        ?.displayName ||
+      request.session
+        ?.dashboardUser
+        ?.username ||
+      "Administrador",
+  }
+)
+
+       )
+);
+
+      return response.json({
+        success: true,
+
+        message:
+          amount === 1
+            ? "Licencia creada correctamente."
+            : `${amount} licencias creadas correctamente.`,
+
+        licenses:
+          created,
+      });
+    } catch (error) {
+      console.error(
+        "Error generando licencia:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo generar la licencia.",
+        });
+    }
+  }
+);
+
+app.post(
+  "/api/licenses/activate",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "Primero tenés que iniciar sesión con Discord.",
+          });
+      }
+
+      const key =
+        String(
+          request.body?.key || ""
+        )
+          .trim()
+          .toUpperCase();
+
+      if (!key) {
+        return response
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Ingresá una Key de acceso.",
+          });
+      }
+
+      const tokens =
+        loadTokens();
+
+      const license =
+        tokens.find(
+          savedLicense =>
+            String(
+              savedLicense?.key || ""
+            ).toUpperCase() === key
+        );
+
+      if (!license) {
+        return response
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "La Key ingresada no existe.",
+          });
+      }
+
+      if (license.revoked === true) {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "Esta Key fue revocada.",
+          });
+      }
+
+      if (
+        license.expiresAt &&
+        Number(license.expiresAt) <=
+          Date.now()
+      ) {
+        return response
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "Esta Key está vencida.",
+          });
+      }
+
+      if (
+        license.activated === true &&
+        String(
+          license.activatedBy || ""
+        ) !== String(dashboardUser.id)
+      ) {
+        return response
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "Esta Key ya fue utilizada por otra cuenta.",
+          });
+      }
+
+  if (license.activated !== true) {
+  const activatedAt =
+    Date.now();
+
+  license.activated =
+    true;
+
+  license.status =
+    "active";
+
+  license.activatedBy =
+    String(dashboardUser.id);
+
+  license.activatedUsername =
+    dashboardUser.username ||
+    "Usuario";
+
+  license.activatedDisplayName =
+    dashboardUser.displayName ||
+    dashboardUser.globalName ||
+    dashboardUser.username ||
+    "Usuario";
+
+  license.activatedAvatar =
+    dashboardUser.avatar ||
+    "";
+
+  license.activatedAt =
+    activatedAt;
+
+        const duration =
+          String(
+            license.duration || "never"
+          ).toLowerCase();
+
+        const durationTimes = {
+          "1d":
+            24 * 60 * 60 * 1000,
+
+          "7d":
+            7 * 24 * 60 * 60 * 1000,
+
+          "30d":
+            30 * 24 * 60 * 60 * 1000,
+
+          "90d":
+            90 * 24 * 60 * 60 * 1000,
+        };
+
+        license.expiresAt =
+          duration === "never"
+            ? null
+            : activatedAt +
+              (
+                durationTimes[
+                  duration
+                ] || 0
+              );
+
+        saveTokens(tokens);
+      }
+
+      request.session
+        .dashboardUser
+        .hasAccess =
+        true;
+
+      request.session.save(
+        error => {
+          if (error) {
+            console.error(
+              "No se pudo guardar el acceso:",
+              error
+            );
+
+            return response
+              .status(500)
+              .json({
+                success: false,
+                message:
+                  "La Key era válida, pero no se pudo guardar la sesión.",
+              });
+          }
+
+          return response.json({
+            success: true,
+
+            message:
+              "Key activada correctamente.",
+
+            data: {
+              hasAccess:
+                true,
+
+              expiresAt:
+                license.expiresAt,
+            },
+          });
+        }
+      );
+    } catch (error) {
+      console.error(
+        "Error activando la Key:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo validar la Key.",
+        });
+    }
+  }
+);
 
 app.get(
   "/api/dashboard",
@@ -2871,6 +4708,585 @@ if (config.showAvatar) {
             "No se pudo enviar el mensaje de prueba",
         });
     }
+  }
+);
+
+/* =========================================================
+   COMANDO /KEYBOT
+   ========================================================= */
+
+client.on(
+  Events.InteractionCreate,
+  async interaction => {
+
+    if (!interaction.isChatInputCommand()) {
+      return;
+    }
+
+    if (interaction.commandName !== "keybot") {
+      return;
+    }
+
+    const subcommand =
+      interaction.options.getSubcommand();
+
+   if (subcommand === "generate") {
+  try {
+    await interaction.deferReply({
+      ephemeral: true,
+    });
+
+    if (!interaction.guild) {
+      await interaction.editReply({
+        content:
+          "❌ Este comando solamente puede utilizarse dentro de un servidor.",
+      });
+
+      return;
+    }
+
+    const durationDays =
+      interaction.options.getInteger("dias") ?? 0;
+
+    const durationHours =
+      interaction.options.getInteger("horas") ?? 0;
+
+    const durationMinutes =
+      interaction.options.getInteger("minutos") ?? 0;
+
+    const durationSeconds =
+      interaction.options.getInteger("segundos") ?? 0;
+
+    const permanent =
+      interaction.options.getBoolean("permanente") === true;
+
+    const amount =
+      interaction.options.getInteger("cantidad") ?? 1;
+
+    const description =
+      interaction.options.getString("descripcion")?.trim() || "";
+
+const deliveryUser =
+  interaction.options.getUser(
+    "entregar_a"
+  );
+
+if (deliveryUser?.bot) {
+  await interaction.editReply({
+    content:
+      "❌ No podés entregar una licencia a otro bot.",
+  });
+
+  return;
+}
+
+    const durationMilliseconds =
+      permanent
+        ? null
+        : (
+            durationDays *
+            24 *
+            60 *
+            60 *
+            1000
+          ) +
+          (
+            durationHours *
+            60 *
+            60 *
+            1000
+          ) +
+          (
+            durationMinutes *
+            60 *
+            1000
+          ) +
+          (
+            durationSeconds *
+            1000
+          );
+
+    if (
+      !permanent &&
+      (
+        !Number.isFinite(durationMilliseconds) ||
+        durationMilliseconds < 1000
+      )
+    ) {
+      await interaction.editReply({
+        content:
+          "❌ Tenés que indicar una duración mínima de 1 segundo o seleccionar `permanente: Sí`.",
+      });
+
+      return;
+    }
+
+    const licenses =
+      loadTokens();
+
+    const createdLicenses = [];
+
+    for (
+      let index = 0;
+      index < amount;
+      index += 1
+    ) {
+      let key =
+        generateLicenseKey();
+
+      while (
+        licenses.some(
+          existingLicense =>
+            existingLicense.key === key
+        )
+      ) {
+        key =
+          generateLicenseKey();
+      }
+
+      const createdAt =
+        Date.now();
+
+      const expiresAt =
+        permanent
+          ? null
+          : createdAt +
+            durationMilliseconds;
+
+      const license = {
+        id:
+          crypto.randomUUID(),
+
+        key,
+
+        botName:
+          client.user?.username ||
+          "Nebula Bot",
+
+        description,
+
+        duration:
+          durationDays,
+
+        durationDays,
+        durationHours,
+        durationMinutes,
+        durationSeconds,
+        durationMilliseconds,
+
+        permanent,
+
+        createdAt,
+        expiresAt,
+
+        createdBy: {
+          id:
+            interaction.user.id,
+
+          username:
+            interaction.user.username,
+
+          displayName:
+            interaction.member?.displayName ||
+            interaction.user.globalName ||
+            interaction.user.username,
+        },
+
+        status:
+          "available",
+
+        activated:
+          false,
+
+        activatedBy:
+          null,
+
+        activatedUsername:
+          null,
+
+        activatedAt:
+          null,
+
+        guildId:
+          interaction.guild.id,
+
+        guildName:
+          interaction.guild.name,
+
+
+deliveredTo:
+  deliveryUser
+    ? {
+        id:
+          deliveryUser.id,
+
+        username:
+          deliveryUser.username,
+
+        displayName:
+          deliveryUser.globalName ||
+          deliveryUser.username,
+
+        avatar:
+          deliveryUser.displayAvatarURL({
+            extension:
+              "png",
+
+            size:
+              256,
+          }),
+      }
+    : null,
+
+deliveredAt:
+  deliveryUser
+    ? Date.now()
+    : null,
+
+        revoked:
+          false,
+
+        revokedAt:
+          null,
+      };
+
+      licenses.push(
+        license
+      );
+
+      createdLicenses.push(
+        license
+      );
+    }
+
+    saveTokens(
+      licenses
+    );
+
+    io.emit(
+      "licenses:update",
+      licenses
+    );
+
+    await Promise.all(
+      createdLicenses.map(
+        createdLicense =>
+          sendLicenseLog(
+            interaction.guild.id,
+            "creation",
+            createdLicense,
+            {
+              source:
+                "discord_command",
+
+              command:
+                "/keybot generate",
+
+              createdBy:
+                interaction.member?.displayName ||
+                interaction.user.globalName ||
+                interaction.user.username,
+            }
+          )
+      )
+    );
+
+    const keysText =
+      createdLicenses
+        .map(
+          (license, index) =>
+            `${index + 1}. \`${license.key}\``
+        )
+        .join("\n");
+
+    const expirationText =
+      permanent
+        ? "Permanente"
+        : [
+            durationDays > 0
+              ? `${durationDays} día${durationDays === 1 ? "" : "s"}`
+              : null,
+
+            durationHours > 0
+              ? `${durationHours} hora${durationHours === 1 ? "" : "s"}`
+              : null,
+
+            durationMinutes > 0
+              ? `${durationMinutes} minuto${durationMinutes === 1 ? "" : "s"}`
+              : null,
+
+            durationSeconds > 0
+              ? `${durationSeconds} segundo${durationSeconds === 1 ? "" : "s"}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+
+let deliverySucceeded =
+  false;
+
+if (deliveryUser) {
+  const deliveredKeysText =
+    createdLicenses
+      .map(
+        (license, index) =>
+          `${index + 1}. \`${license.key}\``
+      )
+      .join("\n");
+
+  const deliveryEmbed =
+    new EmbedBuilder()
+      .setColor(
+        "#5865F2"
+      )
+      .setTitle(
+        createdLicenses.length === 1
+          ? "🔑 Recibiste una licencia"
+          : "🔑 Recibiste nuevas licencias"
+      )
+      .setDescription(
+        [
+          `Hola <@${deliveryUser.id}>.`,
+          "",
+          "Se te entregó una licencia para utilizar el bot.",
+          "",
+          deliveredKeysText,
+        ].join("\n")
+      )
+      .addFields(
+        {
+          name:
+            "🤖 Bot",
+
+          value:
+            client.user?.username ||
+            "Nebula Bot",
+
+          inline:
+            true,
+        },
+
+        {
+          name:
+            "⏳ Duración",
+
+          value:
+            expirationText,
+
+          inline:
+            true,
+        },
+
+        {
+          name:
+            "📦 Cantidad",
+
+          value:
+            String(
+              createdLicenses.length
+            ),
+
+          inline:
+            true,
+        },
+
+        {
+          name:
+            "🏠 Servidor de entrega",
+
+          value:
+            `${interaction.guild.name}\n\`${interaction.guild.id}\``,
+
+          inline:
+            false,
+        },
+
+        {
+          name:
+            "👤 Entregada por",
+
+          value:
+            `${interaction.user}\n\`${interaction.user.id}\``,
+
+          inline:
+            false,
+        }
+      )
+      .setFooter({
+        text:
+          "Guardá esta clave en un lugar seguro y no la compartas.",
+      })
+      .setTimestamp();
+
+  if (description) {
+    deliveryEmbed.addFields({
+      name:
+        "📝 Descripción",
+
+      value:
+        description,
+
+      inline:
+        false,
+    });
+  }
+
+  try {
+    await deliveryUser.send({
+      embeds: [
+        deliveryEmbed,
+      ],
+    });
+
+    deliverySucceeded =
+      true;
+
+  } catch (error) {
+    deliveryError =
+      true;
+
+    console.log(
+      `No se pudo enviar la licencia por MD a ${deliveryUser.tag}:`,
+      error.message
+    );
+  }
+}
+
+    const resultEmbed =
+      new EmbedBuilder()
+        .setColor(
+          "#22c55e"
+        )
+        .setTitle(
+          amount === 1
+            ? "🔑 Licencia generada"
+            : "🔑 Licencias generadas"
+        )
+        .setDescription(
+          keysText
+        )
+        .addFields(
+          {
+            name:
+              "📦 Cantidad",
+
+            value:
+              String(
+                createdLicenses.length
+              ),
+
+            inline:
+              true,
+          },
+
+          {
+            name:
+              "⏳ Duración",
+
+            value:
+              expirationText,
+
+            inline:
+              true,
+          },
+
+          {
+            name:
+              "📊 Estado",
+
+            value:
+              "Disponible",
+
+            inline:
+              true,
+          },
+
+
+{
+  name:
+    "🏠 Servidor",
+
+  value:
+    `${interaction.guild.name}\n\`${interaction.guild.id}\``,
+
+  inline:
+    false,
+},
+
+{
+  name:
+    "📨 Entrega",
+
+  value:
+    !deliveryUser
+      ? "No se seleccionó un destinatario."
+      : deliverySucceeded
+        ? `Enviada por privado a ${deliveryUser}\n\`${deliveryUser.id}\``
+        : `No se pudo enviar el mensaje privado a ${deliveryUser}.\nLa licencia igualmente fue creada.`,
+
+  inline:
+    false,
+}
+
+                 )
+        .setFooter({
+          text:
+            "Las licencias ya fueron guardadas y aparecerán en el Dashboard.",
+        })
+        .setTimestamp();
+
+    if (description) {
+      resultEmbed.addFields({
+        name:
+          "📝 Descripción",
+
+        value:
+          description,
+
+        inline:
+          false,
+      });
+    }
+
+    await interaction.editReply({
+      embeds: [
+        resultEmbed,
+      ],
+    });
+
+  } catch (error) {
+    console.error(
+      "Error ejecutando /keybot generate:",
+      error
+    );
+
+    const errorMessage = {
+      content:
+        "❌ Ocurrió un error al generar las licencias.",
+      embeds: [],
+    };
+
+    if (
+      interaction.deferred ||
+      interaction.replied
+    ) {
+      await interaction
+        .editReply(
+          errorMessage
+        )
+        .catch(() => {});
+    } else {
+      await interaction
+        .reply({
+          ...errorMessage,
+          ephemeral: true,
+        })
+        .catch(() => {});
+    }
+  }
+}
+
   }
 );
 

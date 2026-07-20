@@ -712,6 +712,20 @@ if (
           discordUser.id
         ),
 
+isOwner:
+  String(discordUser.id) ===
+  String(
+    process.env.OWNER_DISCORD_ID ||
+    ""
+  ),
+
+hasAccess:
+  String(discordUser.id) ===
+  String(
+    process.env.OWNER_DISCORD_ID ||
+    ""
+  ),
+
       username:
         discordUser.username,
 
@@ -761,10 +775,20 @@ if (
           );
       }
 
-      return response.redirect(
-        "/?view=servers"
-      );
-    }
+
+const isOwner =
+  String(discordUser.id) ===
+  String(
+    process.env.OWNER_DISCORD_ID ||
+    ""
+  );
+
+return response.redirect(
+  isOwner
+    ? "/?view=servers"
+    : "/?view=access"
+);
+        }
   );
 }
 
@@ -1723,26 +1747,26 @@ app.get(
       authenticated: true,
 
       data: {
-        user: {
-          id:
-            dashboardUser.id,
+      user: {
+  id: dashboardUser.id,
 
-          username:
-            dashboardUser
-              .username,
+  username: dashboardUser.username,
 
-          globalName:
-            dashboardUser
-              .globalName,
+  globalName: dashboardUser.globalName,
 
-          displayName:
-            dashboardUser
-              .displayName,
+  displayName: dashboardUser.displayName,
 
-          avatar:
-            dashboardUser
-              .avatar,
-        },
+  avatar: dashboardUser.avatar,
+
+  isOwner: Boolean(
+    dashboardUser.isOwner
+  ),
+
+  hasAccess: Boolean(
+    dashboardUser.hasAccess ||
+    dashboardUser.isOwner
+  ),
+},
 
         guilds:
           updatedGuilds,

@@ -1,0 +1,4572 @@
+(function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const n of document.querySelectorAll('link[rel="modulepreload"]'))i(n);new MutationObserver(n=>{for(const c of n)if(c.type==="childList")for(const o of c.addedNodes)o.tagName==="LINK"&&o.rel==="modulepreload"&&i(o)}).observe(document,{childList:!0,subtree:!0});function t(n){const c={};return n.integrity&&(c.integrity=n.integrity),n.referrerPolicy&&(c.referrerPolicy=n.referrerPolicy),n.crossOrigin==="use-credentials"?c.credentials="include":n.crossOrigin==="anonymous"?c.credentials="omit":c.credentials="same-origin",c}function i(n){if(n.ep)return;n.ep=!0;const c=t(n);fetch(n.href,c)}})();const ge=Object.create(null);ge.open="0";ge.close="1";ge.ping="2";ge.pong="3";ge.message="4";ge.upgrade="5";ge.noop="6";const ot=Object.create(null);Object.keys(ge).forEach(a=>{ot[ge[a]]=a});const Ct={type:"error",data:"parser error"},aa=typeof Blob=="function"||typeof Blob<"u"&&Object.prototype.toString.call(Blob)==="[object BlobConstructor]",ia=typeof ArrayBuffer=="function",na=a=>typeof ArrayBuffer.isView=="function"?ArrayBuffer.isView(a):a&&a.buffer instanceof ArrayBuffer,Pt=({type:a,data:e},t,i)=>aa&&e instanceof Blob?t?i(e):Wt(e,i):ia&&(e instanceof ArrayBuffer||na(e))?t?i(e):Wt(new Blob([e]),i):i(ge[a]+(e||"")),Wt=(a,e)=>{const t=new FileReader;return t.onload=function(){const i=t.result.split(",")[1];e("b"+(i||""))},t.readAsDataURL(a)};function Jt(a){return a instanceof Uint8Array?a:a instanceof ArrayBuffer?new Uint8Array(a):new Uint8Array(a.buffer,a.byteOffset,a.byteLength)}let yt;function Sa(a,e){if(aa&&a.data instanceof Blob)return a.data.arrayBuffer().then(Jt).then(e);if(ia&&(a.data instanceof ArrayBuffer||na(a.data)))return e(Jt(a.data));Pt(a,!1,t=>{yt||(yt=new TextEncoder),e(yt.encode(t))})}const Xt="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",Qe=typeof Uint8Array>"u"?[]:new Uint8Array(256);for(let a=0;a<Xt.length;a++)Qe[Xt.charCodeAt(a)]=a;const Aa=a=>{let e=a.length*.75,t=a.length,i,n=0,c,o,p,f;a[a.length-1]==="="&&(e--,a[a.length-2]==="="&&e--);const D=new ArrayBuffer(e),N=new Uint8Array(D);for(i=0;i<t;i+=4)c=Qe[a.charCodeAt(i)],o=Qe[a.charCodeAt(i+1)],p=Qe[a.charCodeAt(i+2)],f=Qe[a.charCodeAt(i+3)],N[n++]=c<<2|o>>4,N[n++]=(o&15)<<4|p>>2,N[n++]=(p&3)<<6|f&63;return D},Ia=typeof ArrayBuffer=="function",Ot=(a,e)=>{if(typeof a!="string")return{type:"message",data:sa(a,e)};const t=a.charAt(0);return t==="b"?{type:"message",data:Ta(a.substring(1),e)}:ot[t]?a.length>1?{type:ot[t],data:a.substring(1)}:{type:ot[t]}:Ct},Ta=(a,e)=>{if(Ia){const t=Aa(a);return sa(t,e)}else return{base64:!0,data:a}},sa=(a,e)=>e==="blob"?a instanceof Blob?a:new Blob([a]):a instanceof ArrayBuffer?a:a.buffer,oa="",ka=(a,e)=>{const t=a.length,i=new Array(t);let n=0;a.forEach((c,o)=>{Pt(c,!1,p=>{i[o]=p,++n===t&&e(i.join(oa))})})},La=(a,e)=>{const t=a.split(oa),i=[];for(let n=0;n<t.length;n++){const c=Ot(t[n],e);if(i.push(c),c.type==="error")break}return i};function Ba(){return new TransformStream({transform(a,e){Sa(a,t=>{const i=t.length;let n;if(i<126)n=new Uint8Array(1),new DataView(n.buffer).setUint8(0,i);else if(i<65536){n=new Uint8Array(3);const c=new DataView(n.buffer);c.setUint8(0,126),c.setUint16(1,i)}else{n=new Uint8Array(9);const c=new DataView(n.buffer);c.setUint8(0,127),c.setBigUint64(1,BigInt(i))}a.data&&typeof a.data!="string"&&(n[0]|=128),e.enqueue(n),e.enqueue(t)})}})}let ft;function at(a){return a.reduce((e,t)=>e+t.length,0)}function it(a,e){if(a[0].length===e)return a.shift();const t=new Uint8Array(e);let i=0;for(let n=0;n<e;n++)t[n]=a[0][i++],i===a[0].length&&(a.shift(),i=0);return a.length&&i<a[0].length&&(a[0]=a[0].slice(i)),t}function Da(a,e){ft||(ft=new TextDecoder);const t=[];let i=0,n=-1,c=!1;return new TransformStream({transform(o,p){for(t.push(o);;){if(i===0){if(at(t)<1)break;const f=it(t,1);c=(f[0]&128)===128,n=f[0]&127,n<126?i=3:n===126?i=1:i=2}else if(i===1){if(at(t)<2)break;const f=it(t,2);n=new DataView(f.buffer,f.byteOffset,f.length).getUint16(0),i=3}else if(i===2){if(at(t)<8)break;const f=it(t,8),D=new DataView(f.buffer,f.byteOffset,f.length),N=D.getUint32(0);if(N>Math.pow(2,21)-1){p.enqueue(Ct);break}n=N*Math.pow(2,32)+D.getUint32(4),i=3}else{if(at(t)<n)break;const f=it(t,n);p.enqueue(Ot(c?f:ft.decode(f),e)),i=0}if(n===0||n>a){p.enqueue(Ct);break}}}})}const ra=4;function V(a){if(a)return xa(a)}function xa(a){for(var e in V.prototype)a[e]=V.prototype[e];return a}V.prototype.on=V.prototype.addEventListener=function(a,e){return this._callbacks=this._callbacks||{},(this._callbacks["$"+a]=this._callbacks["$"+a]||[]).push(e),this};V.prototype.once=function(a,e){function t(){this.off(a,t),e.apply(this,arguments)}return t.fn=e,this.on(a,t),this};V.prototype.off=V.prototype.removeListener=V.prototype.removeAllListeners=V.prototype.removeEventListener=function(a,e){if(this._callbacks=this._callbacks||{},arguments.length==0)return this._callbacks={},this;var t=this._callbacks["$"+a];if(!t)return this;if(arguments.length==1)return delete this._callbacks["$"+a],this;for(var i,n=0;n<t.length;n++)if(i=t[n],i===e||i.fn===e){t.splice(n,1);break}return t.length===0&&delete this._callbacks["$"+a],this};V.prototype.emit=function(a){this._callbacks=this._callbacks||{};for(var e=new Array(arguments.length-1),t=this._callbacks["$"+a],i=1;i<arguments.length;i++)e[i-1]=arguments[i];if(t){t=t.slice(0);for(var i=0,n=t.length;i<n;++i)t[i].apply(this,e)}return this};V.prototype.emitReserved=V.prototype.emit;V.prototype.listeners=function(a){return this._callbacks=this._callbacks||{},this._callbacks["$"+a]||[]};V.prototype.hasListeners=function(a){return!!this.listeners(a).length};const vt=typeof Promise=="function"&&typeof Promise.resolve=="function"?e=>Promise.resolve().then(e):(e,t)=>t(e,0),ce=typeof self<"u"?self:typeof window<"u"?window:Function("return this")(),Na="arraybuffer";function ca(a,...e){return e.reduce((t,i)=>(a.hasOwnProperty(i)&&(t[i]=a[i]),t),{})}const Ra=ce.setTimeout,$a=ce.clearTimeout;function mt(a,e){e.useNativeTimers?(a.setTimeoutFn=Ra.bind(ce),a.clearTimeoutFn=$a.bind(ce)):(a.setTimeoutFn=ce.setTimeout.bind(ce),a.clearTimeoutFn=ce.clearTimeout.bind(ce))}const Ma=1.33;function Pa(a){return typeof a=="string"?Oa(a):Math.ceil((a.byteLength||a.size)*Ma)}function Oa(a){let e=0,t=0;for(let i=0,n=a.length;i<n;i++)e=a.charCodeAt(i),e<128?t+=1:e<2048?t+=2:e<55296||e>=57344?t+=3:(i++,t+=4);return t}function la(){return Date.now().toString(36).substring(3)+Math.random().toString(36).substring(2,5)}function _a(a){let e="";for(let t in a)a.hasOwnProperty(t)&&(e.length&&(e+="&"),e+=encodeURIComponent(t)+"="+encodeURIComponent(a[t]));return e}function Va(a){let e={},t=a.split("&");for(let i=0,n=t.length;i<n;i++){let c=t[i].split("=");e[decodeURIComponent(c[0])]=decodeURIComponent(c[1])}return e}class Ua extends Error{constructor(e,t,i){super(e),this.description=t,this.context=i,this.type="TransportError"}}class _t extends V{constructor(e){super(),this.writable=!1,mt(this,e),this.opts=e,this.query=e.query,this.socket=e.socket,this.supportsBinary=!e.forceBase64}onError(e,t,i){return super.emitReserved("error",new Ua(e,t,i)),this}open(){return this.readyState="opening",this.doOpen(),this}close(){return(this.readyState==="opening"||this.readyState==="open")&&(this.doClose(),this.onClose()),this}send(e){this.readyState==="open"&&this.write(e)}onOpen(){this.readyState="open",this.writable=!0,super.emitReserved("open")}onData(e){const t=Ot(e,this.socket.binaryType);this.onPacket(t)}onPacket(e){super.emitReserved("packet",e)}onClose(e){this.readyState="closed",super.emitReserved("close",e)}pause(e){}createUri(e,t={}){return e+"://"+this._hostname()+this._port()+this.opts.path+this._query(t)}_hostname(){const e=this.opts.hostname;return e.indexOf(":")===-1?e:"["+e+"]"}_port(){return this.opts.port&&(this.opts.secure&&Number(this.opts.port)!==443||!this.opts.secure&&Number(this.opts.port)!==80)?":"+this.opts.port:""}_query(e){const t=_a(e);return t.length?"?"+t:""}}class qa extends _t{constructor(){super(...arguments),this._polling=!1}get name(){return"polling"}doOpen(){this._poll()}pause(e){this.readyState="pausing";const t=()=>{this.readyState="paused",e()};if(this._polling||!this.writable){let i=0;this._polling&&(i++,this.once("pollComplete",function(){--i||t()})),this.writable||(i++,this.once("drain",function(){--i||t()}))}else t()}_poll(){this._polling=!0,this.doPoll(),this.emitReserved("poll")}onData(e){const t=i=>{if(this.readyState==="opening"&&i.type==="open"&&this.onOpen(),i.type==="close")return this.onClose({description:"transport closed by the server"}),!1;this.onPacket(i)};La(e,this.socket.binaryType).forEach(t),this.readyState!=="closed"&&(this._polling=!1,this.emitReserved("pollComplete"),this.readyState==="open"&&this._poll())}doClose(){const e=()=>{this.write([{type:"close"}])};this.readyState==="open"?e():this.once("open",e)}write(e){this.writable=!1,ka(e,t=>{this.doWrite(t,()=>{this.writable=!0,this.emitReserved("drain")})})}uri(){const e=this.opts.secure?"https":"http",t=this.query||{};return this.opts.timestampRequests!==!1&&(t[this.opts.timestampParam]=la()),!this.supportsBinary&&!t.sid&&(t.b64=1),this.createUri(e,t)}}let da=!1;try{da=typeof XMLHttpRequest<"u"&&"withCredentials"in new XMLHttpRequest}catch{}const ja=da;function Fa(){}class Ha extends qa{constructor(e){if(super(e),typeof location<"u"){const t=location.protocol==="https:";let i=location.port;i||(i=t?"443":"80"),this.xd=typeof location<"u"&&e.hostname!==location.hostname||i!==e.port}}doWrite(e,t){const i=this.request({method:"POST",data:e});i.on("success",t),i.on("error",(n,c)=>{this.onError("xhr post error",n,c)})}doPoll(){const e=this.request();e.on("data",this.onData.bind(this)),e.on("error",(t,i)=>{this.onError("xhr poll error",t,i)}),this.pollXhr=e}}class fe extends V{constructor(e,t,i){super(),this.createRequest=e,mt(this,i),this._opts=i,this._method=i.method||"GET",this._uri=t,this._data=i.data!==void 0?i.data:null,this._create()}_create(){var e;const t=ca(this._opts,"agent","pfx","key","passphrase","cert","ca","ciphers","rejectUnauthorized","autoUnref");t.xdomain=!!this._opts.xd;const i=this._xhr=this.createRequest(t);try{i.open(this._method,this._uri,!0);try{if(this._opts.extraHeaders){i.setDisableHeaderCheck&&i.setDisableHeaderCheck(!0);for(let n in this._opts.extraHeaders)this._opts.extraHeaders.hasOwnProperty(n)&&i.setRequestHeader(n,this._opts.extraHeaders[n])}}catch{}if(this._method==="POST")try{i.setRequestHeader("Content-type","text/plain;charset=UTF-8")}catch{}try{i.setRequestHeader("Accept","*/*")}catch{}(e=this._opts.cookieJar)===null||e===void 0||e.addCookies(i),"withCredentials"in i&&(i.withCredentials=this._opts.withCredentials),this._opts.requestTimeout&&(i.timeout=this._opts.requestTimeout),i.onreadystatechange=()=>{var n;i.readyState===3&&((n=this._opts.cookieJar)===null||n===void 0||n.parseCookies(i.getResponseHeader("set-cookie"))),i.readyState===4&&(i.status===200||i.status===1223?this._onLoad():this.setTimeoutFn(()=>{this._onError(typeof i.status=="number"?i.status:0)},0))},i.send(this._data)}catch(n){this.setTimeoutFn(()=>{this._onError(n)},0);return}typeof document<"u"&&(this._index=fe.requestsCount++,fe.requests[this._index]=this)}_onError(e){this.emitReserved("error",e,this._xhr),this._cleanup(!0)}_cleanup(e){if(!(typeof this._xhr>"u"||this._xhr===null)){if(this._xhr.onreadystatechange=Fa,e)try{this._xhr.abort()}catch{}typeof document<"u"&&delete fe.requests[this._index],this._xhr=null}}_onLoad(){const e=this._xhr.responseText;e!==null&&(this.emitReserved("data",e),this.emitReserved("success"),this._cleanup())}abort(){this._cleanup()}}fe.requestsCount=0;fe.requests={};if(typeof document<"u"){if(typeof attachEvent=="function")attachEvent("onunload",Yt);else if(typeof addEventListener=="function"){const a="onpagehide"in ce?"pagehide":"unload";addEventListener(a,Yt,!1)}}function Yt(){for(let a in fe.requests)fe.requests.hasOwnProperty(a)&&fe.requests[a].abort()}const Ga=(function(){const a=ua({xdomain:!1});return a&&a.responseType!==null})();class za extends Ha{constructor(e){super(e);const t=e&&e.forceBase64;this.supportsBinary=Ga&&!t}request(e={}){return Object.assign(e,{xd:this.xd},this.opts),new fe(ua,this.uri(),e)}}function ua(a){const e=a.xdomain;try{if(typeof XMLHttpRequest<"u"&&(!e||ja))return new XMLHttpRequest}catch{}if(!e)try{return new ce[["Active"].concat("Object").join("X")]("Microsoft.XMLHTTP")}catch{}}const pa=typeof navigator<"u"&&typeof navigator.product=="string"&&navigator.product.toLowerCase()==="reactnative";class Ka extends _t{get name(){return"websocket"}doOpen(){const e=this.uri(),t=this.opts.protocols,i=pa?{}:ca(this.opts,"agent","perMessageDeflate","pfx","key","passphrase","cert","ca","ciphers","rejectUnauthorized","localAddress","protocolVersion","origin","maxPayload","family","checkServerIdentity");this.opts.extraHeaders&&(i.headers=this.opts.extraHeaders);try{this.ws=this.createSocket(e,t,i)}catch(n){return this.emitReserved("error",n)}this.ws.binaryType=this.socket.binaryType,this.addEventListeners()}addEventListeners(){this.ws.onopen=()=>{this.opts.autoUnref&&this.ws._socket.unref(),this.onOpen()},this.ws.onclose=e=>this.onClose({description:"websocket connection closed",context:e}),this.ws.onmessage=e=>this.onData(e.data),this.ws.onerror=e=>this.onError("websocket error",e)}write(e){this.writable=!1;for(let t=0;t<e.length;t++){const i=e[t],n=t===e.length-1;Pt(i,this.supportsBinary,c=>{try{this.doWrite(i,c)}catch{}n&&vt(()=>{this.writable=!0,this.emitReserved("drain")},this.setTimeoutFn)})}}doClose(){typeof this.ws<"u"&&(this.ws.onerror=()=>{},this.ws.close(),this.ws=null)}uri(){const e=this.opts.secure?"wss":"ws",t=this.query||{};return this.opts.timestampRequests&&(t[this.opts.timestampParam]=la()),this.supportsBinary||(t.b64=1),this.createUri(e,t)}}const gt=ce.WebSocket||ce.MozWebSocket;class Wa extends Ka{createSocket(e,t,i){return pa?new gt(e,t,i):t?new gt(e,t):new gt(e)}doWrite(e,t){this.ws.send(t)}}class Ja extends _t{get name(){return"webtransport"}doOpen(){try{this._transport=new WebTransport(this.createUri("https"),this.opts.transportOptions[this.name])}catch(e){return this.emitReserved("error",e)}this._transport.closed.then(()=>{this.onClose()}).catch(e=>{this.onError("webtransport error",e)}),this._transport.ready.then(()=>{this._transport.createBidirectionalStream().then(e=>{const t=Da(Number.MAX_SAFE_INTEGER,this.socket.binaryType),i=e.readable.pipeThrough(t).getReader(),n=Ba();n.readable.pipeTo(e.writable),this._writer=n.writable.getWriter();const c=()=>{i.read().then(({done:p,value:f})=>{p||(this.onPacket(f),c())}).catch(p=>{})};c();const o={type:"open"};this.query.sid&&(o.data=`{"sid":"${this.query.sid}"}`),this._writer.write(o).then(()=>this.onOpen())})})}write(e){this.writable=!1;for(let t=0;t<e.length;t++){const i=e[t],n=t===e.length-1;this._writer.write(i).then(()=>{n&&vt(()=>{this.writable=!0,this.emitReserved("drain")},this.setTimeoutFn)})}}doClose(){var e;(e=this._transport)===null||e===void 0||e.close()}}const Xa={websocket:Wa,webtransport:Ja,polling:za},Ya=/^(?:(?![^:@\/?#]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@\/?#]*)(?::([^:@\/?#]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/,Za=["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"];function St(a){if(a.length>8e3)throw"URI too long";const e=a,t=a.indexOf("["),i=a.indexOf("]");t!=-1&&i!=-1&&(a=a.substring(0,t)+a.substring(t,i).replace(/:/g,";")+a.substring(i,a.length));let n=Ya.exec(a||""),c={},o=14;for(;o--;)c[Za[o]]=n[o]||"";return t!=-1&&i!=-1&&(c.source=e,c.host=c.host.substring(1,c.host.length-1).replace(/;/g,":"),c.authority=c.authority.replace("[","").replace("]","").replace(/;/g,":"),c.ipv6uri=!0),c.pathNames=Qa(c,c.path),c.queryKey=ei(c,c.query),c}function Qa(a,e){const t=/\/{2,9}/g,i=e.replace(t,"/").split("/");return(e.slice(0,1)=="/"||e.length===0)&&i.splice(0,1),e.slice(-1)=="/"&&i.splice(i.length-1,1),i}function ei(a,e){const t={};return e.replace(/(?:^|&)([^&=]*)=?([^&]*)/g,function(i,n,c){n&&(t[n]=c)}),t}const At=typeof addEventListener=="function"&&typeof removeEventListener=="function",rt=[];At&&addEventListener("offline",()=>{rt.forEach(a=>a())},!1);class Ne extends V{constructor(e,t){if(super(),this.binaryType=Na,this.writeBuffer=[],this._prevBufferLen=0,this._pingInterval=-1,this._pingTimeout=-1,this._maxPayload=-1,this._pingTimeoutTime=1/0,e&&typeof e=="object"&&(t=e,e=null),e){const i=St(e);t.hostname=i.host,t.secure=i.protocol==="https"||i.protocol==="wss",t.port=i.port,i.query&&(t.query=i.query)}else t.host&&(t.hostname=St(t.host).host);mt(this,t),this.secure=t.secure!=null?t.secure:typeof location<"u"&&location.protocol==="https:",t.hostname&&!t.port&&(t.port=this.secure?"443":"80"),this.hostname=t.hostname||(typeof location<"u"?location.hostname:"localhost"),this.port=t.port||(typeof location<"u"&&location.port?location.port:this.secure?"443":"80"),this.transports=[],this._transportsByName={},t.transports.forEach(i=>{const n=i.prototype.name;this.transports.push(n),this._transportsByName[n]=i}),this.opts=Object.assign({path:"/engine.io",agent:!1,withCredentials:!1,upgrade:!0,timestampParam:"t",rememberUpgrade:!1,addTrailingSlash:!0,rejectUnauthorized:!0,perMessageDeflate:{threshold:1024},transportOptions:{},closeOnBeforeunload:!1},t),this.opts.path=this.opts.path.replace(/\/$/,"")+(this.opts.addTrailingSlash?"/":""),typeof this.opts.query=="string"&&(this.opts.query=Va(this.opts.query)),At&&(this.opts.closeOnBeforeunload&&(this._beforeunloadEventListener=()=>{this.transport&&(this.transport.removeAllListeners(),this.transport.close())},addEventListener("beforeunload",this._beforeunloadEventListener,!1)),this.hostname!=="localhost"&&(this._offlineEventListener=()=>{this._onClose("transport close",{description:"network connection lost"})},rt.push(this._offlineEventListener))),this.opts.withCredentials&&(this._cookieJar=void 0),this._open()}createTransport(e){const t=Object.assign({},this.opts.query);t.EIO=ra,t.transport=e,this.id&&(t.sid=this.id);const i=Object.assign({},this.opts,{query:t,socket:this,hostname:this.hostname,secure:this.secure,port:this.port},this.opts.transportOptions[e]);return new this._transportsByName[e](i)}_open(){if(this.transports.length===0){this.setTimeoutFn(()=>{this.emitReserved("error","No transports available")},0);return}const e=this.opts.rememberUpgrade&&Ne.priorWebsocketSuccess&&this.transports.indexOf("websocket")!==-1?"websocket":this.transports[0];this.readyState="opening";const t=this.createTransport(e);t.open(),this.setTransport(t)}setTransport(e){this.transport&&this.transport.removeAllListeners(),this.transport=e,e.on("drain",this._onDrain.bind(this)).on("packet",this._onPacket.bind(this)).on("error",this._onError.bind(this)).on("close",t=>this._onClose("transport close",t))}onOpen(){this.readyState="open",Ne.priorWebsocketSuccess=this.transport.name==="websocket",this.emitReserved("open"),this.flush()}_onPacket(e){if(this.readyState==="opening"||this.readyState==="open"||this.readyState==="closing")switch(this.emitReserved("packet",e),this.emitReserved("heartbeat"),e.type){case"open":this.onHandshake(JSON.parse(e.data));break;case"ping":this._sendPacket("pong"),this.emitReserved("ping"),this.emitReserved("pong"),this._resetPingTimeout();break;case"error":const t=new Error("server error");t.code=e.data,this._onError(t);break;case"message":this.emitReserved("data",e.data),this.emitReserved("message",e.data);break}}onHandshake(e){this.emitReserved("handshake",e),this.id=e.sid,this.transport.query.sid=e.sid,this._pingInterval=e.pingInterval,this._pingTimeout=e.pingTimeout,this._maxPayload=e.maxPayload,this.onOpen(),this.readyState!=="closed"&&this._resetPingTimeout()}_resetPingTimeout(){this.clearTimeoutFn(this._pingTimeoutTimer);const e=this._pingInterval+this._pingTimeout;this._pingTimeoutTime=Date.now()+e,this._pingTimeoutTimer=this.setTimeoutFn(()=>{this._onClose("ping timeout")},e),this.opts.autoUnref&&this._pingTimeoutTimer.unref()}_onDrain(){this.writeBuffer.splice(0,this._prevBufferLen),this._prevBufferLen=0,this.writeBuffer.length===0?this.emitReserved("drain"):this.flush()}flush(){if(this.readyState!=="closed"&&this.transport.writable&&!this.upgrading&&this.writeBuffer.length){const e=this._getWritablePackets();this.transport.send(e),this._prevBufferLen=e.length,this.emitReserved("flush")}}_getWritablePackets(){if(!(this._maxPayload&&this.transport.name==="polling"&&this.writeBuffer.length>1))return this.writeBuffer;let t=1;for(let i=0;i<this.writeBuffer.length;i++){const n=this.writeBuffer[i].data;if(n&&(t+=Pa(n)),i>0&&t>this._maxPayload)return this.writeBuffer.slice(0,i);t+=2}return this.writeBuffer}_hasPingExpired(){if(!this._pingTimeoutTime)return!0;const e=Date.now()>this._pingTimeoutTime;return e&&(this._pingTimeoutTime=0,vt(()=>{this._onClose("ping timeout")},this.setTimeoutFn)),e}write(e,t,i){return this._sendPacket("message",e,t,i),this}send(e,t,i){return this._sendPacket("message",e,t,i),this}_sendPacket(e,t,i,n){if(typeof t=="function"&&(n=t,t=void 0),typeof i=="function"&&(n=i,i=null),this.readyState==="closing"||this.readyState==="closed")return;i=i||{},i.compress=i.compress!==!1;const c={type:e,data:t,options:i};this.emitReserved("packetCreate",c),this.writeBuffer.push(c),n&&this.once("flush",n),this.flush()}close(){const e=()=>{this._onClose("forced close"),this.transport.close()},t=()=>{this.off("upgrade",t),this.off("upgradeError",t),e()},i=()=>{this.once("upgrade",t),this.once("upgradeError",t)};return(this.readyState==="opening"||this.readyState==="open")&&(this.readyState="closing",this.writeBuffer.length?this.once("drain",()=>{this.upgrading?i():e()}):this.upgrading?i():e()),this}_onError(e){if(Ne.priorWebsocketSuccess=!1,this.opts.tryAllTransports&&this.transports.length>1&&this.readyState==="opening")return this.transports.shift(),this._open();this.emitReserved("error",e),this._onClose("transport error",e)}_onClose(e,t){if(this.readyState==="opening"||this.readyState==="open"||this.readyState==="closing"){if(this.clearTimeoutFn(this._pingTimeoutTimer),this.transport.removeAllListeners("close"),this.transport.close(),this.transport.removeAllListeners(),At&&(this._beforeunloadEventListener&&removeEventListener("beforeunload",this._beforeunloadEventListener,!1),this._offlineEventListener)){const i=rt.indexOf(this._offlineEventListener);i!==-1&&rt.splice(i,1)}this.readyState="closed",this.id=null,this.emitReserved("close",e,t),this.writeBuffer=[],this._prevBufferLen=0}}}Ne.protocol=ra;class ti extends Ne{constructor(){super(...arguments),this._upgrades=[]}onOpen(){if(super.onOpen(),this.readyState==="open"&&this.opts.upgrade)for(let e=0;e<this._upgrades.length;e++)this._probe(this._upgrades[e])}_probe(e){let t=this.createTransport(e),i=!1;Ne.priorWebsocketSuccess=!1;const n=()=>{i||(t.send([{type:"ping",data:"probe"}]),t.once("packet",g=>{if(!i)if(g.type==="pong"&&g.data==="probe"){if(this.upgrading=!0,this.emitReserved("upgrading",t),!t)return;Ne.priorWebsocketSuccess=t.name==="websocket",this.transport.pause(()=>{i||this.readyState!=="closed"&&(N(),this.setTransport(t),t.send([{type:"upgrade"}]),this.emitReserved("upgrade",t),t=null,this.upgrading=!1,this.flush())})}else{const I=new Error("probe error");I.transport=t.name,this.emitReserved("upgradeError",I)}}))};function c(){i||(i=!0,N(),t.close(),t=null)}const o=g=>{const I=new Error("probe error: "+g);I.transport=t.name,c(),this.emitReserved("upgradeError",I)};function p(){o("transport closed")}function f(){o("socket closed")}function D(g){t&&g.name!==t.name&&c()}const N=()=>{t.removeListener("open",n),t.removeListener("error",o),t.removeListener("close",p),this.off("close",f),this.off("upgrading",D)};t.once("open",n),t.once("error",o),t.once("close",p),this.once("close",f),this.once("upgrading",D),this._upgrades.indexOf("webtransport")!==-1&&e!=="webtransport"?this.setTimeoutFn(()=>{i||t.open()},200):t.open()}onHandshake(e){this._upgrades=this._filterUpgrades(e.upgrades),super.onHandshake(e)}_filterUpgrades(e){const t=[];for(let i=0;i<e.length;i++)~this.transports.indexOf(e[i])&&t.push(e[i]);return t}}let ai=class extends ti{constructor(e,t={}){const i=typeof e=="object",n=i?{...e}:{...t};(!n.transports||n.transports&&typeof n.transports[0]=="string")&&(n.transports=(n.transports||["polling","websocket","webtransport"]).map(c=>Xa[c]).filter(c=>!!c)),super(i?n:e,n)}};function ii(a,e="",t){let i=a;t=t||typeof location<"u"&&location,a==null&&(a=t.protocol+"//"+t.host),typeof a=="string"&&(a.charAt(0)==="/"&&(a.charAt(1)==="/"?a=t.protocol+a:a=t.host+a),/^(https?|wss?):\/\//.test(a)||(typeof t<"u"?a=t.protocol+"//"+a:a="https://"+a),i=St(a)),i.port||(/^(http|ws)$/.test(i.protocol)?i.port="80":/^(http|ws)s$/.test(i.protocol)&&(i.port="443")),i.path=i.path||"/";const c=i.host.indexOf(":")!==-1?"["+i.host+"]":i.host;return i.id=i.protocol+"://"+c+":"+i.port+e,i.href=i.protocol+"://"+c+(t&&t.port===i.port?"":":"+i.port),i}const ni=typeof ArrayBuffer=="function",si=a=>typeof ArrayBuffer.isView=="function"?ArrayBuffer.isView(a):a.buffer instanceof ArrayBuffer,va=Object.prototype.toString,oi=typeof Blob=="function"||typeof Blob<"u"&&va.call(Blob)==="[object BlobConstructor]",ri=typeof File=="function"||typeof File<"u"&&va.call(File)==="[object FileConstructor]";function Vt(a){return ni&&(a instanceof ArrayBuffer||si(a))||oi&&a instanceof Blob||ri&&a instanceof File}function ct(a,e){if(!a||typeof a!="object")return!1;if(Array.isArray(a)){for(let t=0,i=a.length;t<i;t++)if(ct(a[t]))return!0;return!1}if(Vt(a))return!0;if(a.toJSON&&typeof a.toJSON=="function"&&arguments.length===1)return ct(a.toJSON(),!0);for(const t in a)if(Object.prototype.hasOwnProperty.call(a,t)&&ct(a[t]))return!0;return!1}function ci(a){const e=[],t=a.data,i=a;return i.data=It(t,e),i.attachments=e.length,{packet:i,buffers:e}}function It(a,e){if(!a)return a;if(Vt(a)){const t={_placeholder:!0,num:e.length};return e.push(a),t}else if(Array.isArray(a)){const t=new Array(a.length);for(let i=0;i<a.length;i++)t[i]=It(a[i],e);return t}else if(typeof a=="object"&&!(a instanceof Date)){const t={};for(const i in a)Object.prototype.hasOwnProperty.call(a,i)&&(t[i]=It(a[i],e));return t}return a}function li(a,e){return a.data=Tt(a.data,e),delete a.attachments,a}function Tt(a,e){if(!a)return a;if(a&&a._placeholder===!0){if(typeof a.num=="number"&&a.num>=0&&a.num<e.length)return e[a.num];throw new Error("illegal attachments")}else if(Array.isArray(a))for(let t=0;t<a.length;t++)a[t]=Tt(a[t],e);else if(typeof a=="object")for(const t in a)Object.prototype.hasOwnProperty.call(a,t)&&(a[t]=Tt(a[t],e));return a}const di=["connect","connect_error","disconnect","disconnecting","newListener","removeListener"];var A;(function(a){a[a.CONNECT=0]="CONNECT",a[a.DISCONNECT=1]="DISCONNECT",a[a.EVENT=2]="EVENT",a[a.ACK=3]="ACK",a[a.CONNECT_ERROR=4]="CONNECT_ERROR",a[a.BINARY_EVENT=5]="BINARY_EVENT",a[a.BINARY_ACK=6]="BINARY_ACK"})(A||(A={}));class ui{constructor(e){this.replacer=e}encode(e){return(e.type===A.EVENT||e.type===A.ACK)&&ct(e)?this.encodeAsBinary({type:e.type===A.EVENT?A.BINARY_EVENT:A.BINARY_ACK,nsp:e.nsp,data:e.data,id:e.id}):[this.encodeAsString(e)]}encodeAsString(e){let t=""+e.type;return(e.type===A.BINARY_EVENT||e.type===A.BINARY_ACK)&&(t+=e.attachments+"-"),e.nsp&&e.nsp!=="/"&&(t+=e.nsp+","),e.id!=null&&(t+=e.id),e.data!=null&&(t+=JSON.stringify(e.data,this.replacer)),t}encodeAsBinary(e){const t=ci(e),i=this.encodeAsString(t.packet),n=t.buffers;return n.unshift(i),n}}class Ut extends V{constructor(e){super(),this.opts=Object.assign({reviver:void 0,maxAttachments:10},typeof e=="function"?{reviver:e}:e)}add(e){let t;if(typeof e=="string"){if(this.reconstructor)throw new Error("got plaintext data when reconstructing a packet");t=this.decodeString(e);const i=t.type===A.BINARY_EVENT;i||t.type===A.BINARY_ACK?(t.type=i?A.EVENT:A.ACK,this.reconstructor=new pi(t),t.attachments===0&&super.emitReserved("decoded",t)):super.emitReserved("decoded",t)}else if(Vt(e)||e.base64)if(this.reconstructor)t=this.reconstructor.takeBinaryData(e),t&&(this.reconstructor=null,super.emitReserved("decoded",t));else throw new Error("got binary data when not reconstructing a packet");else throw new Error("Unknown type: "+e)}decodeString(e){let t=0;const i={type:Number(e.charAt(0))};if(A[i.type]===void 0)throw new Error("unknown packet type "+i.type);if(i.type===A.BINARY_EVENT||i.type===A.BINARY_ACK){const c=t+1;for(;e.charAt(++t)!=="-"&&t!=e.length;);const o=e.substring(c,t);if(o!=Number(o)||e.charAt(t)!=="-")throw new Error("Illegal attachments");const p=Number(o);if(!vi(p)||p<0)throw new Error("Illegal attachments");if(p>this.opts.maxAttachments)throw new Error("too many attachments");i.attachments=p}if(e.charAt(t+1)==="/"){const c=t+1;for(;++t&&!(e.charAt(t)===","||t===e.length););i.nsp=e.substring(c,t)}else i.nsp="/";const n=e.charAt(t+1);if(n!==""&&Number(n)==n){const c=t+1;for(;++t;){const o=e.charAt(t);if(o==null||Number(o)!=o){--t;break}if(t===e.length)break}i.id=Number(e.substring(c,t+1))}if(e.charAt(++t)){const c=this.tryParse(e.substr(t));if(Ut.isPayloadValid(i.type,c))i.data=c;else throw new Error("invalid payload")}return i}tryParse(e){try{return JSON.parse(e,this.opts.reviver)}catch{return!1}}static isPayloadValid(e,t){switch(e){case A.CONNECT:return Zt(t);case A.DISCONNECT:return t===void 0;case A.CONNECT_ERROR:return typeof t=="string"||Zt(t);case A.EVENT:case A.BINARY_EVENT:return Array.isArray(t)&&(typeof t[0]=="number"||typeof t[0]=="string"&&di.indexOf(t[0])===-1);case A.ACK:case A.BINARY_ACK:return Array.isArray(t)}}destroy(){this.reconstructor&&(this.reconstructor.finishedReconstruction(),this.reconstructor=null)}}class pi{constructor(e){this.packet=e,this.buffers=[],this.reconPack=e}takeBinaryData(e){if(this.buffers.push(e),this.buffers.length===this.reconPack.attachments){const t=li(this.reconPack,this.buffers);return this.finishedReconstruction(),t}return null}finishedReconstruction(){this.reconPack=null,this.buffers=[]}}const vi=Number.isInteger||function(a){return typeof a=="number"&&isFinite(a)&&Math.floor(a)===a};function Zt(a){return Object.prototype.toString.call(a)==="[object Object]"}const mi=Object.freeze(Object.defineProperty({__proto__:null,Decoder:Ut,Encoder:ui,get PacketType(){return A}},Symbol.toStringTag,{value:"Module"}));function ue(a,e,t){return a.on(e,t),function(){a.off(e,t)}}const yi=Object.freeze({connect:1,connect_error:1,disconnect:1,disconnecting:1,newListener:1,removeListener:1});class ma extends V{constructor(e,t,i){super(),this.connected=!1,this.recovered=!1,this.receiveBuffer=[],this.sendBuffer=[],this._queue=[],this._queueSeq=0,this.ids=0,this.acks={},this.flags={},this.io=e,this.nsp=t,i&&i.auth&&(this.auth=i.auth),this._opts=Object.assign({},i),this.io._autoConnect&&this.open()}get disconnected(){return!this.connected}subEvents(){if(this.subs)return;const e=this.io;this.subs=[ue(e,"open",this.onopen.bind(this)),ue(e,"packet",this.onpacket.bind(this)),ue(e,"error",this.onerror.bind(this)),ue(e,"close",this.onclose.bind(this))]}get active(){return!!this.subs}connect(){return this.connected?this:(this.subEvents(),this.io._reconnecting||this.io.open(),this.io._readyState==="open"&&this.onopen(),this)}open(){return this.connect()}send(...e){return e.unshift("message"),this.emit.apply(this,e),this}emit(e,...t){var i,n,c;if(yi.hasOwnProperty(e))throw new Error('"'+e.toString()+'" is a reserved event name');if(t.unshift(e),this._opts.retries&&!this.flags.fromQueue&&!this.flags.volatile)return this._addToQueue(t),this;const o={type:A.EVENT,data:t};if(o.options={},o.options.compress=this.flags.compress!==!1,typeof t[t.length-1]=="function"){const N=this.ids++,g=t.pop();this._registerAckCallback(N,g),o.id=N}const p=(n=(i=this.io.engine)===null||i===void 0?void 0:i.transport)===null||n===void 0?void 0:n.writable,f=this.connected&&!(!((c=this.io.engine)===null||c===void 0)&&c._hasPingExpired());return this.flags.volatile&&!p||(f?(this.notifyOutgoingListeners(o),this.packet(o)):this.sendBuffer.push(o)),this.flags={},this}_registerAckCallback(e,t){var i;const n=(i=this.flags.timeout)!==null&&i!==void 0?i:this._opts.ackTimeout;if(n===void 0){this.acks[e]=t;return}const c=this.io.setTimeoutFn(()=>{delete this.acks[e];for(let p=0;p<this.sendBuffer.length;p++)this.sendBuffer[p].id===e&&this.sendBuffer.splice(p,1);t.call(this,new Error("operation has timed out"))},n),o=(...p)=>{this.io.clearTimeoutFn(c),t.apply(this,p)};o.withError=!0,this.acks[e]=o}emitWithAck(e,...t){return new Promise((i,n)=>{const c=(o,p)=>o?n(o):i(p);c.withError=!0,t.push(c),this.emit(e,...t)})}_addToQueue(e){let t;typeof e[e.length-1]=="function"&&(t=e.pop());const i={id:this._queueSeq++,tryCount:0,pending:!1,args:e,flags:Object.assign({fromQueue:!0},this.flags)};e.push((n,...c)=>(this._queue[0],n!==null?i.tryCount>this._opts.retries&&(this._queue.shift(),t&&t(n)):(this._queue.shift(),t&&t(null,...c)),i.pending=!1,this._drainQueue())),this._queue.push(i),this._drainQueue()}_drainQueue(e=!1){if(!this.connected||this._queue.length===0)return;const t=this._queue[0];t.pending&&!e||(t.pending=!0,t.tryCount++,this.flags=t.flags,this.emit.apply(this,t.args))}packet(e){e.nsp=this.nsp,this.io._packet(e)}onopen(){typeof this.auth=="function"?this.auth(e=>{this._sendConnectPacket(e)}):this._sendConnectPacket(this.auth)}_sendConnectPacket(e){this.packet({type:A.CONNECT,data:this._pid?Object.assign({pid:this._pid,offset:this._lastOffset},e):e})}onerror(e){this.connected||this.emitReserved("connect_error",e)}onclose(e,t){this.connected=!1,delete this.id,this.emitReserved("disconnect",e,t),this._clearAcks()}_clearAcks(){Object.keys(this.acks).forEach(e=>{if(!this.sendBuffer.some(i=>String(i.id)===e)){const i=this.acks[e];delete this.acks[e],i.withError&&i.call(this,new Error("socket has been disconnected"))}})}onpacket(e){if(e.nsp===this.nsp)switch(e.type){case A.CONNECT:e.data&&e.data.sid?this.onconnect(e.data.sid,e.data.pid):this.emitReserved("connect_error",new Error("It seems you are trying to reach a Socket.IO server in v2.x with a v3.x client, but they are not compatible (more information here: https://socket.io/docs/v3/migrating-from-2-x-to-3-0/)"));break;case A.EVENT:case A.BINARY_EVENT:this.onevent(e);break;case A.ACK:case A.BINARY_ACK:this.onack(e);break;case A.DISCONNECT:this.ondisconnect();break;case A.CONNECT_ERROR:this.destroy();const i=new Error(e.data.message);i.data=e.data.data,this.emitReserved("connect_error",i);break}}onevent(e){const t=e.data||[];e.id!=null&&t.push(this.ack(e.id)),this.connected?this.emitEvent(t):this.receiveBuffer.push(Object.freeze(t))}emitEvent(e){if(this._anyListeners&&this._anyListeners.length){const t=this._anyListeners.slice();for(const i of t)i.apply(this,e)}super.emit.apply(this,e),this._pid&&e.length&&typeof e[e.length-1]=="string"&&(this._lastOffset=e[e.length-1])}ack(e){const t=this;let i=!1;return function(...n){i||(i=!0,t.packet({type:A.ACK,id:e,data:n}))}}onack(e){const t=this.acks[e.id];typeof t=="function"&&(delete this.acks[e.id],t.withError&&e.data.unshift(null),t.apply(this,e.data))}onconnect(e,t){this.id=e,this.recovered=t&&this._pid===t,this._pid=t,this.connected=!0,this.emitBuffered(),this._drainQueue(!0),this.emitReserved("connect")}emitBuffered(){this.receiveBuffer.forEach(e=>this.emitEvent(e)),this.receiveBuffer=[],this.sendBuffer.forEach(e=>{this.notifyOutgoingListeners(e),this.packet(e)}),this.sendBuffer=[]}ondisconnect(){this.destroy(),this.onclose("io server disconnect")}destroy(){this.subs&&(this.subs.forEach(e=>e()),this.subs=void 0),this.io._destroy(this)}disconnect(){return this.connected&&this.packet({type:A.DISCONNECT}),this.destroy(),this.connected&&this.onclose("io client disconnect"),this}close(){return this.disconnect()}compress(e){return this.flags.compress=e,this}get volatile(){return this.flags.volatile=!0,this}timeout(e){return this.flags.timeout=e,this}onAny(e){return this._anyListeners=this._anyListeners||[],this._anyListeners.push(e),this}prependAny(e){return this._anyListeners=this._anyListeners||[],this._anyListeners.unshift(e),this}offAny(e){if(!this._anyListeners)return this;if(e){const t=this._anyListeners;for(let i=0;i<t.length;i++)if(e===t[i])return t.splice(i,1),this}else this._anyListeners=[];return this}listenersAny(){return this._anyListeners||[]}onAnyOutgoing(e){return this._anyOutgoingListeners=this._anyOutgoingListeners||[],this._anyOutgoingListeners.push(e),this}prependAnyOutgoing(e){return this._anyOutgoingListeners=this._anyOutgoingListeners||[],this._anyOutgoingListeners.unshift(e),this}offAnyOutgoing(e){if(!this._anyOutgoingListeners)return this;if(e){const t=this._anyOutgoingListeners;for(let i=0;i<t.length;i++)if(e===t[i])return t.splice(i,1),this}else this._anyOutgoingListeners=[];return this}listenersAnyOutgoing(){return this._anyOutgoingListeners||[]}notifyOutgoingListeners(e){if(this._anyOutgoingListeners&&this._anyOutgoingListeners.length){const t=this._anyOutgoingListeners.slice();for(const i of t)i.apply(this,e.data)}}}function Je(a){a=a||{},this.ms=a.min||100,this.max=a.max||1e4,this.factor=a.factor||2,this.jitter=a.jitter>0&&a.jitter<=1?a.jitter:0,this.attempts=0}Je.prototype.duration=function(){var a=this.ms*Math.pow(this.factor,this.attempts++);if(this.jitter){var e=Math.random(),t=Math.floor(e*this.jitter*a);a=(Math.floor(e*10)&1)==0?a-t:a+t}return Math.min(a,this.max)|0};Je.prototype.reset=function(){this.attempts=0};Je.prototype.setMin=function(a){this.ms=a};Je.prototype.setMax=function(a){this.max=a};Je.prototype.setJitter=function(a){this.jitter=a};class kt extends V{constructor(e,t){var i;super(),this.nsps={},this.subs=[],e&&typeof e=="object"&&(t=e,e=void 0),t=t||{},t.path=t.path||"/socket.io",this.opts=t,mt(this,t),this.reconnection(t.reconnection!==!1),this.reconnectionAttempts(t.reconnectionAttempts||1/0),this.reconnectionDelay(t.reconnectionDelay||1e3),this.reconnectionDelayMax(t.reconnectionDelayMax||5e3),this.randomizationFactor((i=t.randomizationFactor)!==null&&i!==void 0?i:.5),this.backoff=new Je({min:this.reconnectionDelay(),max:this.reconnectionDelayMax(),jitter:this.randomizationFactor()}),this.timeout(t.timeout==null?2e4:t.timeout),this._readyState="closed",this.uri=e;const n=t.parser||mi;this.encoder=new n.Encoder,this.decoder=new n.Decoder,this._autoConnect=t.autoConnect!==!1,this._autoConnect&&this.open()}reconnection(e){return arguments.length?(this._reconnection=!!e,e||(this.skipReconnect=!0),this):this._reconnection}reconnectionAttempts(e){return e===void 0?this._reconnectionAttempts:(this._reconnectionAttempts=e,this)}reconnectionDelay(e){var t;return e===void 0?this._reconnectionDelay:(this._reconnectionDelay=e,(t=this.backoff)===null||t===void 0||t.setMin(e),this)}randomizationFactor(e){var t;return e===void 0?this._randomizationFactor:(this._randomizationFactor=e,(t=this.backoff)===null||t===void 0||t.setJitter(e),this)}reconnectionDelayMax(e){var t;return e===void 0?this._reconnectionDelayMax:(this._reconnectionDelayMax=e,(t=this.backoff)===null||t===void 0||t.setMax(e),this)}timeout(e){return arguments.length?(this._timeout=e,this):this._timeout}maybeReconnectOnOpen(){!this._reconnecting&&this._reconnection&&this.backoff.attempts===0&&this.reconnect()}open(e){if(~this._readyState.indexOf("open"))return this;this.engine=new ai(this.uri,this.opts);const t=this.engine,i=this;this._readyState="opening",this.skipReconnect=!1;const n=ue(t,"open",function(){i.onopen(),e&&e()}),c=p=>{this.cleanup(),this._readyState="closed",this.emitReserved("error",p),e?e(p):this.maybeReconnectOnOpen()},o=ue(t,"error",c);if(this._timeout!==!1){const p=this._timeout,f=this.setTimeoutFn(()=>{n(),c(new Error("timeout")),t.close()},p);this.opts.autoUnref&&f.unref(),this.subs.push(()=>{this.clearTimeoutFn(f)})}return this.subs.push(n),this.subs.push(o),this}connect(e){return this.open(e)}onopen(){this.cleanup(),this._readyState="open",this.emitReserved("open");const e=this.engine;this.subs.push(ue(e,"ping",this.onping.bind(this)),ue(e,"data",this.ondata.bind(this)),ue(e,"error",this.onerror.bind(this)),ue(e,"close",this.onclose.bind(this)),ue(this.decoder,"decoded",this.ondecoded.bind(this)))}onping(){this.emitReserved("ping")}ondata(e){try{this.decoder.add(e)}catch(t){this.onclose("parse error",t)}}ondecoded(e){vt(()=>{this.emitReserved("packet",e)},this.setTimeoutFn)}onerror(e){this.emitReserved("error",e)}socket(e,t){let i=this.nsps[e];return i?this._autoConnect&&!i.active&&i.connect():(i=new ma(this,e,t),this.nsps[e]=i),i}_destroy(e){const t=Object.keys(this.nsps);for(const i of t)if(this.nsps[i].active)return;this._close()}_packet(e){const t=this.encoder.encode(e);for(let i=0;i<t.length;i++)this.engine.write(t[i],e.options)}cleanup(){this.subs.forEach(e=>e()),this.subs.length=0,this.decoder.destroy()}_close(){this.skipReconnect=!0,this._reconnecting=!1,this.onclose("forced close")}disconnect(){return this._close()}onclose(e,t){var i;this.cleanup(),(i=this.engine)===null||i===void 0||i.close(),this.backoff.reset(),this._readyState="closed",this.emitReserved("close",e,t),this._reconnection&&!this.skipReconnect&&this.reconnect()}reconnect(){if(this._reconnecting||this.skipReconnect)return this;const e=this;if(this.backoff.attempts>=this._reconnectionAttempts)this.backoff.reset(),this.emitReserved("reconnect_failed"),this._reconnecting=!1;else{const t=this.backoff.duration();this._reconnecting=!0;const i=this.setTimeoutFn(()=>{e.skipReconnect||(this.emitReserved("reconnect_attempt",e.backoff.attempts),!e.skipReconnect&&e.open(n=>{n?(e._reconnecting=!1,e.reconnect(),this.emitReserved("reconnect_error",n)):e.onreconnect()}))},t);this.opts.autoUnref&&i.unref(),this.subs.push(()=>{this.clearTimeoutFn(i)})}}onreconnect(){const e=this.backoff.attempts;this._reconnecting=!1,this.backoff.reset(),this.emitReserved("reconnect",e)}}const Ze={};function lt(a,e){typeof a=="object"&&(e=a,a=void 0),e=e||{};const t=ii(a,e.path||"/socket.io"),i=t.source,n=t.id,c=t.path,o=Ze[n]&&c in Ze[n].nsps,p=e.forceNew||e["force new connection"]||e.multiplex===!1||o;let f;return p?f=new kt(i,e):(Ze[n]||(Ze[n]=new kt(i,e)),f=Ze[n]),t.query&&!e.query&&(e.query=t.queryKey),f.socket(t.path,e)}Object.assign(lt,{Manager:kt,Socket:ma,io:lt,connect:lt});const R=window.location.origin,fi=[{title:"SERVIDORES",items:[["◈","Servidor actual",""],["⌁","Invitaciones",""],["♧","Miembros",""],["♙","Roles",""],["▣","Canales",""],["▤","Logs del servidor",""]]},{title:"COMANDOS",items:[["⚙","Comandos","»"],["✣","Slash Commands",""],["▢","Mensajes",""],["◫","Auto Respuestas",""]]},{title:"MODERACIÓN",items:[["◆","Moderación","»"],["◉","Advertencias",""],["⊗","Baneos",""],["◔","Muteos",""],["⌁","Anti Raid",""],["✦","Auto Mod",""]]},{title:"SISTEMA",items:[["▤","Logs","»"],["◷","Auditoría",""],["□","Tareas programadas",""],["▣","Backups",""],["⌘","Webhooks",""]]},{title:"CONFIGURACIÓN",items:[["⚙","Configuración","»"],["✎","Personalización",""],["⌁","Variables de entorno",""],["◇","Tokens",""],["⊙","Permisos",""],["⌘","Integraciones",""]]}],gi=fi.map(a=>`
+  <div class="side-group">
+    <div class="side-title">${a.title}</div>
+    ${a.items.map(([e,t,i])=>`
+      <button class="side-item">
+        <span class="side-icon">${e}</span>
+        <span>${t}</span>
+        ${i?`<b>${i}</b>`:""}
+      </button>
+    `).join("")}
+  </div>
+`).join("");document.querySelector("#app").innerHTML=`
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-logo">N</div>
+        <div>
+          <strong>Nebula</strong>
+          <span>BOT CONTROL</span>
+        </div>
+      </div>
+<nav
+  class="public-sidebar-menu"
+  id="publicSidebarMenu"
+>
+  <button
+    class="public-side-item active"
+    id="publicMyServers"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ▱
+    </span>
+
+    <span>
+      Mis servidores
+    </span>
+  </button>
+
+  <button
+    class="public-side-item"
+    id="publicInviteBot"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ＋
+    </span>
+
+    <span>
+      Invitar bot
+    </span>
+  </button>
+
+  <button
+    class="public-side-item"
+    id="publicBotStatus"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ◉
+    </span>
+
+    <span>
+      Estado del bot
+    </span>
+  </button>
+
+
+<button
+  class="public-side-item owner-only"
+  id="publicLicenses"
+  type="button"
+>
+
+     <span class="public-side-icon">
+      🔑
+    </span>
+
+    <span>
+      Licencias
+    </span>
+  </button>
+
+
+  <button
+    class="public-side-item"
+    id="publicSupport"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ?
+    </span>
+
+    <span>
+      Soporte
+    </span>
+  </button>
+
+  <button
+    class="public-side-item public-logout"
+    id="publicLogout"
+    type="button"
+  >
+    <span class="public-side-icon">
+      ↪
+    </span>
+
+    <span>
+      Cerrar sesión
+    </span>
+  </button>
+</nav>
+<div
+  class="server-switcher dashboard-only"
+  id="serverSwitcher"
+>
+  <button
+    class="server-current"
+    id="serverCurrent"
+    type="button"
+  >
+    <div
+      class="server-current-icon"
+      id="serverCurrentIcon"
+    >
+      N
+    </div>
+
+    <div class="server-current-copy">
+      <span>Servidor actual</span>
+
+      <strong id="serverCurrentName">
+        Cargando...
+      </strong>
+    </div>
+
+    <span class="server-current-arrow">
+      ⌄
+    </span>
+  </button>
+
+  <div
+    class="server-dropdown"
+    id="serverDropdown"
+  >
+    <div class="server-dropdown-head">
+      <strong>Tus servidores</strong>
+
+      <span id="serverDropdownCount">
+        0
+      </span>
+    </div>
+
+    <div
+      class="server-dropdown-list"
+      id="serverDropdownList"
+    >
+      <div class="server-dropdown-empty">
+        Cargando servidores...
+      </div>
+    </div>
+  </div>
+</div>
+
+      <button
+  class="side-item dashboard-link active dashboard-only"
+>
+        <span class="side-icon">⌂</span>
+        <span>Dashboard</span>
+        <b>⌁</b>
+      </button>
+
+    <div class="sidebar-scroll dashboard-only">
+        ${gi}
+      </div>
+
+<div class="owner-card">
+  <div
+    class="owner-avatar"
+    id="ownerAvatar"
+  >
+    U
+  </div>
+
+  <div class="owner-info">
+    <strong id="ownerDisplayName">
+      Cargando...
+    </strong>
+
+    <span id="ownerUsername">
+      @discord
+    </span>
+
+    <small>
+      Administrador
+    </small>
+  </div>
+
+  <button
+    id="ownerMenuButton"
+    type="button"
+  >
+    ⚙
+  </button>
+</div>
+
+          </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="hamburger" id="hamburger">☰</button>
+          <div class="search">
+            <span>⌕</span>
+            <input placeholder="Buscar en el panel..." />
+            <kbd>Ctrl K</kbd>
+          </div>
+        </div>
+
+        <div class="top-right">
+          <button class="circle-btn">♢</button>
+          <button class="circle-btn">▣</button>
+          <button class="circle-btn">⚙</button>
+          <button class="circle-btn">?</button>
+<button
+  class="top-profile"
+  id="topProfile"
+  type="button"
+>
+  <div
+    class="profile-avatar"
+    id="profileAvatar"
+  >
+    AM
+  </div>
+
+  <div>
+    <strong id="profileDisplayName">
+      Cargando...
+    </strong>
+
+    <span id="profileUsername">
+      <i></i>
+      Discord
+    </span>
+  </div>
+
+  <b>⌄</b>
+</button>
+        </div>
+      </header>
+
+      <section class="welcome-row">
+        <div>
+         <h1>
+  ¡Bienvenido de vuelta,
+  <span id="welcomeUsername">
+    usuario
+  </span>! 👋
+</h1>
+          <p>Aquí tienes un resumen completo de tu bot y servidores.</p>
+        </div>
+        <div class="welcome-actions">
+          <div class="status-card">
+            <i></i>
+            <div>
+              <span>Estado del bot</span>
+              <strong>En línea</strong>
+            </div>
+          </div>
+          <button class="invite-btn">＋ Invitar bot</button>
+        </div>
+      </section>
+
+      <section class="stats-grid">
+        <article class="stat-card purple-border">
+          <div class="stat-icon purple">♛</div>
+          <div><span>Servidores</span><strong data-count="12">0</strong><small>+2 este mes</small></div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon blue">♣</div>
+          <div><span>Usuarios Totales</span><strong data-count="8745">0</strong><small>+342 este mes</small></div>
+        </article>
+        <article class="stat-card purple-border">
+          <div class="stat-icon green">⌘</div>
+          <div><span>Comandos Usados</span><strong data-count="25683">0</strong><small>+18.7% este mes</small></div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-icon yellow">▣</div>
+          <div><span>Mensajes Enviados</span><strong data-count="134245">0</strong><small>+29.4% este mes</small></div>
+        </article>
+        <article class="stat-card purple-border">
+          <div class="stat-icon pink">〽</div>
+          <div><span>Uptime</span><strong>99.99%</strong><small>30 días</small></div>
+        </article>
+      </section>
+
+      <section class="main-grid">
+        <article class="panel performance">
+          <div class="panel-head">
+            <div><h3>Rendimiento del Bot</h3></div>
+            <button>Últimos 7 días⌄</button>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-labels"><span>40K</span><span>30K</span><span>20K</span><span>10K</span><span>0</span></div>
+            <div class="chart">
+              <div class="grid-line g1"></div><div class="grid-line g2"></div><div class="grid-line g3"></div><div class="grid-line g4"></div><div class="grid-line g5"></div>
+              <svg viewBox="0 0 760 300" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="purpleArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".65"/>
+                    <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".04"/>
+                  </linearGradient>
+                </defs>
+                <path class="area" d="M0 235 C55 185 90 165 140 125 C195 84 255 150 310 135 C375 118 420 100 475 122 C530 138 580 90 635 105 C690 118 720 82 760 72 L760 300 L0 300 Z"/>
+                <path class="line" d="M0 235 C55 185 90 165 140 125 C195 84 255 150 310 135 C375 118 420 100 475 122 C530 138 580 90 635 105 C690 118 720 82 760 72"/>
+                <g class="points">
+                  <circle cx="0" cy="235" r="4"/><circle cx="140" cy="125" r="4"/><circle cx="310" cy="135" r="4"/><circle cx="475" cy="122" r="4"/><circle cx="635" cy="105" r="4"/><circle cx="760" cy="72" r="4"/>
+                </g>
+              </svg>
+              <div class="chart-days"><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span></div>
+            </div>
+          </div>
+
+          <div class="metric-strip">
+            <div><span>◔</span><strong>25.6K</strong><small>Comandos</small></div>
+            <div><span>⌘</span><strong>134K</strong><small>Mensajes</small></div>
+            <div><span>♣</span><strong>8.7K</strong><small>Usuarios</small></div>
+            <div><span>◉</span><strong>99.99%</strong><small>Uptime</small></div>
+          </div>
+        </article>
+
+        <article class="panel health">
+          <div class="panel-head"><h3>Estado del Sistema</h3></div>
+          <div class="health-ring">
+            <div class="health-core"><strong>100%</strong><span>Salud del sistema</span></div>
+          </div>
+          <div class="health-list">
+            ${["API Discord","Base de Datos","Servidores","Web Dashboard","Sistema de Logs"].map(a=>`<div><span><i></i>${a}</span><strong>Operativo</strong></div>`).join("")}
+          </div>
+        </article>
+
+        <article class="panel activity">
+          <div class="panel-head"><h3>Actividad Reciente</h3><button>Ver todo</button></div>
+          <div class="activity-list">
+            <div class="activity-item"><i class="green">◎</i><div><strong>Nuevo servidor conectado</strong><span>Nebula Community</span></div><time>hace 2 min</time></div>
+            <div class="activity-item"><i class="purple">⌘</i><div><strong>Comando ejecutado</strong><span>/verify @usuario</span></div><time>hace 3 min</time></div>
+            <div class="activity-item"><i class="red">●</i><div><strong>Usuario baneado</strong><span>Usuario#1234</span></div><time>hace 8 min</time></div>
+            <div class="activity-item"><i class="blue">⌁</i><div><strong>Nueva invitación creada</strong><span>discord.gg/nebula</span></div><time>hace 15 min</time></div>
+            <div class="activity-item"><i class="purple">▣</i><div><strong>Backup automático</strong><span>Base de datos</span></div><time>hace 30 min</time></div>
+            <div class="activity-item"><i class="green">□</i><div><strong>Actualización del sistema</strong><span>Versión 2.4.1</span></div><time>hace 1 hora</time></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel commands-panel">
+          <div class="panel-head"><h3>Uso de Comandos</h3><button>Últimos 7 días⌄</button></div>
+          <div class="donut-wrap">
+            <div class="donut"><div><strong>25.683</strong><span>Total</span></div></div>
+            <div class="command-legend">
+              <div><span><i class="c1"></i>/verify</span><strong>8.429</strong><small>32.8%</small></div>
+              <div><span><i class="c2"></i>/setup</span><strong>4.326</strong><small>16.8%</small></div>
+              <div><span><i class="c3"></i>/ban</span><strong>3.782</strong><small>14.7%</small></div>
+              <div><span><i class="c4"></i>/kick</span><strong>2.945</strong><small>11.5%</small></div>
+              <div><span><i class="c5"></i>/mute</span><strong>2.156</strong><small>8.4%</small></div>
+              <div><span><i class="c6"></i>Otros</span><strong>3.045</strong><small>11.8%</small></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel servers-panel">
+          <div class="panel-head"><h3>Servidores Más Activos</h3><button>Ver todos</button></div>
+          <div class="server-list">
+            ${[["NC","Nebula Community","1.245 usuarios","89%"],["GZ","Gaming Zone","987 usuarios","75%"],["TD","Team Developers","756 usuarios","62%"],["AW","Anime World","654 usuarios","48%"],["CL","Chill Lounge","432 usuarios","35%"]].map(([a,e,t,i])=>`
+              <div class="server-item">
+                <div class="server-logo">${a}</div>
+                <div class="server-copy"><strong>${e}</strong><span>${t}</span></div>
+                <div class="server-progress"><span style="width:${i}"></span></div>
+                <b>${i}</b>
+              </div>`).join("")}
+          </div>
+        </article>
+
+        <article class="panel bot-info">
+          <div class="panel-head"><h3>Información del Bot</h3></div>
+          <div class="bot-visual">
+            <div class="bot-orbit orbit-1"></div>
+            <div class="bot-orbit orbit-2"></div>
+            <div class="bot-orbit orbit-3"></div>
+            <div class="bot-core">N</div>
+          </div>
+          <div class="bot-table">
+            <div><span>Nombre</span><strong>Nebula Bot</strong></div>
+            <div><span>Versión</span><strong>2.4.1</strong></div>
+            <div><span>Desarrollador</span><strong>Alvi Moreyra</strong></div>
+            <div><span>Librería</span><strong>Discord.js v14</strong></div>
+            <div><span>Servidor</span><strong>Render (Free)</strong></div>
+            <div><span>RAM</span><strong>86.4 MB</strong></div>
+            <div><span>CPU</span><strong>2.3%</strong></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="footer-status">
+        <div><span class="footer-icon purple">〽</span><div><small>Latencia</small><strong>38ms</strong></div></div>
+        <div><span class="footer-icon purple">◎</span><div><small>Región</small><strong>South America</strong></div></div>
+        <div><span class="footer-icon green">⌁</span><div><small>Conexión</small><strong class="green-text">Estable</strong></div></div>
+        <div><span class="footer-icon yellow">◉</span><div><small>Bot Uptime</small><strong>30d 14h 23m</strong></div></div>
+        <div><span class="footer-icon red">▣</span><div><small>Versión del Panel</small><strong>2.4.1</strong></div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">
+    <span>✓</span>
+    <div><strong>Demo visual</strong><p>Esta función se conectará en el siguiente paso.</p></div>
+  </div>
+`;const hi=document.getElementById("serverSwitcher"),bi=document.getElementById("serverCurrent"),ht=document.getElementById("serverCurrentIcon"),ut=document.getElementById("serverCurrentName"),qt=document.getElementById("serverDropdown"),bt=document.getElementById("serverDropdownList"),Ei=document.getElementById("serverDropdownCount"),Qt=document.getElementById("profileAvatar"),Lt=document.getElementById("profileDisplayName"),Bt=document.getElementById("profileUsername"),ea=document.getElementById("ownerAvatar"),Dt=document.getElementById("ownerDisplayName"),xt=document.getElementById("ownerUsername");document.getElementById("welcomeUsername");let pe=[],K=localStorage.getItem("nebulaSelectedServerId")||"";function Ke(a){return String(a||"N").split(/\s+/).filter(Boolean).slice(0,2).map(e=>e.charAt(0)).join("").toUpperCase()}function Nt(a){if(!a){ut.textContent="Seleccioná un servidor",ht.textContent="N";return}ut.textContent=a.name||"Servidor",a.icon?ht.innerHTML=`
+      <img
+        src="${a.icon}"
+        alt="${a.name}"
+      >
+    `:ht.textContent=Ke(a.name)}function jt(a){a?.id&&(K=String(a.id),localStorage.setItem("nebulaSelectedServerId",K),Nt(a),qt.classList.remove("open"),window.dispatchEvent(new CustomEvent("nebula:server-changed",{detail:{server:a}})))}function pt(){if(Ei.textContent=String(pe.length),pe.length===0){bt.innerHTML=`
+      <div class="server-dropdown-empty">
+        No se encontraron servidores.
+      </div>
+    `,Nt(null);return}let a=pe.find(e=>String(e.id)===String(K));a||(a=pe[0],K=String(a.id),localStorage.setItem("nebulaSelectedServerId",K)),bt.innerHTML=pe.map(e=>{const t=String(e.id)===String(K),i=e.icon?`<img
+                 src="${e.icon}"
+                 alt="${e.name}"
+               >`:Ke(e.name);return`
+          <button
+            class="server-dropdown-item ${t?"active":""}"
+            data-server-id="${e.id}"
+            type="button"
+          >
+            <span class="server-dropdown-icon">
+              ${i}
+            </span>
+
+            <span class="server-dropdown-copy">
+              <strong>
+                ${e.name}
+              </strong>
+
+              <small>
+                ${Number(e.members||e.memberCount||0).toLocaleString("es-AR")} miembros
+              </small>
+            </span>
+
+            ${t?`
+                  <span class="server-dropdown-check">
+                    ✓
+                  </span>
+                `:""}
+          </button>
+        `}).join(""),Nt(a),bt.querySelectorAll("[data-server-id]").forEach(e=>{e.addEventListener("click",()=>{const t=pe.find(i=>String(i.id)===String(e.dataset.serverId));jt(t),pt(),t?.botPresent&&$e(t.id)})})}let _=null,Rt={name:"Nebula Bot",avatar:""};async function wi(){const a=new AbortController,e=setTimeout(()=>{a.abort()},1e4);try{const t=await fetch(`${R}/api/dashboard/session`,{method:"GET",headers:{Accept:"application/json"},credentials:"include",cache:"no-store",signal:a.signal}),i=await t.json();if(t.status===401||!i.authenticated){window.location.replace("/auth/dashboard");return}if(!t.ok||!i.success||!i.data)throw new Error(i.message||"No se pudo cargar la sesión.");const n=i.data;_=n.user||null;const c=_?.hasAccess===!0||_?.isOwner===!0;pe=Array.isArray(n.guilds)?n.guilds:[],$t(_),pt();const o=new URLSearchParams(window.location.search);c?o.get("view")==="servers"?We():($.innerHTML=fa,$t(_),pt(),Ft()):(ya(),window.history.replaceState({},"","/?view=access"))}catch(t){if(console.error("Error cargando la sesión:",t),t.name==="AbortError"){Lt.textContent="Servidor sin respuesta",Bt.innerHTML="<i></i> Reintentá",Dt.textContent="Servidor sin respuesta",xt.textContent="Recargá la página",ut.textContent="Sin respuesta";return}Lt.textContent="Sesión no disponible",Bt.innerHTML="<i></i> Discord",Dt.textContent="Sesión no disponible",xt.textContent="@discord",ut.textContent="Sin conexión",setTimeout(()=>{window.location.replace("/auth/dashboard")},1500)}finally{clearTimeout(e)}}function $t(a){if(!a)return;const e=a.displayName||a.globalName||a.username||"Usuario",t=a.username||"discord";Lt.textContent=e,Bt.innerHTML=`
+    <i></i>
+    @${t}
+  `,Dt.textContent=e,xt.textContent=`@${t}`;const i=document.getElementById("welcomeUsername"),n=document.getElementById("publicLicenses");if(n&&(n.style.display=a?.isOwner?"flex":"none"),i&&(i.textContent=e),a.avatar){const c=`
+      <img
+        src="${a.avatar}"
+        alt="${e}"
+      >
+    `;Qt.innerHTML=c,ea.innerHTML=c}else{const c=Ke(e);Qt.textContent=c,ea.textContent=c}}function ya(){document.body.classList.add("servers-selection-mode");const a=_?.displayName||_?.username||"Usuario",e=_?.username||"discord";$.innerHTML=`
+    <div class="dynamic-page access-page">
+      <section class="access-card">
+        <div class="access-lock">
+          🔒
+        </div>
+
+        <span class="access-eyebrow">
+          NEBULA DASHBOARD
+        </span>
+
+        <h1>
+          Acceso restringido
+        </h1>
+
+        <p>
+          Hola <strong>${a}</strong>.
+          Tu cuenta de Discord todavía no tiene acceso al dashboard.
+        </p>
+
+        <small>
+          @${e}
+        </small>
+
+        <div class="access-key-inputs">
+          <input
+            id="accessKeyInput"
+            type="text"
+            placeholder="NEBULA-XXXX-XXXX-XXXX"
+            maxlength="24"
+            autocomplete="off"
+          >
+        </div>
+
+        <button
+          id="validateAccessKey"
+          type="button"
+        >
+          Validar Key
+        </button>
+
+        <div
+          class="access-message"
+          id="accessMessage"
+        ></div>
+
+        <p class="access-help">
+          ¿No tenés una key?
+          Solicitásela al administrador.
+        </p>
+      </section>
+    </div>
+  `;const t=document.getElementById("accessKeyInput"),i=document.getElementById("validateAccessKey"),n=document.getElementById("accessMessage");t?.addEventListener("input",()=>{t.value=t.value.toUpperCase().replace(/[^A-Z0-9-]/g,"")}),i?.addEventListener("click",async()=>{const c=t.value.trim().toUpperCase();if(!c){n.textContent="Ingresá una Key de acceso.";return}i.disabled=!0,i.textContent="Validando...",n.textContent="Comprobando la Key...";try{const o=await fetch(`${R}/api/licenses/activate`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},credentials:"include",body:JSON.stringify({key:c})}),p=await o.json();if(!o.ok||!p.success)throw new Error(p.message||"La Key no es válida.");n.textContent="Key activada correctamente. Entrando...",_&&(_.hasAccess=!0),setTimeout(()=>{window.location.replace("/?view=servers")},700)}catch(o){n.textContent=o.message||"No se pudo validar la Key.",i.disabled=!1,i.textContent="Validar Key"}})}function We(){document.body.classList.add("servers-selection-mode");const e=pe.map(t=>{const i=Ke(t.name),n=t.icon?`
+              <img
+                src="${t.icon}"
+                alt="${t.name}"
+              >
+            `:`
+              <span>
+                ${i}
+              </span>
+            `,c=t.botPresent?`
+              <span class="session-server-online">
+                ● Bot conectado
+              </span>
+            `:`
+              <span class="session-server-missing">
+                Bot no agregado
+              </span>
+            `,o=t.botPresent?`
+              <button
+                class="session-manage-server"
+                data-server-id="${t.id}"
+                type="button"
+              >
+                Administrar
+              </button>
+            `:`
+              <button
+                class="session-invite-server"
+                data-server-id="${t.id}"
+                type="button"
+              >
+                Agregar bot
+              </button>
+            `;return`
+          <article class="session-server-card">
+            <div class="session-server-icon">
+              ${n}
+            </div>
+
+            <div class="session-server-info">
+              <strong>
+                ${t.name}
+              </strong>
+
+              <span>
+                ${t.memberCount?`${Number(t.memberCount).toLocaleString("es-AR")} miembros`:"Cantidad no disponible"}
+              </span>
+
+              ${c}
+            </div>
+
+            ${o}
+          </article>
+        `}).join("");$.innerHTML=`
+    <div class="dynamic-page session-servers-page">
+      <section class="section-header">
+        <div>
+          <span>
+            CUENTA DE DISCORD
+          </span>
+
+          <h1>
+            Mis servidores
+          </h1>
+
+          <p>
+            Seleccioná un servidor que puedas administrar.
+          </p>
+        </div>
+
+        <button
+          id="sessionInviteBot"
+          class="section-action"
+          type="button"
+        >
+          ＋ Invitar bot
+        </button>
+      </section>
+
+      <section class="session-user-summary">
+        <div class="session-user-avatar">
+          ${_?.avatar?`
+                <img
+                  src="${_.avatar}"
+                  alt="${_.displayName}"
+                >
+              `:Ke(_?.displayName)}
+        </div>
+
+        <div>
+          <span>
+            Sesión iniciada como
+          </span>
+
+          <strong>
+            ${_?.displayName||_?.username||"Usuario"}
+          </strong>
+
+          <small>
+            @${_?.username||"discord"}
+          </small>
+        </div>
+      </section>
+
+      <section class="session-server-list">
+        ${e||`
+            <div class="session-servers-empty">
+              No administrás ningún servidor.
+            </div>
+          `}
+      </section>
+    </div>
+  `,document.querySelectorAll(".session-manage-server").forEach(t=>{t.addEventListener("click",async()=>{const i=t.dataset.serverId,n=pe.find(c=>String(c.id)===String(i));n&&(jt(n),document.body.classList.remove("servers-selection-mode"),await $e(i))})}),document.querySelectorAll(".session-invite-server").forEach(t=>{t.addEventListener("click",()=>{const i=t.dataset.serverId;Ci(i,t)})}),document.getElementById("sessionInviteBot")?.addEventListener("click",()=>{window.open("/auth/bot/invite","_blank","noopener,noreferrer")})}async function Ci(a,e){const t=e.textContent;if(e.disabled=!0,e.textContent="Esperando autorización...",!window.open(`/auth/bot/invite?guildId=${encodeURIComponent(a)}`,"_blank","noopener,noreferrer")){window.location.href=`/auth/bot/invite?guildId=${encodeURIComponent(a)}`;return}const n=Date.now(),c=12e4,o=2500;async function p(){try{const D=await fetch(`${R}/api/servers/${encodeURIComponent(a)}`,{credentials:"include",cache:"no-store"}),N=await D.json();if(D.ok&&N.success&&N.data){clearInterval(f),e.textContent="Bot agregado ✓";const g=pe.find(I=>String(I.id)===String(a));g&&(g.botPresent=!0,jt(g)),setTimeout(()=>{$e(a)},600);return}Date.now()-n>c&&(clearInterval(f),e.disabled=!1,e.textContent="Comprobar nuevamente")}catch(D){console.log("El bot todavía no aparece en el servidor:",D.message)}}const f=setInterval(p,o);p(),setTimeout(()=>{clearInterval(f),e.textContent==="Esperando autorización..."&&(e.disabled=!1,e.textContent=t)},c)}bi.addEventListener("click",a=>{a.stopPropagation(),qt.classList.toggle("open")});document.addEventListener("click",a=>{hi.contains(a.target)||qt.classList.remove("open")});const Z=document.getElementById("toast"),Ae=()=>{Z.classList.add("show"),clearTimeout(window.toastTimer),window.toastTimer=setTimeout(()=>Z.classList.remove("show"),2300)};document.querySelectorAll("button").forEach(a=>{a.addEventListener("click",()=>{a.id==="openWelcomeVariables"||a.id==="hamburger"||a.id==="serverCurrent"||a.id==="topProfile"||a.id==="sessionInviteBot"||a.id==="publicMyServers"||a.id==="publicInviteBot"||a.id==="publicBotStatus"||a.id==="publicSupport"||a.id==="publicLogout"||a.id==="publicDiscordSupport"||a.id==="publicLicenses"||a.classList.contains("public-support-button")||a.classList.contains("server-dropdown-item")||a.classList.contains("session-invite-server")||a.classList.contains("session-manage-server")||a.classList.contains("verify-variable-button")||Ae()})});document.querySelectorAll(".side-item").forEach(a=>{a.addEventListener("click",()=>{document.querySelectorAll(".side-item").forEach(e=>e.classList.remove("active")),a.classList.add("active")})});let dt=null;function Re(){dt&&(clearInterval(dt),dt=null)}document.getElementById("publicMyServers")?.addEventListener("click",()=>{if(Re(),!(_?.hasAccess===!0||_?.isOwner===!0)){ya(),window.history.replaceState({},"","/?view=access");return}We(),window.history.replaceState({},"","/?view=servers")});document.getElementById("publicInviteBot")?.addEventListener("click",()=>{Re(),window.open("/auth/bot/invite","_blank","noopener,noreferrer")});document.getElementById("publicBotStatus")?.addEventListener("click",()=>{document.body.classList.add("servers-selection-mode"),Re(),$.innerHTML=`
+        <div class="dynamic-page">
+          <section class="section-header">
+            <div>
+              <span>
+                ESTADO DEL SERVICIO
+              </span>
+
+              <h1>
+                Estado del bot
+              </h1>
+
+              <p>
+                Información actualizada automáticamente cada segundo.
+              </p>
+            </div>
+          </section>
+
+          <section class="public-status-grid">
+            <article class="public-info-card">
+              <span>
+                CONEXIÓN
+              </span>
+
+              <strong id="liveBotConnection">
+                Consultando...
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                LATENCIA
+              </span>
+
+              <strong id="liveBotLatency">
+                -- ms
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                TIEMPO ACTIVO
+              </span>
+
+              <strong id="liveBotUptime">
+                Sin datos
+              </strong>
+            </article>
+
+            <article class="public-info-card">
+              <span>
+                ÚLTIMA ACTUALIZACIÓN
+              </span>
+
+              <strong id="liveBotUpdatedAt">
+                --
+              </strong>
+            </article>
+          </section>
+        </div>
+      `;async function a(){const e=document.getElementById("liveBotConnection"),t=document.getElementById("liveBotLatency"),i=document.getElementById("liveBotUptime"),n=document.getElementById("liveBotUpdatedAt");if(!e||!t||!i||!n){Re();return}try{const c=await fetch(`${R}/api/bot/status`,{method:"GET",headers:{Accept:"application/json"},cache:"no-store",credentials:"include"}),o=await c.json();if(!c.ok||!o.success)throw new Error(o.message||"No se pudo consultar el bot.");const p=o.data||{},f=p.status==="online"||p.online===!0;e.textContent=f?"En línea":"Desconectado",e.classList.toggle("live-status-online",f),e.classList.toggle("live-status-offline",!f),i.textContent=p.uptime||"Sin datos",n.textContent=new Date().toLocaleTimeString("es-AR")}catch(c){console.error("Error actualizando el estado del bot:",c),e.textContent="Sin conexión",e.classList.remove("live-status-online"),e.classList.add("live-status-offline"),n.textContent="Error"}}a(),dt=setInterval(a,500)});document.getElementById("publicLicenses")?.addEventListener("click",()=>{if(Re(),!_?.isOwner){alert("No tenés permisos para acceder a esta sección.");return}document.body.classList.add("servers-selection-mode"),$.innerHTML=`
+<div class="dynamic-page">
+
+<section class="section-header">
+<div>
+<span>LICENCIAS</span>
+<h1>Administrador de Licencias</h1>
+<p>
+Gestioná todas las licencias del dashboard desde un solo lugar.
+</p>
+</div>
+</section>
+
+<div class="licenses-top-layout">
+
+  <section class="public-status-grid licenses-stats-grid">
+
+    <article class="public-info-card">
+      <span>TOTAL</span>
+      <strong id="licenseTotal">0</strong>
+      <p>Licencias creadas</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>ACTIVAS</span>
+      <strong id="licenseActive">0</strong>
+      <p>Licencias en uso</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>DISPONIBLES</span>
+      <strong id="licenseUnused">0</strong>
+      <p>Sin activar</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>REVOCADAS</span>
+      <strong id="licenseRevoked">0</strong>
+      <p>Deshabilitadas</p>
+    </article>
+
+  </section>
+
+  <aside class="license-settings-card">
+
+    <div class="license-settings-title">
+      <span class="license-settings-icon">
+        ⚙
+      </span>
+
+      <div>
+        <h3>Configuración de Licencias</h3>
+        <p>
+          Configurá dónde se enviarán los registros.
+        </p>
+      </div>
+    </div>
+
+    <div class="license-setting-group">
+      <label for="licenseLogsChannel">
+        Canal de Logs
+      </label>
+
+      <select
+        id="licenseLogsChannel"
+        class="license-setting-select"
+      >
+        <option value="">
+          Seleccionar un canal
+        </option>
+
+        <option value="demo">
+          #logs-licencias
+        </option>
+      </select>
+    </div>
+
+    <div class="license-checkbox-list">
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogCreation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar creación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogActivation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar activación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogExpiration"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar expiración</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogDeletion"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar eliminación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogRevocation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar revocación</span>
+      </label>
+
+    </div>
+
+    <button
+      id="saveLicenseSettings"
+      class="license-save-button"
+      type="button"
+    >
+      💾 Guardar configuración
+    </button>
+
+  </aside>
+
+</div>
+
+<section class="panel licenses-list-panel">
+
+  <div class="panel-head licenses-list-header">
+
+    <div>
+      <h3>Listado de Licencias</h3>
+
+      <p class="licenses-list-description">
+        Administrá, generá y controlá todas las licencias del sistema.
+      </p>
+    </div>
+
+    <div class="licenses-header-actions">
+
+      <button
+        id="deleteAllLicensesButton"
+        class="delete-all-licenses-button"
+        type="button"
+      >
+        🗑 Borrar Keys
+      </button>
+
+      <button
+        id="generateLicenseButton"
+        class="generate-license-button"
+        type="button"
+      >
+        🔑 Generar Key
+      </button>
+
+    </div>
+
+  </div>
+
+  <div
+    id="licensesTable"
+    class="licenses-table"
+  >
+    <div class="server-dropdown-empty">
+      Todavía no hay licencias.
+    </div>
+  </div>
+
+</section>
+
+</div>
+      `;const a=document.getElementById("generateLicenseButton"),e=document.getElementById("deleteAllLicensesButton"),t=document.getElementById("licensesTable"),i=document.getElementById("licenseTotal"),n=document.getElementById("licenseActive"),c=document.getElementById("licenseUnused"),o=document.getElementById("licenseRevoked"),p=document.getElementById("licenseLogsChannel"),f=document.getElementById("saveLicenseSettings"),D=document.getElementById("licenseLogCreation"),N=document.getElementById("licenseLogActivation"),g=document.getElementById("licenseLogExpiration"),I=document.getElementById("licenseLogDeletion"),u=document.getElementById("licenseLogRevocation");async function he(){if(p){if(!K){p.innerHTML=`
+      <option value="">
+        Primero seleccioná un servidor
+      </option>
+    `,p.disabled=!0;return}p.disabled=!0,p.innerHTML=`
+    <option value="">
+      Cargando canales...
+    </option>
+  `;try{const r=await fetch(`${R}/api/servers/${encodeURIComponent(K)}/text-channels`,{method:"GET",headers:{Accept:"application/json"},credentials:"include",cache:"no-store"}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"No se pudieron cargar los canales.");const y=Array.isArray(d.data)?d.data:[];p.innerHTML=`
+      <option value="">
+        Seleccionar un canal
+      </option>
+
+      ${y.map(h=>`
+          <option value="${h.id}">
+            #${h.name}
+          </option>
+        `).join("")}
+    `,p.disabled=!1}catch(r){console.error("Error cargando canales de logs:",r),p.innerHTML=`
+      <option value="">
+        No se pudieron cargar los canales
+      </option>
+    `,p.disabled=!0}}}async function ve(){if(!(!K||!p))try{const r=await fetch(`${R}/api/servers/${encodeURIComponent(K)}/license-settings`,{method:"GET",headers:{Accept:"application/json"},credentials:"include",cache:"no-store"}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"No se pudo cargar la configuración.");const y=d.data||{};p.value=y.logsChannelId||"",D.checked=y.creation!==!1,N.checked=y.activation!==!1,g.checked=y.expiration!==!1,I.checked=y.deletion!==!1,u.checked=y.revocation!==!1}catch(r){console.error("Error cargando configuración de licencias:",r)}}async function W(){if(!K){alert("Primero seleccioná un servidor.");return}if(!f)return;const r=f.textContent;f.disabled=!0,f.textContent="Guardando...";try{const d=await fetch(`${R}/api/servers/${encodeURIComponent(K)}/license-settings`,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},credentials:"include",body:JSON.stringify({logsChannelId:p?.value||"",creation:D?.checked===!0,activation:N?.checked===!0,expiration:g?.checked===!0,deletion:I?.checked===!0,revocation:u?.checked===!0})}),y=await d.json();if(!d.ok||!y.success)throw new Error(y.message||"No se pudo guardar la configuración.");f.textContent="✓ Configuración guardada",setTimeout(()=>{f.textContent=r},1800)}catch(d){console.error("Error guardando configuración de licencias:",d),alert(d.message||"No se pudo guardar la configuración."),f.textContent=r}finally{f.disabled=!1}}f?.addEventListener("click",W);function J(){document.querySelector(".license-config-overlay")?.remove(),document.body.insertAdjacentHTML("beforeend",`
+      <div class="license-config-overlay">
+
+        <div class="license-config-modal">
+
+          <div class="license-config-header">
+
+            <div class="license-config-title">
+              <span>🔑</span>
+
+              <div>
+                <h2>Nueva Licencia</h2>
+
+                <p>
+                  Configurá la licencia antes de generarla.
+                </p>
+              </div>
+            </div>
+
+            <button
+              class="license-config-close"
+              id="closeLicenseModal"
+              type="button"
+            >
+              ×
+            </button>
+
+          </div>
+
+          <div class="license-config-field">
+
+            <label>
+              Duración
+            </label>
+
+            <div class="license-time-grid">
+
+              <div class="license-time-field">
+                <span>DÍAS</span>
+
+                <input
+                  id="licenseDays"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="9999"
+                  value="30"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>HORAS</span>
+
+                <input
+                  id="licenseHours"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="23"
+                  value="0"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>MINUTOS</span>
+
+                <input
+                  id="licenseMinutes"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>SEGUNDOS</span>
+
+                <input
+                  id="licenseSeconds"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                >
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="license-duration-preview">
+
+            <div>
+              <span>
+                VIGENCIA
+              </span>
+
+              <strong
+                id="licenseExpirePreview"
+              >
+                Calculando...
+              </strong>
+            </div>
+
+            <div
+              class="license-modal-countdown"
+              id="licenseModalCountdown"
+            >
+              ⏱ Calculando tiempo restante...
+            </div>
+
+            <b
+              id="licensePermanentTag"
+              class="license-permanent-badge"
+              style="display:none"
+            >
+              PERMANENTE
+            </b>
+
+          </div>
+
+          <div class="license-config-field">
+
+            <label>
+              Descripción
+            </label>
+
+            <textarea
+              id="licenseDescription"
+              class="license-config-textarea"
+              placeholder="Ej: Licencia de prueba, cliente premium, etc."
+            ></textarea>
+
+          </div>
+
+          <div class="license-config-actions">
+
+            <button
+              id="cancelGenerateLicense"
+              class="license-config-cancel"
+              type="button"
+            >
+              Cancelar
+            </button>
+
+            <button
+              id="continueGenerateLicense"
+              class="license-config-confirm"
+              type="button"
+            >
+              Continuar →
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `),Me()}function Me(){const r=document.getElementById("licenseDays"),d=document.getElementById("licenseHours"),y=document.getElementById("licenseMinutes"),h=document.getElementById("licenseSeconds"),E=document.getElementById("licenseExpirePreview"),w=document.getElementById("licenseModalCountdown"),P=document.getElementById("licensePermanentTag");let j=null;function B(s,l,v){let m=Number(s?.value||0);return Number.isFinite(m)||(m=l),m=Math.floor(m),m=Math.min(v,Math.max(l,m)),s.value=String(m),m}function U(){const s=B(r,0,9999),l=B(d,0,23),v=B(y,0,59),m=B(h,0,59),k=s>=9999,H=k?null:s*24*60*60*1e3+l*60*60*1e3+v*60*1e3+m*1e3;return{days:s,hours:l,minutes:v,seconds:m,permanent:k,milliseconds:H}}function F(s){const l=Math.max(0,Math.floor(s/1e3)),v=Math.floor(l/86400),m=Math.floor(l%86400/3600),k=Math.floor(l%3600/60),H=l%60;return`${v}d ${String(m).padStart(2,"0")}h ${String(k).padStart(2,"0")}m ${String(H).padStart(2,"0")}s restantes`}function ie(){const s=U();if(s.permanent){E.textContent="Licencia permanente",w.textContent="∞ Sin vencimiento",w.classList.add("permanent"),P.style.display="inline-flex";return}if(P.style.display="none",w.classList.remove("permanent"),!s.milliseconds||s.milliseconds<1e3){E.textContent="Duración no válida",w.textContent="La duración mínima es de 1 segundo";return}const l=Date.now()+s.milliseconds,v=new Date(l);E.textContent="Vence el "+v.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"}),w.textContent="⏱ "+F(s.milliseconds)}function Y(){j&&(clearInterval(j),j=null),document.querySelector(".license-config-overlay")?.remove()}[r,d,y,h].forEach(s=>{s?.addEventListener("input",ie),s?.addEventListener("change",ie)}),document.getElementById("closeLicenseModal")?.addEventListener("click",Y),document.getElementById("cancelGenerateLicense")?.addEventListener("click",Y),document.getElementById("continueGenerateLicense")?.addEventListener("click",async()=>{const s=U(),l=document.getElementById("licenseDescription"),v=document.getElementById("continueGenerateLicense"),m=String(l?.value||"").trim();if(!s.permanent&&(!s.milliseconds||s.milliseconds<1e3)){window.alert("La duración mínima es de 1 segundo.");return}v.disabled=!0,v.textContent="Generando...",Y(),await M({days:s.days,hours:s.hours,minutes:s.minutes,seconds:s.seconds,permanent:s.permanent,durationMilliseconds:s.milliseconds,description:m})}),ie(),j=setInterval(ie,1e3)}function L(r){return String(r??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}function Q(r){if(!r)return"Sin fecha";const d=new Date(r);return Number.isNaN(d.getTime())?String(r):d.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}function Ie(r){const d=String(r?.status||r?.state||"").trim().toLowerCase(),y=r?.revoked===!0||r?.disabled===!0||d==="revoked"||d==="revocada"||d==="disabled",h=r?.used===!0||r?.active===!0||r?.activated===!0||!!(r?.userId||r?.discordId||r?.discordUserId||r?.activatedBy||r?.user?.id)||d==="used"||d==="active"||d==="activa";return y?{className:"revoked",label:"Revocada",description:r?.revokedAt?`Revocada: ${Q(r.revokedAt)}`:"Licencia deshabilitada"}:h?{className:"active",label:"Activa",description:r?.activatedAt?`Activada: ${Q(r.activatedAt)}`:"Licencia en uso"}:{className:"available",label:"Disponible",description:"Nunca utilizada"}}function be(r){const d=r?.user||r?.discordUser||(typeof r?.activatedBy=="object"?r.activatedBy:{}),y=d?.id||r?.userId||r?.discordId||r?.discordUserId||(typeof r?.activatedBy=="string"?r.activatedBy:""),h=d?.displayName||d?.globalName||d?.username||r?.activatedDisplayName||r?.activatedUsername||r?.displayName||r?.username||"",E=d?.username||r?.username||"",w=d?.avatar||r?.activatedAvatar||r?.avatar||r?.userAvatar||"",P=!!(y||h||E);return{assigned:P,id:String(y||""),displayName:h||E||"Sin asignar",username:E?`@${E}`:P?"Usuario de Discord":"Nunca utilizada",avatar:w}}function Ue(r){return String(r).split(/\s+/).filter(Boolean).slice(0,2).map(d=>d.charAt(0)).join("").toUpperCase()}function qe(r){const d=be(r),y=d.avatar?`
+          <img
+            src="${L(d.avatar)}"
+            alt="${L(d.displayName)}"
+          >
+        `:L(d.assigned?Ue(d.displayName):"?");return`
+    <div class="license-user ${d.assigned?"":"unassigned"}">
+
+      <div class="license-user-avatar">
+        ${y}
+      </div>
+
+      <div class="license-user-copy">
+
+        <strong>
+          ${L(d.displayName)}
+        </strong>
+
+        <span>
+          ${d.id?`ID: ${L(d.id)}`:L(d.username)}
+        </span>
+
+      </div>
+
+    </div>
+  `}function Te(r,d=!1){const y=r?.key||r?.licenseKey||r?.token||"KEY NO DISPONIBLE",h=r?.createdAt||r?.created||new Date().toISOString(),E=Number(r?.durationDays??r?.duration??0),w=Number(r?.durationHours??0),P=Number(r?.durationMinutes??0),j=Number(r?.durationSeconds??0),B=Number(r?.durationMilliseconds??E*864e5+w*36e5+P*6e4+j*1e3),U=r?.permanent===!0||E>=9999||String(r?.type||"").toLowerCase()==="permanente",F=String(r?.description||"Sin descripción").trim(),ie=U?"Permanente":E>0?`${E} ${E===1?"día":"días"}`:r?.type||r?.plan||"Dashboard",Y=U?null:r?.expiresAt||r?.expirationDate||r?.expires||(B>0?new Date(new Date(h).getTime()+B).toISOString():null),s=Ie(r);return U||Y&&`${Q(Y)}`,`
+    <div
+      class="license-generated-card ${d?"license-new-entry":""}"
+      data-license-key="${L(y)}"
+      data-license-duration="${L(String(E))}"
+      data-license-permanent="${U?"true":"false"}"
+      data-license-description="${L(F)}"
+      data-license-created-at="${L(h)}"
+      data-license-expires-at="${L(Y||"")}"
+    >
+
+      <div class="license-generated-info">
+
+        <span>
+          LICENCIA
+        </span>
+
+        <strong title="${L(y)}">
+          ${L(y)}
+        </strong>
+
+        <div class="license-meta">
+
+          <span class="license-created-date">
+            Creada:
+            ${L(Q(h))}
+          </span>
+
+          <span class="license-meta-separator">
+            •
+          </span>
+
+          <span class="license-type">
+            ${L(ie)}
+          </span>
+
+        </div>
+
+      ${U?`
+      <div class="license-permanent-timer">
+        <strong>∞</strong>
+        <span>LICENCIA PERMANENTE</span>
+      </div>
+    `:`
+      <div
+        class="license-live-timer"
+        data-license-countdown
+        data-expires-at="${L(Y||"")}"
+      >
+
+        <div class="license-time-box">
+          <strong data-countdown-days>
+            00
+          </strong>
+
+          <span>
+            DÍAS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-hours>
+            00
+          </strong>
+
+          <span>
+            HORAS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-minutes>
+            00
+          </strong>
+
+          <span>
+            MINUTOS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-seconds>
+            00
+          </strong>
+
+          <span>
+            SEGUNDOS
+          </span>
+        </div>
+
+      </div>
+    `}
+
+</div>
+
+      ${qe(r)}
+
+      <div class="license-state-column">
+
+        <b class="license-status ${s.className}">
+          ${s.label}
+        </b>
+
+        <span class="license-state-date">
+          ${L(s.description)}
+        </span>
+
+      </div>
+
+      <div class="license-actions">
+
+        <button
+          class="license-action-btn view"
+          title="Ver detalles"
+          type="button"
+          data-license-action="view"
+        >
+          👁
+        </button>
+
+        <button
+          class="license-action-btn edit"
+          title="Editar"
+          type="button"
+          data-license-action="edit"
+        >
+          ✏️
+        </button>
+
+        <button
+          class="license-action-btn copy"
+          title="Copiar Key"
+          type="button"
+          data-license-action="copy"
+          data-license-key="${L(y)}"
+        >
+          📋
+        </button>
+
+        <button
+          class="license-action-btn delete"
+          title="Eliminar"
+          type="button"
+          data-license-action="delete"
+        >
+          🗑
+        </button>
+
+      </div>
+
+    </div>
+  `}let X=null;function Pe(){document.querySelectorAll("[data-license-countdown]").forEach(d=>{const y=d.dataset.expiresAt,h=d.querySelector("[data-countdown-days]"),E=d.querySelector("[data-countdown-hours]"),w=d.querySelector("[data-countdown-minutes]"),P=d.querySelector("[data-countdown-seconds]"),j=/^\d+$/.test(String(y))?Number(y):new Date(y).getTime();if(!y||Number.isNaN(j)){d.innerHTML=`
+        <span class="license-countdown-error">
+          Vencimiento no disponible
+        </span>
+      `;return}const B=j-Date.now();if(B<=0){d.innerHTML=`
+            <span class="license-countdown-expired">
+                LICENCIA EXPIRADA
+            </span>
+        `;const s=d.closest(".license-generated-card");s&&!s.dataset.expired&&(s.dataset.expired="true",je(s.dataset.licenseKey));return}const U=Math.floor(B/864e5),F=Math.floor(B%864e5/36e5),ie=Math.floor(B%36e5/6e4),Y=Math.floor(B%6e4/1e3);h&&(h.textContent=String(U).padStart(2,"0")),E&&(E.textContent=String(F).padStart(2,"0")),w&&(w.textContent=String(ie).padStart(2,"0")),P&&(P.textContent=String(Y).padStart(2,"0"))})}async function je(r){try{await fetch(`/api/licenses/${encodeURIComponent(r)}`,{method:"DELETE"});const d=document.querySelector(`[data-license-key="${CSS.escape(r)}"]`);d&&d.remove(),te()}catch(d){console.error("Error eliminando licencia:",d)}}function le(){clearInterval(X),Pe(),X=setInterval(Pe,1e3)}function ee(){return`
+    <div class="licenses-table-header">
+      <span>Licencia</span>
+      <span>Usuario</span>
+      <span>Estado</span>
+      <span style="text-align:right">
+        Acciones
+      </span>
+    </div>
+  `}function me(){return`
+    ${ee()}
+
+    <div class="licenses-empty-state">
+      Todavía no hay licencias.
+    </div>
+  `}function q(){document.querySelector(".delete-licenses-overlay")?.remove(),document.body.insertAdjacentHTML("beforeend",`
+      <div class="delete-licenses-overlay">
+
+        <div class="delete-licenses-modal">
+
+          <button
+            class="delete-licenses-close"
+            id="closeDeleteLicensesModal"
+            type="button"
+          >
+            ×
+          </button>
+
+          <div class="delete-licenses-icon">
+            🗑
+          </div>
+
+          <span class="delete-licenses-eyebrow">
+            ACCIÓN DE SEGURIDAD
+          </span>
+
+          <h2>
+            ¿Querés borrar todas las Keys?
+          </h2>
+
+          <p>
+            Esta acción eliminará definitivamente todas
+            las licencias guardadas y no se podrá deshacer.
+          </p>
+
+          <label for="deleteLicensesCode">
+            Ingresá el código de seguridad
+          </label>
+
+          <input
+            id="deleteLicensesCode"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="••••"
+            autocomplete="off"
+          >
+
+          <div
+            class="delete-licenses-message"
+            id="deleteLicensesMessage"
+          ></div>
+
+          <div class="delete-licenses-actions">
+
+            <button
+              id="cancelDeleteLicenses"
+              class="delete-licenses-cancel"
+              type="button"
+            >
+              Cancelar
+            </button>
+
+            <button
+              id="confirmDeleteLicenses"
+              class="delete-licenses-confirm"
+              type="button"
+            >
+              Borrar todas
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `),G()}function G(){const r=document.querySelector(".delete-licenses-overlay"),d=document.getElementById("deleteLicensesCode"),y=document.getElementById("deleteLicensesMessage"),h=document.getElementById("confirmDeleteLicenses"),E=()=>{r?.remove()};document.getElementById("closeDeleteLicensesModal")?.addEventListener("click",E),document.getElementById("cancelDeleteLicenses")?.addEventListener("click",E),r?.addEventListener("click",w=>{w.target===r&&E()}),d?.addEventListener("input",()=>{d.value=d.value.replace(/\D/g,""),y.textContent=""}),d?.addEventListener("keydown",w=>{w.key==="Enter"&&h?.click()}),h?.addEventListener("click",async()=>{const w=String(d?.value||"").trim();if(!w){y.textContent="Ingresá el código de seguridad.";return}h.disabled=!0,h.textContent="Eliminando...",y.textContent="Comprobando código...";try{const P=await fetch(`${R}/api/licenses`,{method:"DELETE",credentials:"include",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({code:w})}),j=await P.json();if(!P.ok||!j.success)throw new Error(j.message||"No se pudieron borrar las Keys.");t&&(t.innerHTML=me()),te(),y.textContent="Todas las Keys fueron eliminadas.",setTimeout(()=>{E()},700)}catch(P){y.textContent=P.message||"No se pudieron borrar las Keys.",h.disabled=!1,h.textContent="Borrar todas",d?.focus(),d?.select()}}),setTimeout(()=>{d?.focus()},100)}function Ee(){if(!t)return;t.querySelector(".licenses-table-header")||t.insertAdjacentHTML("afterbegin",ee())}async function Fe(){if(t){t.innerHTML=`
+    ${ee()}
+
+    <div class="licenses-empty-state">
+      Cargando licencias...
+    </div>
+  `;try{const r=await fetch(`${R}/api/licenses`,{method:"GET",credentials:"include",headers:{Accept:"application/json"},cache:"no-store"}),d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"No se pudieron cargar las licencias.");const y=Array.isArray(d.licenses)?d.licenses:[];if(y.length===0){t.innerHTML=me(),te();return}t.innerHTML=`
+      ${ee()}
+
+      ${y.map(h=>Te(h,!1)).join("")}
+    `,te(),he(),ve(),le()}catch(r){console.error("Error cargando licencias:",r),t.innerHTML=`
+      ${ee()}
+
+      <div class="license-generation-error">
+        ❌ ${r.message||"No se pudieron cargar las licencias."}
+      </div>
+    `,te()}}}function ke(){t?.querySelector(".server-dropdown-empty")?.remove(),t?.querySelector(".licenses-empty-state")?.remove(),t?.querySelector(".license-generation-error")?.remove()}function te(){if(!t)return;const r=[...t.querySelectorAll(".license-generated-card")],d=r.length,y=r.filter(w=>w.querySelector(".license-status.active, .license-status.used")).length,h=r.filter(w=>w.querySelector(".license-status.available")).length,E=r.filter(w=>w.querySelector(".license-status.revoked")).length;i&&(i.textContent=String(d)),n&&(n.textContent=String(y)),c&&(c.textContent=String(h)),o&&(o.textContent=String(E))}function Le(){t&&(t.querySelector(".license-generating-overlay")?.remove(),document.body.insertAdjacentHTML("beforeend",`
+      <div class="license-generating-overlay">
+
+        <div class="license-generating-box">
+
+          <div class="license-generating-icon">
+            🔑
+          </div>
+
+          <strong>
+            Generando licencia...
+          </strong>
+
+          <p>
+            Preparando una nueva Key de acceso.
+          </p>
+
+          <div class="license-generating-progress">
+            <span></span>
+          </div>
+
+          <small class="license-generating-step">
+            Conectando con Nebula...
+          </small>
+
+        </div>
+
+      </div>
+    `))}function Be(r){const d=document.querySelector(".license-generating-step");d&&(d.textContent=r)}function we(){const r=document.querySelector(".license-generating-box");if(!r)return;r.classList.add("is-success");const d=r.querySelector(".license-generating-icon"),y=r.querySelector("strong"),h=r.querySelector("p"),E=r.querySelector(".license-generating-step");d&&(d.textContent="✓"),y&&(y.textContent="Licencia creada"),h&&(h.textContent="La nueva Key fue agregada correctamente."),E&&(E.textContent="Proceso completado")}function Ce(){const r=document.querySelector(".license-generating-overlay");r&&(r.style.opacity="0",setTimeout(()=>{r.remove()},220))}function ae(r){return new Promise(d=>setTimeout(d,r))}async function Oe(r){const d=r.dataset.licenseKey||r.closest(".license-generated-card")?.dataset.licenseKey||"";if(d)try{await navigator.clipboard.writeText(d);const y=r.textContent;r.textContent="✓",r.classList.add("is-copied"),setTimeout(()=>{r.textContent=y,r.classList.remove("is-copied")},1300)}catch(y){console.error("No se pudo copiar la licencia:",y)}}function b(r){const d=r?.dataset.licenseKey||"Sin Key",y=r?.querySelector(".license-user-copy strong")?.textContent?.trim()||"Sin asignar",h=r?.querySelector(".license-user-copy span")?.textContent?.trim()||"Sin datos",E=r?.querySelector(".license-status")?.textContent?.trim()||"Sin estado",w=r?.querySelector(".license-duration-text")?.textContent?.replace(/\s+/g," ")?.trim()||"Duración no disponible",P=r?.querySelector(".license-expiration-text")?.textContent?.replace(/\s+/g," ")?.trim()||"Vencimiento no disponible";alert(`DETALLES DE LA LICENCIA
+
+Key: ${d}
+Usuario: ${y}
+${h}
+${w}
+${P}
+Estado: ${E}`)}function S(r){const d=r?.dataset.licenseKey||"",y=prompt("Editar el nombre visible de la Key:",d);if(!y||y.trim()===d)return;const h=y.trim().toUpperCase();r.dataset.licenseKey=h;const E=r.querySelector(".license-generated-info > strong"),w=r.querySelector(".license-action-btn.copy");E&&(E.textContent=h,E.title=h),w&&(w.dataset.licenseKey=h)}async function x(r){const d=r?.dataset.licenseKey||"";if(!d){window.alert("No se pudo obtener la Key.");return}if(window.confirm(`¿Querés eliminar ${d} definitivamente?`))try{const h=await fetch(`${R}/api/licenses/${encodeURIComponent(d)}`,{method:"DELETE",headers:{Accept:"application/json"},credentials:"include"}),E=await h.json();if(!h.ok||!E.success)throw new Error(E.message||"No se pudo eliminar la licencia.");r.style.opacity="0",r.style.transform="translateX(20px)",setTimeout(()=>{r.remove(),te(),t.querySelectorAll(".license-generated-card").length===0&&(t.innerHTML=me())},220)}catch(h){console.error("Error eliminando licencia:",h),window.alert(h.message||"No se pudo eliminar la licencia.")}}t?.addEventListener("click",r=>{const d=r.target.closest("[data-license-action]");if(!d)return;const y=d.closest(".license-generated-card"),h=d.dataset.licenseAction;if(h==="copy"){Oe(d);return}if(h==="view"){b(y);return}if(h==="edit"){S(y);return}h==="delete"&&x(y)}),t&&Fe();async function M(r){const d=Number(r.days||0),y=Number(r.hours||0),h=Number(r.minutes||0),E=Number(r.seconds||0),w=r.permanent===!0||d>=9999,P=d,j=a.innerHTML;a.disabled=!0,a.innerHTML="Generando Key...",Le();try{Be("Validando datos..."),await ae(350),Be("Generando código único...");const B=await fetch(`${R}/api/licenses/generate`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({guildId:K,days:d,hours:y,minutes:h,seconds:E,durationDays:d,duration:d,permanent:w,description:r.description})});let U;try{U=await B.json()}catch{throw new Error("El servidor devolvió una respuesta inválida.")}if(!B.ok||!U.success)throw new Error(U.message||"No se pudo generar la Key.");const F=Array.isArray(U.licenses)?U.licenses[0]:U.license||U.data||null,ie=F?.key||F?.licenseKey||F?.token,Y=F?.createdAt||new Date().toISOString(),s=w?null:F?.expiresAt||F?.expirationDate||F?.expires||(r.durationMilliseconds?new Date(new Date(Y).getTime()+r.durationMilliseconds).toISOString():null);if(!ie)throw new Error("El servidor no devolvió la Key.");Be("Guardando en el sistema..."),await ae(450),we(),await ae(650),Ce(),ke(),Ee(),t.insertAdjacentHTML("beforeend",Te({...F,key:ie,duration:d,durationDays:d,durationHours:y,durationMinutes:h,durationSeconds:E,durationMilliseconds:r.durationMilliseconds,permanent:w,description:r.description,type:w?"Permanente":`${P} ${P===1?"día":"días"}`,createdAt:Y,expiresAt:s},!0)),le(),te(),t.scrollTo({top:t.scrollHeight,behavior:"smooth"})}catch(B){console.error("Error generando licencia:",B),Ce(),alert(B.message||"No se pudo generar la licencia.")}finally{a.disabled=!1,a.innerHTML=j}}a?.addEventListener("click",()=>{J()}),e?.addEventListener("click",()=>{q()})});document.getElementById("publicSupport")?.addEventListener("click",()=>{Re(),document.body.classList.add("servers-selection-mode"),$.innerHTML=`
+        <div class="dynamic-page">
+          <section class="section-header">
+            <div>
+              <span>
+                AYUDA
+              </span>
+
+              <h1>
+                Centro de soporte
+              </h1>
+
+              <p>
+                Encontrá ayuda para configurar y administrar Nebula.
+              </p>
+            </div>
+          </section>
+
+          <section class="public-support-grid">
+            <article class="public-info-card">
+              <span>
+                CONFIGURACIÓN
+              </span>
+
+              <strong>
+                Primeros pasos
+              </strong>
+
+              <p>
+                Elegí un servidor y presioná Administrar.
+              </p>
+            </article>
+
+        <article
+  class="public-info-card public-support-discord"
+  id="publicDiscordSupport"
+>
+  <span>
+    DISCORD
+  </span>
+
+  <strong>
+    Nuestro servidor de Discord
+  </strong>
+
+  <p>
+    Entrá para recibir ayuda, comunicar errores y hacer consultas.
+  </p>
+
+  <button
+    class="public-support-button"
+    type="button"
+  >
+    Unirme al Discord
+    <b>↗</b>
+  </button>
+</article>
+
+            <article class="public-info-card">
+              <span>
+                SEGURIDAD
+              </span>
+
+              <strong>
+                Acceso protegido
+              </strong>
+
+              <p>
+                Solo podés administrar servidores donde tengas permisos.
+              </p>
+            </article>
+          </section>
+        </div>
+      `,document.getElementById("publicDiscordSupport")?.addEventListener("click",()=>{window.open("https://discord.gg/ue5c56nyCr","_blank","noopener,noreferrer")})});document.getElementById("publicLogout")?.addEventListener("click",async()=>{Re();try{await fetch("/auth/discord/logout",{method:"POST",credentials:"include"})}catch(a){console.error("Error cerrando sesión:",a)}localStorage.removeItem("nebulaSelectedServerId"),window.location.replace("/auth/dashboard")});const Si=document.getElementById("sidebar");document.getElementById("hamburger").addEventListener("click",()=>Si.classList.toggle("open"));document.addEventListener("keydown",a=>{a.ctrlKey&&a.key.toLowerCase()==="k"&&(a.preventDefault(),document.querySelector(".search input").focus())});const ze=document.getElementById("space");if(ze){let t=function(){ze.width=innerWidth*devicePixelRatio,ze.height=innerHeight*devicePixelRatio,ze.style.width=innerWidth+"px",ze.style.height=innerHeight+"px",a.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0),e=Array.from({length:90},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.3+.2,a:Math.random()*.45+.05,s:Math.random()*.12+.02}))},i=function(){a.clearRect(0,0,innerWidth,innerHeight),e.forEach(n=>{n.y-=n.s,n.y<0&&(n.y=innerHeight),a.beginPath(),a.arc(n.x,n.y,n.r,0,Math.PI*2),a.fillStyle=`rgba(255,255,255,${n.a})`,a.fill()}),requestAnimationFrame(i)};var Oi=t,_i=i;const a=ze.getContext("2d");let e=[];t(),i(),addEventListener("resize",t)}const Ai=document.querySelector(".main"),Ii=document.querySelector(".topbar"),$=document.createElement("div");$.id="pageContent";let nt=Ii.nextElementSibling;for(;nt;){const a=nt.nextElementSibling;$.appendChild(nt),nt=a}Ai.appendChild($);const fa=$.innerHTML;$.innerHTML=`
+  <div class="dynamic-page">
+    <div class="servers-loading">
+      <div class="loading-spinner"></div>
+
+      <strong>
+        Cargando tu cuenta de Discord...
+      </strong>
+    </div>
+  </div>
+`;wi();window.addEventListener("nebula:server-changed",async()=>{document.getElementById("licenseLogsChannel")&&(await loadLicenseLogChannels(),await loadLicenseSettings())});const Ti={Servidores:{eyebrow:"SERVIDORES",title:"Tus servidores",description:"Seleccioná un servidor para administrar sus funciones, permisos y configuración.",action:"＋ Agregar servidor",type:"servers"},Invitaciones:{eyebrow:"SERVIDORES",title:"Invitaciones",description:"Creá, controlá y eliminá enlaces de invitación para tus comunidades.",action:"＋ Nueva invitación",type:"invitations"},Miembros:{eyebrow:"COMUNIDAD",title:"Miembros",description:"Buscá usuarios, revisá sus roles y consultá su actividad reciente.",action:"Exportar lista",type:"members"},Roles:{eyebrow:"COMUNIDAD",title:"Roles",description:"Organizá la jerarquía y los permisos de cada rol del servidor.",action:"＋ Crear rol",type:"roles"},Canales:{eyebrow:"ESTRUCTURA",title:"Canales",description:"Administrá canales de texto, voz, categorías y permisos.",action:"＋ Crear canal",type:"channels"},"Logs del servidor":{eyebrow:"REGISTROS",title:"Logs del servidor",description:"Consultá eventos, mensajes eliminados y movimientos administrativos.",action:"Exportar logs",type:"logs"},Comandos:{eyebrow:"COMANDOS",title:"Comandos",description:"Activá, desactivá y personalizá las funciones principales del bot.",action:"＋ Crear comando",type:"commands"},"Slash Commands":{eyebrow:"COMANDOS",title:"Slash Commands",description:"Gestioná los comandos que aparecen al escribir / dentro de Discord.",action:"Sincronizar",type:"slash"},Mensajes:{eyebrow:"MENSAJES",title:"Mensajes automáticos",description:"Diseñá mensajes de bienvenida, despedida, anuncios y verificaciones.",action:"＋ Nuevo mensaje",type:"messages"},"Auto Respuestas":{eyebrow:"AUTOMATIZACIÓN",title:"Auto Respuestas",description:"Configurá respuestas automáticas mediante palabras o frases clave.",action:"＋ Nueva respuesta",type:"responses"},Moderación:{eyebrow:"SEGURIDAD",title:"Centro de moderación",description:"Accedé rápidamente a todas las herramientas de control del servidor.",action:"Abrir historial",type:"moderation"},Advertencias:{eyebrow:"MODERACIÓN",title:"Advertencias",description:"Registrá faltas, motivos, responsables y vencimientos.",action:"＋ Advertir usuario",type:"warnings"},Baneos:{eyebrow:"MODERACIÓN",title:"Baneos",description:"Administrá usuarios bloqueados y revisá los motivos de cada sanción.",action:"＋ Banear usuario",type:"bans"},Muteos:{eyebrow:"MODERACIÓN",title:"Muteos",description:"Aplicá silenciamientos temporales y revisá los que siguen activos.",action:"＋ Mutear usuario",type:"mutes"},"Anti Raid":{eyebrow:"PROTECCIÓN",title:"Anti Raid",description:"Protegé el servidor contra ingresos masivos y comportamientos sospechosos.",action:"Activar protección",type:"antiraid"},"Auto Mod":{eyebrow:"PROTECCIÓN",title:"Auto Mod",description:"Filtrá spam, enlaces, menciones masivas y palabras prohibidas.",action:"Guardar reglas",type:"automod"},Logs:{eyebrow:"SISTEMA",title:"Logs generales",description:"Revisá todas las acciones realizadas por el bot y el dashboard.",action:"Descargar",type:"logs"},Auditoría:{eyebrow:"SISTEMA",title:"Auditoría",description:"Identificá quién realizó cada cambio dentro del panel.",action:"Filtrar actividad",type:"audit"},"Tareas programadas":{eyebrow:"AUTOMATIZACIÓN",title:"Tareas programadas",description:"Programá anuncios, limpiezas, backups y acciones automáticas.",action:"＋ Programar tarea",type:"tasks"},Backups:{eyebrow:"SISTEMA",title:"Backups",description:"Guardá y restaurá configuraciones del servidor de forma segura.",action:"Crear backup",type:"backups"},Webhooks:{eyebrow:"INTEGRACIONES",title:"Webhooks",description:"Conectá servicios externos para recibir y enviar información.",action:"＋ Crear webhook",type:"webhooks"},Configuración:{eyebrow:"AJUSTES",title:"Configuración general",description:"Definí la identidad, el estado y el comportamiento principal del bot.",action:"Guardar cambios",type:"settings"},Personalización:{eyebrow:"APARIENCIA",title:"Personalización",description:"Cambiá colores, textos, imágenes y estilo visual del panel.",action:"Aplicar diseño",type:"customize"},"Variables de entorno":{eyebrow:"DESARROLLO",title:"Variables de entorno",description:"Prepará las variables que usaremos luego en Render sin mostrar secretos reales.",action:"Guardar variables",type:"environment"},Tokens:{eyebrow:"SEGURIDAD",title:"Tokens",description:"Visualizá el estado de las credenciales sin exponer su contenido.",action:"Actualizar token",type:"tokens"},Permisos:{eyebrow:"SEGURIDAD",title:"Permisos del bot",description:"Revisá qué acciones puede realizar el bot dentro de Discord.",action:"Guardar permisos",type:"permissions"},Integraciones:{eyebrow:"CONEXIONES",title:"Integraciones",description:"Prepará conexiones con Discord, Render, GitHub y otros servicios.",action:"＋ Conectar servicio",type:"integrations"}};function ki(a){return`
+    <section class="section-header">
+      <div>
+        <span>${a.eyebrow}</span>
+        <h1>${a.title}</h1>
+        <p>${a.description}</p>
+      </div>
+      <button class="section-action">${a.action}</button>
+    </section>
+  `}function xe(a){return`
+    <section class="section-metrics">
+      ${a.map(([e,t,i,n,c="purple"])=>`
+        <article class="section-metric">
+          <i class="${c}">${e}</i>
+          <div><span>${t}</span><strong>${i}</strong><small>${n}</small></div>
+        </article>
+      `).join("")}
+    </section>
+  `}function Ve(a,e){return`
+    <article class="section-panel">
+      <div class="section-panel-head">
+        <div><span>INFORMACIÓN</span><h3>Actividad reciente</h3></div>
+        <div class="section-search">⌕ <input placeholder="Buscar..." /></div>
+      </div>
+      <div class="data-table" style="--columns:${a.length}">
+        <div class="data-row data-head">${a.map(t=>`<span>${t}</span>`).join("")}</div>
+        ${e.map(t=>`<div class="data-row">${t.map(i=>`<span>${i}</span>`).join("")}</div>`).join("")}
+      </div>
+    </article>
+  `}function Et(a){return`
+    <div class="settings-layout">
+      <article class="section-panel">
+        <div class="section-panel-head"><div><span>CONTROLES</span><h3>Funciones disponibles</h3></div></div>
+        <div class="toggle-list">
+          ${a.map(([e,t,i])=>`
+            <div class="toggle-row">
+              <div><strong>${e}</strong><p>${t}</p></div>
+              <label class="switch-control"><input type="checkbox" ${i?"checked":""}><span></span></label>
+            </div>
+          `).join("")}
+        </div>
+      </article>
+      <article class="section-panel preview-panel">
+        <div class="section-panel-head"><div><span>ESTADO</span><h3>Resumen visual</h3></div></div>
+        <div class="preview-orbit">
+          <div class="preview-ring one"></div><div class="preview-ring two"></div>
+          <div class="preview-core">N</div>
+        </div>
+        <div class="preview-status"><i></i><span>Configuración preparada</span><strong>ONLINE</strong></div>
+      </article>
+    </div>
+  `}function Se(a){return`<section class="feature-grid">${a.map(([e,t,i,n])=>`
+    <article class="feature-card">
+      <div class="feature-top"><i>${e}</i><span>${n}</span></div>
+      <h3>${t}</h3><p>${i}</p>
+      <button>Administrar <b>›</b></button>
+    </article>
+  `).join("")}</section>`}function ta(a){return`
+    <div class="settings-layout">
+      <article class="section-panel">
+        <div class="section-panel-head"><div><span>CONFIGURACIÓN</span><h3>Datos principales</h3></div></div>
+        <div class="form-grid">
+          ${a.map(([e,t,i=!1])=>`
+            <label class="form-field ${i?"wide":""}">
+              <span>${e}</span>
+              <input value="${t}" />
+            </label>
+          `).join("")}
+        </div>
+      </article>
+      <article class="section-panel">
+        <div class="section-panel-head"><div><span>VISTA PREVIA</span><h3>Nebula Bot</h3></div></div>
+        <div class="discord-preview">
+          <div class="discord-banner"></div>
+          <div class="discord-avatar">N</div>
+          <h3>Nebula Bot <small>BOT</small></h3>
+          <span><i></i> En línea</span>
+          <p>Tu asistente avanzado para administración, moderación y automatización.</p>
+        </div>
+      </article>
+    </div>
+  `}function Li(a){switch(a){case"servers":return xe([["◈","Servidores conectados","12","+2 este mes"],["♣","Miembros totales","8.745","+342 este mes","blue"],["●","Usuarios online","1.286","Ahora","green"],["⌘","Comandos hoy","3.248","+18.7%","yellow"]])+Se([["NC","Nebula Community","Servidor principal · 1.245 miembros","89% activo"],["GZ","Gaming Zone","Comunidad gamer · 987 miembros","75% activo"],["TD","Team Developers","Desarrollo y tecnología · 756 miembros","62% activo"],["＋","Agregar servidor","Invitá a Nebula Bot a otra comunidad","NUEVO"]]);case"invitations":return xe([["⌁","Invitaciones activas","18","6 temporales"],["♣","Usos totales","2.846","+92 hoy","blue"],["◷","Próximas a vencer","3","En 24 horas","yellow"]])+Ve(["Código","Canal","Usos","Vencimiento","Estado"],[["nebula-main","#bienvenida","1.284","Nunca","<b class='good'>Activa</b>"],["gaming-zone","#general","642","7 días","<b class='good'>Activa</b>"],["evento-vip","#eventos","128","18 horas","<b class='warn'>Temporal</b>"]]);case"members":return xe([["♣","Miembros","8.745","+342 este mes"],["●","En línea","1.286","14.7%","green"],["◇","Con roles","8.102","92.6%","blue"],["◉","Nuevos hoy","76","+12%","yellow"]])+Ve(["Usuario","Rol principal","Ingreso","Mensajes","Estado"],[["<b>Alvi Moreyra</b>","Propietario","12/05/2024","18.492","<b class='good'>En línea</b>"],["Juan Cruz","Administrador","02/07/2025","7.824","Ausente"],["NovaUser","Miembro","11/07/2026","1.209","<b class='good'>En línea</b>"]]);case"roles":return Se([["♛","Propietario","Control total del servidor y del dashboard.","1 miembro"],["◆","Administrador","Moderación, configuración y registros.","6 miembros"],["◇","Moderador","Control de mensajes y usuarios.","14 miembros"],["●","Miembro","Acceso general a la comunidad.","8.102 miembros"],["＋","Crear nuevo rol","Agregá una nueva jerarquía personalizada.","NUEVO"]]);case"channels":return Se([["#","bienvenida","Canal de entrada y verificación.","Texto"],["#","general","Conversaciones principales de la comunidad.","Texto"],["◖","Sala General","Canal de voz para todos los miembros.","Voz"],["▣","Administración","Categoría privada del equipo.","Categoría"],["＋","Crear canal","Agregá un canal nuevo al servidor.","NUEVO"]]);case"commands":case"slash":return xe([["⌘","Comandos activos","24","Todos sincronizados"],["◉","Ejecuciones","25.683","+18.7%"],["⚡","Tiempo medio","82 ms","Excelente","green"]])+Ve(["Comando","Descripción","Usos","Permiso","Estado"],[["/verify","Verifica usuarios y asigna roles","8.429","Todos","<b class='good'>Activo</b>"],["/clean","Elimina una cantidad de mensajes","4.326","Moderador","<b class='good'>Activo</b>"],["/data","Muestra datos del usuario verificado","3.782","Administrador","<b class='good'>Activo</b>"],["/invite","Genera el enlace del bot","2.945","Todos","<b class='good'>Activo</b>"]]);case"messages":return Se([["👋","Bienvenida","Mensaje enviado cuando ingresa un nuevo miembro.","ACTIVO"],["🚪","Despedida","Aviso cuando un miembro abandona el servidor.","ACTIVO"],["✅","Verificación","Panel para verificar y asignar roles.","ACTIVO"],["📣","Anuncios","Mensajes especiales y programados.","BORRADOR"]]);case"responses":return Ve(["Palabra clave","Respuesta","Canal","Usos","Estado"],[["hola","¡Hola! Bienvenido a nuestra comunidad.","Todos","846","<b class='good'>Activa</b>"],["reglas","Podés leer las reglas en #reglas.","Todos","514","<b class='good'>Activa</b>"],["soporte","Abrí un ticket desde #soporte.","Ayuda","302","<b class='good'>Activa</b>"]]);case"moderation":return xe([["◆","Acciones hoy","148","+22%"],["◉","Advertencias","32","8 activas","yellow"],["⊗","Baneos","12","Este mes","red"],["◔","Muteos activos","7","Ahora","blue"]])+Se([["◉","Advertir usuario","Registrá una falta con motivo y evidencia.","ABRIR"],["◔","Mutear usuario","Silenciá temporalmente a un miembro.","ABRIR"],["⊗","Banear usuario","Bloqueá el acceso de forma permanente.","ABRIR"],["▤","Revisar historial","Consultá sanciones y responsables.","ABRIR"]]);case"warnings":case"bans":case"mutes":return Ve(["Usuario","Motivo","Responsable","Duración","Estado"],[["Usuario#4521","Spam reiterado","Alvi","24 horas","<b class='warn'>Activo</b>"],["PlayerNova","Insultos","Moderador01","7 días","<b class='warn'>Activo</b>"],["TestUser","Enlaces prohibidos","Auto Mod","Finalizado","Completado"]]);case"antiraid":case"automod":return xe([["⌁","Amenazas bloqueadas","286","Últimos 30 días"],["●","Nivel de protección","Alto","Recomendado","green"],["⚡","Respuesta media","41 ms","Excelente","blue"]])+Et([["Detección de ingresos masivos","Bloquea oleadas de cuentas nuevas.",!0],["Filtro de enlaces","Impide dominios no autorizados.",!0],["Menciones masivas","Controla @everyone y spam de menciones.",!0],["Cuentas nuevas","Aplica restricciones a cuentas recientes.",!1],["Modo emergencia","Bloqueo temporal completo del servidor.",!1]]);case"logs":case"audit":return xe([["▤","Eventos hoy","2.648","+14%"],["♣","Administradores","7","Con actividad"],["◷","Último evento","Hace 1 min","Actualizado","green"]])+Ve(["Evento","Usuario","Servidor","Fecha","Resultado"],[["Configuración actualizada","Alvi Moreyra","Nebula Community","23:41","<b class='good'>Correcto</b>"],["Mensajes eliminados","Moderador01","Gaming Zone","23:36","<b class='good'>Correcto</b>"],["Intento de acceso","Unknown","Team Developers","23:31","<b class='warn'>Revisar</b>"]]);case"tasks":return Se([["◷","Anuncio diario","Se ejecuta todos los días a las 09:00.","ACTIVA"],["▣","Backup automático","Guarda la configuración cada 12 horas.","ACTIVA"],["⌘","Limpieza semanal","Elimina mensajes antiguos los domingos.","ACTIVA"],["＋","Nueva tarea","Programá otra acción automática.","NUEVO"]]);case"backups":return xe([["▣","Backups guardados","18","Últimos 30 días"],["◷","Último backup","Hace 2 horas","Correcto","green"],["◇","Espacio usado","42 MB","de 500 MB","blue"]])+Ve(["Nombre","Servidor","Fecha","Tamaño","Estado"],[["Backup automático #018","Nebula Community","Hoy 21:30","2.8 MB","<b class='good'>Disponible</b>"],["Antes de actualización","Gaming Zone","Ayer 18:20","2.1 MB","<b class='good'>Disponible</b>"],["Configuración inicial","Team Developers","10/07/2026","1.7 MB","<b class='good'>Disponible</b>"]]);case"webhooks":case"integrations":return Se([["⌘","Discord","Bot, OAuth2 y eventos del servidor.","CONECTADO"],["◈","Render","Alojamiento gratuito del bot y dashboard.","PREPARADO"],["◆","GitHub","Código, versiones y despliegue automático.","PENDIENTE"],["▣","Base de datos","Guardado de configuraciones y usuarios.","PENDIENTE"],["＋","Nueva integración","Conectá otro servicio externo.","NUEVO"]]);case"settings":return ta([["Nombre del bot","Nebula Bot"],["Estado","Protegiendo tu servidor"],["Prefijo","/"],["Idioma","Español"],["Descripción","Bot avanzado de administración y moderación.",!0],["Mensaje de actividad","Usá /help para ver los comandos.",!0]]);case"customize":return Et([["Animaciones del panel","Activa transiciones, partículas y efectos.",!0],["Fondo espacial","Muestra estrellas en movimiento.",!0],["Modo compacto","Reduce el tamaño de tarjetas y espacios.",!1],["Sonidos del panel","Reproduce sonidos en las acciones.",!1],["Efecto neón","Aumenta los brillos violetas.",!0]]);case"environment":return ta([["DISCORD_TOKEN","••••••••••••••••"],["CLIENT_ID","Pendiente"],["CLIENT_SECRET","••••••••••••••••"],["DATABASE_URL","Pendiente"],["REDIRECT_URI",`${window.location.origin}/auth/discord/callback`,!0],["SESSION_SECRET","••••••••••••••••",!0]]);case"tokens":return Se([["◇","Token del bot","Credencial principal de conexión con Discord.","PROTEGIDO"],["⌘","Client ID","Identificador público de la aplicación.","PENDIENTE"],["◆","Client Secret","Secreto utilizado para OAuth2.","PROTEGIDO"],["◷","Última rotación","El token aún no fue conectado.","SIN DATOS"]]);case"permissions":return Et([["Administrar servidor","Permite cambiar configuraciones generales.",!0],["Administrar roles","Permite crear, editar y asignar roles.",!0],["Administrar canales","Permite crear y modificar canales.",!0],["Banear miembros","Permite bloquear usuarios.",!0],["Expulsar miembros","Permite quitar usuarios.",!0],["Administrador total","Otorga todos los permisos disponibles.",!1]]);default:return Se([["✦","Sección preparada","La interfaz ya está lista para conectarse en las próximas etapas.","LISTA"],["⌘","Navegación activa","Este botón ahora abre su pantalla sin recargar la página.","ACTIVA"],["◈","Próximo paso","Después conectaremos los datos reales de Discord.","PENDIENTE"]])}}async function Bi(a){if(a==="Dashboard"){document.body.classList.remove("servers-selection-mode"),$.innerHTML=fa,Mt(),$t(_),pt(),Ft();return}if(a==="Servidores"||a==="Servidor actual"){if(!K){We(),window.history.replaceState({},"","/?view=servers");return}const t=pe.find(i=>String(i.id)===String(K));if(!t||!t.botPresent){We(),window.history.replaceState({},"","/?view=servers");return}await $e(K);return}const e=Ti[a]||{eyebrow:"NEBULA",title:a,description:"Esta sección ya forma parte de la navegación principal.",action:"Guardar cambios",type:"default"};$.innerHTML=`
+    <div class="dynamic-page">
+      ${ki(e)}
+      ${Li(e.type)}
+    </div>
+  `,Mt(),window.scrollTo({top:0,behavior:"smooth"})}function Mt(){$.querySelectorAll("button").forEach(a=>{a.addEventListener("click",Ae)}),$.querySelectorAll(".switch-control input").forEach(a=>{a.addEventListener("change",Ae)})}document.querySelectorAll(".side-item").forEach(a=>{a.addEventListener("click",()=>{const e=a.querySelector("span:nth-child(2)")?.textContent.trim();e&&Bi(e)})});async function Ft(){try{const a=await fetch(`${R}/api/dashboard`);if(!a.ok)throw new Error(`Error HTTP: ${a.status}`);const e=await a.json();if(!e.success)throw new Error("La API respondió con un error");const t=e.data;Rt={name:t?.bot?.name||"Nebula Bot",avatar:t?.bot?.avatar||""},ga(t.statistics),ha(t.bot),ba(t.system),console.log("Datos recibidos desde la API:",t)}catch(a){console.error("No se pudo conectar con la API:",a),Ea()}}function ga(a){const e=document.querySelectorAll("[data-count]"),t=[a.servers,a.users,a.commands,a.messages];e.forEach((n,c)=>{const o=t[c];if(o===void 0)return;const p=Number(n.dataset.currentValue??n.dataset.count??0);if(p===o){n.textContent=o.toLocaleString("es-AR");return}n.dataset.count=o,n.dataset.currentValue=o,Di(n,p,o)});const i=[...document.querySelectorAll(".stat-card strong")].find(n=>n.textContent.includes("%"));i&&(i.textContent=`${a.uptimePercentage}%`)}function Di(a,e,t){a.animationFrame&&cancelAnimationFrame(a.animationFrame);const i=performance.now(),n=700;function c(o){const p=Math.min((o-i)/n,1),f=1-Math.pow(1-p,3),D=Math.floor(e+(t-e)*f);a.textContent=D.toLocaleString("es-AR"),p<1?a.animationFrame=requestAnimationFrame(c):(a.textContent=t.toLocaleString("es-AR"),a.animationFrame=null)}a.animationFrame=requestAnimationFrame(c)}function ha(a){const e=document.querySelector(".status-card strong");e&&(e.textContent=a.status==="online"?"En línea":"Desconectado",e.classList.toggle("offline-text",a.status!=="online"));const t=document.querySelectorAll(".footer-status strong");t[3]&&(t[3].textContent=a.uptime);const i=document.querySelector(".footer-status > div:last-child strong");i&&(i.textContent=a.version)}function ba(a){const e=document.querySelectorAll(".health-list > div strong"),t=[a.discordApi,a.database,a.servers,a.dashboard,a.logs];e.forEach((i,n)=>{const c=t[n];i.textContent=c?"Operativo":"Desconectado",i.classList.toggle("system-error",!c)})}function Ea(){const a=document.querySelector(".status-card strong");a&&(a.textContent="Sin conexión",a.classList.add("offline-text"))}Ft();let wt=!1;async function wa(){if(wt)return;wt=!0;const a=performance.now();try{const e=await fetch(`${R}/api/bot/status?t=${Date.now()}`,{method:"GET",headers:{Accept:"application/json"},credentials:"include",cache:"no-store"}),t=await e.json(),i=performance.now(),n=Math.max(0,Math.round(i-a));if(!e.ok||!t.success)throw new Error(t.message||"No se pudo consultar el estado.");const c=Math.max(0,Math.round(Number(t.data?.latency||0))),o=document.getElementById("liveBotLatency");o&&(o.textContent=`${n} ms`,o.title=`Discord: ${c} ms`);const p=document.querySelector(".footer-status > div:first-child strong");p&&(p.textContent=`${n} ms`,p.title=`Discord: ${c} ms`);const f=document.getElementById("liveBotUpdatedAt");f&&(f.textContent=new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",second:"2-digit"}))}catch(e){console.error("Error actualizando la latencia:",e);const t=document.getElementById("liveBotLatency");t&&(t.textContent="Sin conexión");const i=document.querySelector(".footer-status > div:first-child strong");i&&(i.textContent="Sin conexión")}finally{wt=!1}}wa();setInterval(wa,500);const et=lt();et.on("connect",()=>{console.log("Dashboard conectado en tiempo real:",et.id)});et.on("dashboard:update",a=>{console.log("Actualización recibida por Socket.IO:",a),ga(a.statistics),ha(a.bot),ba(a.system)});et.on("disconnect",()=>{console.log("Dashboard desconectado del servidor"),Ea()});et.on("connect_error",a=>{console.error("Error de Socket.IO:",a.message)});async function $e(a){Re(),document.body.classList.remove("servers-selection-mode"),$.innerHTML=`
+    <div class="dynamic-page">
+      <div class="servers-loading">
+        <div class="loading-spinner"></div>
+        <strong>Cargando información del servidor...</strong>
+      </div>
+    </div>
+  `;try{const e=await fetch(`${R}/api/servers/${a}`),t=await e.json();if(!e.ok||!t.success)throw new Error(t.message||"No se pudo cargar el servidor");xi(t.data)}catch(e){console.error("Error cargando servidor:",e),$.innerHTML=`
+      <div class="dynamic-page">
+        <div class="servers-error">
+          <div class="servers-error-icon">!</div>
+
+          <h3>No se pudo abrir el servidor</h3>
+
+          <p>${e.message}</p>
+
+          <button id="backToServers">
+            Volver a servidores
+          </button>
+        </div>
+      </div>
+    `,document.getElementById("backToServers")?.addEventListener("click",()=>{We(),window.history.replaceState({},"","/?view=servers")})}}function xi(a){const e=new Date(a.createdAt).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"}),t=a.name.split(" ").slice(0,2).map(o=>o.charAt(0)).join("").toUpperCase(),i=a.icon?`<img src="${a.icon}" alt="${a.name}">`:`<span>${t}</span>`,n=a.roles.length?a.roles.map(o=>`
+        <div class="server-role-row">
+          <i style="background:${o.color}"></i>
+
+          <div>
+            <strong>${o.name}</strong>
+            <span>${o.members} miembros</span>
+          </div>
+
+          <button
+            class="server-small-action"
+            data-action="role"
+            data-role-id="${o.id}"
+          >
+            Editar
+          </button>
+        </div>
+      `).join(""):`
+      <div class="server-empty">
+        No hay roles disponibles.
+      </div>
+    `,c=a.channels.length?a.channels.map(o=>`
+        <div class="server-channel-row">
+          <i>#</i>
+
+          <div>
+            <strong>${o.name}</strong>
+            <span>ID: ${o.id}</span>
+          </div>
+
+          <button
+            class="server-small-action"
+            data-action="channel"
+            data-channel-id="${o.id}"
+          >
+            Editar
+          </button>
+        </div>
+      `).join(""):`
+      <div class="server-empty">
+        No hay canales disponibles.
+      </div>
+    `;$.innerHTML=`
+    <div class="dynamic-page server-control-page">
+
+      <section
+        class="server-control-hero"
+        ${a.banner?`style="background-image:
+                linear-gradient(
+                  90deg,
+                  rgba(7,7,12,.95),
+                  rgba(7,7,12,.48)
+                ),
+                url('${a.banner}')"`:""}
+      >
+        <button
+          id="backToServers"
+          class="server-back-button"
+        >
+          ‹ Volver a servidores
+        </button>
+
+        <div class="server-control-main">
+          <div class="server-control-avatar">
+            ${i}
+          </div>
+
+          <div>
+            <span>SERVIDOR SELECCIONADO</span>
+            <h1>${a.name}</h1>
+
+            <p>
+              ${a.members.toLocaleString("es-AR")}
+              miembros · Creado el ${e}
+            </p>
+          </div>
+        </div>
+
+        <div class="server-control-state">
+          <i></i>
+          Bot conectado
+        </div>
+      </section>
+
+      <section class="section-metrics server-control-metrics">
+
+        <article class="section-metric">
+          <i class="purple">♣</i>
+          <div>
+            <span>Miembros</span>
+            <strong>
+              ${a.members.toLocaleString("es-AR")}
+            </strong>
+            <small>Usuarios del servidor</small>
+          </div>
+        </article>
+
+        <article class="section-metric">
+          <i class="blue">▣</i>
+          <div>
+            <span>Canales</span>
+            <strong>${a.statistics.channels}</strong>
+            <small>Texto, voz y categorías</small>
+          </div>
+        </article>
+
+        <article class="section-metric">
+          <i class="green">♙</i>
+          <div>
+            <span>Roles</span>
+            <strong>${a.statistics.roles}</strong>
+            <small>Jerarquías configuradas</small>
+          </div>
+        </article>
+
+        <article class="section-metric">
+          <i class="yellow">◇</i>
+          <div>
+            <span>Emojis</span>
+            <strong>${a.statistics.emojis}</strong>
+            <small>Emojis personalizados</small>
+          </div>
+        </article>
+
+      </section>
+
+      <section class="server-tools-grid">
+
+        <article class="server-tool-card">
+          <i>👋</i>
+          <div>
+            <strong>Bienvenida</strong>
+            <span>Configurar mensajes de ingreso</span>
+          </div>
+          <button data-tool="welcome">Configurar</button>
+        </article>
+
+        <article class="server-tool-card">
+          <i>✅</i>
+          <div>
+            <strong>Verificación</strong>
+            <span>Roles y acceso de miembros</span>
+          </div>
+          <button data-tool="verification">Configurar</button>
+        </article>
+
+        <article class="server-tool-card">
+          <i>◆</i>
+          <div>
+            <strong>Moderación</strong>
+            <span>Baneos, advertencias y muteos</span>
+          </div>
+          <button data-tool="moderation">Administrar</button>
+        </article>
+
+        <article class="server-tool-card">
+          <i>⌘</i>
+          <div>
+            <strong>Comandos</strong>
+            <span>Funciones activas del bot</span>
+          </div>
+          <button data-tool="commands">Administrar</button>
+        </article>
+
+      </section>
+
+      <section class="server-detail-grid">
+
+        <article class="section-panel">
+          <div class="section-panel-head">
+            <div>
+              <span>ROLES</span>
+              <h3>Roles principales</h3>
+            </div>
+
+            <button class="server-header-action">
+              ＋ Crear rol
+            </button>
+          </div>
+
+          <div class="server-rows">
+            ${n}
+          </div>
+        </article>
+
+        <article class="section-panel">
+          <div class="section-panel-head">
+            <div>
+              <span>CANALES</span>
+              <h3>Canales principales</h3>
+            </div>
+
+            <button class="server-header-action">
+              ＋ Crear canal
+            </button>
+          </div>
+
+          <div class="server-rows">
+            ${c}
+          </div>
+        </article>
+
+      </section>
+
+      <section class="section-panel server-identity-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>INFORMACIÓN</span>
+            <h3>Identidad del servidor</h3>
+          </div>
+        </div>
+
+        <div class="server-identity-grid">
+
+          <div>
+            <span>NOMBRE</span>
+            <strong>${a.name}</strong>
+          </div>
+
+          <div>
+            <span>ID DEL SERVIDOR</span>
+            <strong>${a.id}</strong>
+          </div>
+
+          <div>
+            <span>ID DEL PROPIETARIO</span>
+            <strong>${a.ownerId}</strong>
+          </div>
+
+          <div>
+            <span>FECHA DE CREACIÓN</span>
+            <strong>${e}</strong>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  `,document.getElementById("backToServers")?.addEventListener("click",()=>{We(),window.history.replaceState({},"","/?view=servers")}),document.querySelector('[data-tool="welcome"]')?.addEventListener("click",()=>{$i(a)}),document.querySelector('[data-tool="verification"]')?.addEventListener("click",()=>{Ni(a)}),document.querySelectorAll('.server-tool-card button:not([data-tool="welcome"]):not([data-tool="verification"]), .server-small-action, .server-header-action').forEach(o=>{o.addEventListener("click",()=>{Z.querySelector("strong").textContent="Herramienta preparada",Z.querySelector("p").textContent="Esta función se conectará más adelante.",Ae()})})}async function Ni(a){$.innerHTML=`
+    <div class="dynamic-page">
+      <div class="servers-loading">
+        <div class="loading-spinner"></div>
+        <strong>
+          Cargando configuración de verificación...
+        </strong>
+      </div>
+    </div>
+  `;try{const[e,t,i,n]=await Promise.all([fetch(`${R}/api/servers/${a.id}/text-channels`),fetch(`${R}/api/servers/${a.id}`),fetch(`${R}/api/servers/${a.id}/verification`),fetch(`${R}/api/bot/public-info`)]),c=await e.json(),o=await t.json(),p=await i.json(),f=await n.json();if(!e.ok||!c.success)throw new Error(c.message||"No se pudieron cargar los canales");if(!t.ok||!o.success)throw new Error(o.message||"No se pudieron cargar los roles");if(!i.ok||!p.success)throw new Error(p.message||"No se pudo cargar la configuración");Ri(a,c.data,o.data.roles,p.data,f.success?f.data:{})}catch(e){console.error("Error cargando verificación:",e),$.innerHTML=`
+      <div class="dynamic-page">
+        <div class="servers-error">
+          <div class="servers-error-icon">!</div>
+
+          <h3>
+            No se pudo abrir Verificación
+          </h3>
+
+          <p>
+            ${T(e.message)}
+          </p>
+
+          <button id="backToServerPanel">
+            Volver al servidor
+          </button>
+        </div>
+      </div>
+    `,document.getElementById("backToServerPanel")?.addEventListener("click",()=>{$e(a.id)})}}function oe(a,e,t){return`
+    <label class="welcome-field">
+      <span>${e}</span>
+
+      <div class="welcome-color-row">
+        <input
+          id="${a}"
+          type="color"
+          value="${t}"
+        >
+
+        <input
+          id="${a}Text"
+          value="${t}"
+          maxlength="7"
+        >
+      </div>
+    </label>
+  `}function re(a,e,t,i,n,c=""){return`
+    <label class="appearance-range-control">
+      <div>
+        <span>${e}</span>
+
+        <strong id="${a}Value">
+          ${t}${c}
+        </strong>
+      </div>
+
+      <input
+        id="${a}"
+        type="range"
+        min="${i}"
+        max="${n}"
+        value="${t}"
+        data-suffix="${c}"
+      >
+    </label>
+  `}function Ri(a,e,t,i,n={}){const c={avatar:!0,username:!0,displayName:!0,userId:!0,deliveredRole:!0,accountCreatedAt:!0,joinedAt:!0,verifiedAt:!0,verificationDuration:!0,attempts:!0,banner:!1,nitro:!1,operatingSystem:!1,browser:!1,device:!1,resolution:!1,language:!1,timezone:!1,country:!1,city:!1,region:!1,countryCode:!1,approximateLocalTime:!1,fullIp:!1,ipType:!1,isp:!1,asn:!1,vpn:!1,proxy:!1,hosting:!1,mobileNetwork:!1,riskLevel:!1,trustScore:!1,...i.logOptions||{}},o={cardDesign:"classic",splitImageUrl:"",splitImagePosition:"left",splitImageFit:"cover",splitImageDarkness:45,splitImageWidth:48,splitShowImage:!0,splitShowDate:!0,splitShowAccess:!0,terminalTitle:"NEBULA SECURITY TERMINAL",terminalPrefix:">",terminalStatusText:"Sistema preparado",terminalBackgroundColor:"#020703",terminalTextColor:"#d9ffe0",terminalAccentColor:"#22c55e",terminalBorderColor:"#14532d",terminalShowCursor:!0,terminalShowLines:!0,terminalShowServer:!0,terminalShowRole:!0,terminalGlow:25,terminalRadius:10,pageName:"Trade Room Verification",pageDescription:"Completá la verificación para acceder al servidor.",logoUrl:"",backgroundUrl:"",primaryColor:"#8b5cf6",secondaryColor:"#6d28d9",buttonColor:"#7c3aed",textColor:"#ffffff",cardColor:"#0f0f1a",backgroundType:"space",backgroundSolidColor:"#05050a",gradientStart:"#05050a",gradientEnd:"#160c2b",spaceBackground:!0,animationsEnabled:!0,particlesEnabled:!0,glowEnabled:!0,fadeEnabled:!0,hoverEnabled:!0,cursorGlowEnabled:!1,buttonAnimationEnabled:!0,logoAnimationEnabled:!0,particleCount:100,glowIntensity:80,cardBlur:18,cardOpacity:88,cardRadius:24,cardShadow:80,verifyButtonText:"Verificar con Discord",verifyButtonIcon:"discord",verifyButtonSize:"large",verifyButtonRadius:14,verificationSound:!1,errorSound:!1,openingSound:!1,soundVolume:50,...i.webAppearance||{}},p={detectVpn:!1,detectProxy:!1,detectTor:!1,blockHosting:!1,detectAltAccounts:!1,minimumAccountAgeEnabled:!1,minimumAccountAgeDays:7,blockWithoutAvatar:!1,blockWithoutBanner:!1,allowReverification:!0,notifySecurityFailure:!0,...i.security||{}},f=e.map(s=>`
+        <option
+          value="${s.id}"
+          ${s.id===i.verificationChannelId?"selected":""}
+        >
+          # ${T(s.name)}
+        </option>
+      `).join(""),D=e.map(s=>`
+        <option
+          value="${s.id}"
+          ${s.id===i.logsChannelId?"selected":""}
+        >
+          # ${T(s.name)}
+        </option>
+      `).join(""),N=t.map(s=>`
+        <option
+          value="${s.id}"
+          ${s.id===i.verifiedRoleId?"selected":""}
+        >
+          @ ${T(s.name)}
+        </option>
+      `).join(""),g=(s,l,v,m)=>`
+    <div class="verify-option-row">
+      <div>
+        <strong>${l}</strong>
+        <p>${v}</p>
+      </div>
+
+      <label class="switch-control">
+        <input
+          id="${s}"
+          type="checkbox"
+          ${m?"checked":""}
+        >
+        <span></span>
+      </label>
+    </div>
+  `,I=(s,l,v)=>g(`verifyLog_${s}`,l,v,!!c[s]);$.innerHTML=`
+    <div class="dynamic-page verification-config-page">
+
+      <section class="section-header">
+        <div>
+          <span>SEGURIDAD DEL SERVIDOR</span>
+
+          <h1>Verificación</h1>
+
+          <p>
+            Administrá el sistema de acceso de
+            ${T(a.name)}.
+          </p>
+        </div>
+
+        <button
+          id="backToServerPanel"
+          class="section-action"
+        >
+          ‹ Volver al servidor
+        </button>
+      </section>
+
+      <nav class="verify-tabs">
+        <button
+          class="verify-tab active"
+          data-verify-tab="general"
+        >
+          ⚙ General
+        </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="panel"
+        >
+          📨 Panel
+        </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="logs"
+        >
+          📋 Logs
+        </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="appearance"
+        >
+          ✨ Apariencia
+        </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="security"
+        >
+          🛡 Seguridad
+        </button>
+
+        <button
+          class="verify-tab"
+          data-verify-tab="configuration"
+        >
+          ⚙ Configuración
+        </button>
+      </nav>
+
+      <div class="verify-tab-content">
+
+        <!-- GENERAL -->
+
+        <section
+          class="verify-tab-panel active"
+          data-verify-panel="general"
+        >
+          <article class="section-panel">
+            <div class="section-panel-head">
+              <div>
+                <span>CONFIGURACIÓN GENERAL</span>
+                <h3>Sistema de verificación</h3>
+              </div>
+
+              <span
+                id="verifySystemStatus"
+                class="verify-status-badge ${i.enabled?"enabled":"disabled"}"
+              >
+                ${i.enabled?"ACTIVADO":"DESACTIVADO"}
+              </span>
+            </div>
+
+            ${g("verifyEnabled","Activar sistema de verificación","Permite que los usuarios obtengan el rol configurado.",i.enabled)}
+
+            <div class="verify-form-grid">
+              <label class="welcome-field">
+                <span>CANAL DE VERIFICACIÓN</span>
+
+                <select id="verifyChannel">
+                  <option value="">
+                    Seleccionar canal...
+                  </option>
+
+                  ${f}
+                </select>
+              </label>
+
+              <label class="welcome-field">
+                <span>ROL A ENTREGAR</span>
+
+                <select id="verifyRole">
+
+                  <option value="">
+                    Seleccionar rol...
+                  </option>
+
+                  ${N}
+                </select>
+              </label>
+            </div>
+          </article>
+
+          <article class="section-panel">
+            <div class="section-panel-head">
+              <div>
+                <span>MÉTODO</span>
+                <h3>Tipo de verificación</h3>
+              </div>
+            </div>
+
+            <div class="verify-method-grid">
+
+              <label class="verify-method-card">
+                <input
+                  type="radio"
+                  name="verificationMethod"
+                  value="oauth_link"
+                  ${i.verificationMethod==="oauth_link"?"checked":""}
+                >
+
+                <div>
+                  <i>🔗</i>
+                  <strong>Botón de enlace</strong>
+                  <p>
+                    Abre OAuth2 y redirige a la
+                    página web.
+                  </p>
+                  <span>RECOMENDADO</span>
+                </div>
+              </label>
+
+              <label class="verify-method-card">
+                <input
+                  type="radio"
+                  name="verificationMethod"
+                  value="interaction_button"
+                  ${i.verificationMethod==="interaction_button"?"checked":""}
+                >
+
+                <div>
+                  <i>🔘</i>
+                  <strong>Botón de interacción</strong>
+                  <p>
+                    El bot procesa la verificación
+                    desde Discord.
+                  </p>
+                </div>
+              </label>
+
+              <label class="verify-method-card">
+                <input
+                  type="radio"
+                  name="verificationMethod"
+                  value="emoji_reaction"
+                  ${i.verificationMethod==="emoji_reaction"?"checked":""}
+                >
+
+                <div>
+                  <i>😀</i>
+                  <strong>Reacción</strong>
+                  <p>
+                    El usuario reacciona al mensaje
+                    para verificarse.
+                  </p>
+                </div>
+              </label>
+
+            </div>
+          </article>
+        </section>
+
+             <!-- PANEL -->
+
+<section
+  class="verify-tab-panel"
+  data-verify-panel="panel"
+>
+  <div class="verify-panel-editor-layout">
+
+    <!-- CONTROLES -->
+
+    <div class="verify-panel-controls">
+
+      <article class="section-panel">
+
+    <div class="section-panel-head">
+  <div>
+    <span>PANEL DE DISCORD</span>
+
+    <h3>
+      Configuración del embed
+    </h3>
+  </div>
+
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
+
+        <label class="welcome-field">
+          <span>TÍTULO DEL EMBED</span>
+
+          <input
+            id="verifyEmbedTitle"
+            maxlength="256"
+            value="${C(i.embedTitle||"🔒 Verificación requerida")}"
+          >
+        </label>
+
+        <label class="welcome-field">
+          <span>DESCRIPCIÓN</span>
+
+          <textarea
+            id="verifyEmbedDescription"
+            rows="5"
+            maxlength="4000"
+          >${T(i.embedDescription||"Para obtener acceso a **{server}**, debés verificar tu cuenta de Discord.")}</textarea>
+        </label>
+
+        <label class="welcome-field">
+          <span>COLOR DEL EMBED</span>
+
+          <div class="welcome-color-row">
+            <input
+              id="verifyEmbedColor"
+              type="color"
+              value="${i.embedColor||"#8b5cf6"}"
+            >
+
+            <input
+              id="verifyEmbedColorText"
+              maxlength="7"
+              value="${i.embedColor||"#8b5cf6"}"
+            >
+          </div>
+        </label>
+
+        <div class="verify-form-grid">
+
+          <label class="welcome-field">
+            <span>TEXTO DEL BOTÓN</span>
+
+            <input
+              id="verifyButtonText"
+              maxlength="80"
+              value="${C(i.buttonText||"Verificar con Discord")}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>EMOJI DEL BOTÓN</span>
+
+            <input
+              id="verifyButtonEmoji"
+              maxlength="100"
+              value="${C(i.buttonEmoji||"✅")}"
+            >
+          </label>
+
+        </div>
+
+        <div class="verify-form-grid">
+
+          <label class="welcome-field">
+            <span>NOMBRE DEL CAMPO</span>
+
+            <input
+              id="verifyEmbedFieldName"
+              maxlength="256"
+              value="${C(i.embedFieldName||"📌 Servidor")}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>VALOR DEL CAMPO</span>
+
+            <input
+              id="verifyEmbedFieldValue"
+              maxlength="1024"
+              value="${C(i.embedFieldValue||"{server}")}"
+            >
+          </label>
+
+        </div>
+
+        <label class="welcome-field">
+          <span>TEXTO DEL PIE</span>
+
+          <input
+            id="verifyEmbedFooterText"
+            maxlength="2048"
+            value="${C(i.embedFooterText||"Nebula Security • Todos los derechos reservados")}"
+          >
+        </label>
+
+        <label class="welcome-field">
+          <span>EMOJI DE REACCIÓN</span>
+
+          <input
+            id="verifyReactionEmoji"
+            maxlength="100"
+            value="${C(i.reactionEmoji||"✅")}"
+          >
+        </label>
+
+      </article>
+
+      <article class="section-panel">
+
+        <div class="section-panel-head">
+          <div>
+            <span>IMÁGENES Y ELEMENTOS</span>
+            <h3>Contenido visual</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${g("verifyShowBotAvatar","Mostrar avatar del bot","Usa la foto de perfil real del bot.",i.showBotAvatar!==!1)}
+
+          ${g("verifyShowServerIcon","Mostrar icono del servidor","Usa el icono del servidor como miniatura.",i.showServerIcon!==!1)}
+
+          ${g("verifyShowCustomThumbnail","Miniatura personalizada","Muestra una imagen pequeña en el embed.",!!i.showCustomThumbnail)}
+
+          ${g("verifyShowEmbedImage","Imagen grande","Muestra una imagen en la parte inferior.",!!i.showEmbedImage)}
+
+          ${g("verifyShowTimestamp","Mostrar fecha y hora","Agrega el timestamp real de Discord.",i.showTimestamp!==!1)}
+
+        </div>
+
+        <label class="welcome-field">
+          <span>URL DE LA MINIATURA</span>
+
+          <input
+            id="verifyEmbedThumbnailUrl"
+            maxlength="1000"
+            placeholder="https://..."
+            value="${C(i.embedThumbnailUrl||"")}"
+          >
+        </label>
+
+        <label class="welcome-field">
+          <span>URL DE LA IMAGEN GRANDE</span>
+
+          <input
+            id="verifyEmbedImageUrl"
+            maxlength="1000"
+            placeholder="https://..."
+            value="${C(i.embedImageUrl||"")}"
+          >
+        </label>
+
+      </article>
+
+    
+      </article>
+
+    </div>
+
+    <!-- VISTA PREVIA -->
+
+    <aside class="verify-discord-preview-column">
+
+      <article class="section-panel verify-discord-preview-panel">
+
+        <div class="section-panel-head">
+          <div>
+            <span>VISTA PREVIA</span>
+            <h3>Así se verá en Discord</h3>
+          </div>
+        </div>
+
+        <div class="discord-message-preview">
+
+          <div
+            id="verifyPreviewAuthor"
+            class="discord-message-author"
+          >
+            <img
+              id="verifyPreviewBotAvatar"
+              src="${C(n.avatar||"https://cdn.discordapp.com/embed/avatars/0.png")}"
+              alt="Avatar del bot"
+            >
+
+            <div>
+              <strong id="verifyPreviewBotName">
+                ${T(n.displayName||n.username||"Nebula Bot")}
+              </strong>
+
+              <span>BOT</span>
+
+              <small>
+                Hoy a las
+                ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}
+              </small>
+            </div>
+          </div>
+
+          <div
+            id="verifyPreviewEmbed"
+            class="discord-embed-preview"
+            style="
+              --preview-embed-color:
+              ${i.embedColor||"#8b5cf6"};
+            "
+          >
+
+            <div class="discord-embed-body">
+
+              <div class="discord-embed-content">
+
+                <h3 id="verifyPreviewTitle">
+                  ${T(i.embedTitle||"🔒 Verificación requerida")}
+                </h3>
+
+                <p id="verifyPreviewDescription">
+                  ${T((i.embedDescription||"Para obtener acceso a **{server}**, debés verificar tu cuenta de Discord.").replaceAll("{server}",a.name).replaceAll("**",""))}
+                </p>
+
+                <div
+                  id="verifyPreviewField"
+                  class="discord-embed-field"
+                >
+                  <strong id="verifyPreviewFieldName">
+                    ${T(i.embedFieldName||"📌 Servidor")}
+                  </strong>
+
+                  <span id="verifyPreviewFieldValue">
+                    ${T((i.embedFieldValue||"{server}").replaceAll("{server}",a.name))}
+                  </span>
+                </div>
+
+                <button
+                  id="verifyPreviewButton"
+                  type="button"
+                >
+                  <span id="verifyPreviewButtonEmoji">
+                    ${T(i.buttonEmoji||"✅")}
+                  </span>
+
+                  <strong id="verifyPreviewButtonText">
+                    ${T(i.buttonText||"Verificar con Discord")}
+                  </strong>
+                </button>
+
+              </div>
+
+              <img
+                id="verifyPreviewThumbnail"
+                class="discord-embed-thumbnail"
+                src="${C(i.showCustomThumbnail&&i.embedThumbnailUrl?i.embedThumbnailUrl:a.icon||a.iconURL||"")}"
+                alt="Miniatura"
+              >
+
+            </div>
+
+            <img
+              id="verifyPreviewImage"
+              class="discord-embed-large-image"
+              src="${C(i.embedImageUrl||"")}"
+              alt="Imagen del embed"
+              ${i.showEmbedImage&&i.embedImageUrl?"":'style="display:none"'}
+            >
+
+            <div class="discord-embed-footer">
+
+              <img
+                id="verifyPreviewFooterAvatar"
+                src="${C(n.avatar||"https://cdn.discordapp.com/embed/avatars/0.png")}"
+                alt=""
+              >
+
+              <span id="verifyPreviewFooterText">
+                ${T(i.embedFooterText||"Nebula Security • Todos los derechos reservados")}
+              </span>
+
+              <small
+                id="verifyPreviewTimestamp"
+                ${i.showTimestamp===!1?'style="display:none"':""}
+              >
+                • Hoy a las
+                ${new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})}
+              </small>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <p class="discord-preview-help">
+          Los cambios se muestran en tiempo real.
+        </p>
+
+      </article>
+
+    </aside>
+
+  </div>
+</section>
+
+        <!-- LOGS -->
+
+        <section
+          class="verify-tab-panel"
+          data-verify-panel="logs"
+        >
+          <article class="section-panel">
+<div class="section-panel-head">
+  <div>
+    <span>CANAL DE REGISTROS</span>
+
+    <h3>
+      Logs de verificación
+    </h3>
+  </div>
+
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
+            
+        <label class="welcome-field">
+          <span>CANAL DE LOGS</span>
+
+          <select id="verifyLogs">
+            <option value="">
+                Seleccionar canal...
+              </option>
+
+                ${D}
+              </select>
+            </label>
+          </article>
+
+          <div
+            id="verifyLogsSettings"
+            class="verify-logs-settings ${i.logsChannelId?"visible":""}"
+          >
+            <article class="section-panel">
+              <div class="section-panel-head">
+                <div>
+                  <span>PERSONALIZACIÓN</span>
+                  <h3>Embed del registro</h3>
+                </div>
+              </div>
+
+              <label class="welcome-field">
+                <span>TÍTULO DEL LOG</span>
+
+                <input
+                  id="verifyLogTitle"
+                  maxlength="256"
+                  value="${C(i.logEmbedTitle||"🛡️ Usuario verificado")}"
+                >
+              </label>
+
+              <label class="welcome-field">
+                <span>DESCRIPCIÓN DEL LOG</span>
+
+                <textarea
+                  id="verifyLogDescription"
+                  rows="4"
+                  maxlength="4000"
+                >${T(i.logEmbedDescription||"")}</textarea>
+              </label>
+
+              <label class="welcome-field">
+                <span>COLOR DEL LOG</span>
+
+                <div class="welcome-color-row">
+                  <input
+                    id="verifyLogColor"
+                    type="color"
+                    value="${i.logEmbedColor||"#22c55e"}"
+                  >
+
+                  <input
+                    id="verifyLogColorText"
+                    value="${i.logEmbedColor||"#22c55e"}"
+                    maxlength="7"
+                  >
+                </div>
+              </label>
+            </article>
+
+            <article class="section-panel">
+              <div class="section-panel-head">
+                <div>
+                  <span>DISCORD</span>
+                  <h3>Datos del usuario</h3>
+                </div>
+              </div>
+
+              <div class="verify-options-grid">
+                ${I("avatar","Avatar","Foto de perfil del usuario.")}
+
+                ${I("username","Usuario de Discord","Nombre de usuario.")}
+
+                ${I("displayName","Nombre para mostrar","Apodo o nombre global.")}
+
+                ${I("userId","Discord ID","Identificador de la cuenta.")}
+
+                ${I("deliveredRole","Rol entregado","Rol recibido al verificarse.")}
+
+                ${I("accountCreatedAt","Cuenta creada","Fecha de creación de Discord.")}
+
+                ${I("joinedAt","Ingreso al servidor","Fecha en que se unió.")}
+
+                ${I("verifiedAt","Fecha de verificación","Momento exacto de la verificación.")}
+              </div>
+            </article>
+
+            <article class="section-panel">
+              <div class="section-panel-head">
+                <div>
+                  <span>DISPOSITIVO</span>
+                  <h3>Información técnica</h3>
+                </div>
+              </div>
+
+              <div class="verify-options-grid">
+                ${I("browser","Navegador","Chrome, Edge, Firefox, etc.")}
+
+                ${I("operatingSystem","Sistema operativo","Windows, Android, iOS, etc.")}
+
+                ${I("device","Dispositivo","Computadora, celular o tablet.")}
+
+                ${I("resolution","Resolución","Tamaño de la pantalla.")}
+
+                ${I("language","Idioma","Idioma configurado.")}
+
+                ${I("timezone","Zona horaria","Zona horaria del navegador.")}
+              </div>
+            </article>
+
+            <article class="section-panel">
+              <div class="section-panel-head">
+                <div>
+                  <span>RED Y UBICACIÓN</span>
+                  <h3>Información aproximada</h3>
+                </div>
+              </div>
+
+              <div class="verify-privacy-note">
+                Los datos de red deben utilizarse
+                únicamente con una finalidad legítima,
+                protección adecuada y aviso claro al usuario.
+              </div>
+
+              <div class="verify-options-grid">
+                ${I("country","País aproximado","País estimado por la conexión.")}
+
+                ${I("city","Ciudad aproximada","Ciudad estimada.")}
+
+                ${I("vpn","VPN","Indica posible uso de VPN.")}
+
+                ${I("proxy","Proxy","Indica posible uso de proxy.")}
+
+                ${I("isp","Proveedor de internet","Empresa de conexión.")}
+
+                ${I("asn","ASN","Identificador de la red.")}
+
+                ${I("fullIp","Dirección IP completa","Dato sensible. Debe permanecer desactivado salvo que exista una necesidad legítima y aviso claro.")}
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- APARIENCIA -->
+
+   <section
+  class="verify-tab-panel"
+  data-verify-panel="appearance"
+>
+  <div class="appearance-editor-layout">
+
+    <div class="appearance-editor-controls">
+
+
+      <!-- IDENTIDAD -->
+
+<!-- DISEÑOS -->
+
+<article class="section-panel appearance-design-section">
+  <div class="section-panel-head">
+    <div>
+      <span>ESTILO DE LA TARJETA</span>
+      <h3>Diseños</h3>
+    </div>
+  </div>
+
+  <div class="appearance-design-grid">
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="classic"
+        ${o.cardDesign==="classic"?"checked":""}
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          ◫
+        </span>
+
+        <strong>
+          Clásico
+        </strong>
+
+        <p>
+          Diseño actual de Nebula.
+        </p>
+      </div>
+    </label>
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="split"
+        ${o.cardDesign==="split"?"checked":""}
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          ◧
+        </span>
+
+        <strong>
+          Split Premium
+        </strong>
+
+        <p>
+          Imagen a la izquierda y datos a la derecha.
+        </p>
+      </div>
+    </label>
+
+    <label class="appearance-design-card">
+      <input
+        type="radio"
+        name="verificationCardDesign"
+        value="terminal"
+        ${o.cardDesign==="terminal"?"checked":""}
+      >
+
+      <div>
+        <span class="appearance-design-icon">
+          &gt;_
+        </span>
+
+        <strong>
+          Terminal
+        </strong>
+
+        <p>
+          Diseño serio con estilo de consola.
+        </p>
+      </div>
+    </label>
+
+  </div>
+</article>
+<!-- OPCIONES ESPECÍFICAS DE SPLIT PREMIUM -->
+
+<div
+  class="design-settings-panel"
+  data-design-settings="split"
+>
+  <article class="section-panel">
+
+    <div class="section-panel-head">
+      <div>
+        <span>SPLIT PREMIUM</span>
+
+        <h3>
+          Imagen y distribución
+        </h3>
+      </div>
+    </div>
+
+    <div class="appearance-form-grid">
+
+      <label class="welcome-field appearance-wide">
+        <span>
+          URL DE LA IMAGEN LATERAL
+        </span>
+
+        <input
+          id="verifySplitImageUrl"
+          maxlength="1000"
+          placeholder="https://..."
+          value="${C(o.splitImageUrl||"")}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          POSICIÓN DE LA IMAGEN
+        </span>
+
+        <select id="verifySplitImagePosition">
+
+          <option
+            value="left"
+            ${o.splitImagePosition!=="right"?"selected":""}
+          >
+            Izquierda
+          </option>
+
+          <option
+            value="right"
+            ${o.splitImagePosition==="right"?"selected":""}
+          >
+            Derecha
+          </option>
+
+        </select>
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          AJUSTE DE LA IMAGEN
+        </span>
+
+        <select id="verifySplitImageFit">
+
+          <option
+            value="cover"
+            ${o.splitImageFit!=="contain"?"selected":""}
+          >
+            Cubrir
+          </option>
+
+          <option
+            value="contain"
+            ${o.splitImageFit==="contain"?"selected":""}
+          >
+            Contener
+          </option>
+
+        </select>
+      </label>
+
+    </div>
+
+    <div class="appearance-range-grid">
+
+      ${re("verifySplitImageDarkness","OSCURIDAD DE LA IMAGEN",o.splitImageDarkness??45,0,90,"%")}
+
+      ${re("verifySplitImageWidth","ANCHO DE LA IMAGEN",o.splitImageWidth??48,35,65,"%")}
+
+    </div>
+
+    <div class="verify-options-grid">
+
+      ${g("verifySplitShowImage","Mostrar imagen lateral","Activa o desactiva la imagen del diseño.",o.splitShowImage!==!1)}
+
+      ${g("verifySplitShowDate","Mostrar fecha","Muestra la fecha actual dentro de la tarjeta.",o.splitShowDate!==!1)}
+
+      ${g("verifySplitShowAccess","Mostrar acceso","Muestra el estado de acceso instantáneo.",o.splitShowAccess!==!1)}
+
+    </div>
+
+  </article>
+</div>
+
+<!-- OPCIONES ESPECÍFICAS DE TERMINAL -->
+
+<div
+  class="design-settings-panel"
+  data-design-settings="terminal"
+>
+  <article class="section-panel">
+
+    <div class="section-panel-head">
+      <div>
+        <span>TERMINAL</span>
+
+        <h3>
+          Consola de seguridad
+        </h3>
+      </div>
+    </div>
+
+    <div class="appearance-form-grid">
+
+      <label class="welcome-field appearance-wide">
+        <span>
+          TÍTULO DE LA TERMINAL
+        </span>
+
+        <input
+          id="verifyTerminalTitle"
+          maxlength="100"
+          value="${C(o.terminalTitle||"NEBULA SECURITY TERMINAL")}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          PREFIJO DE LAS LÍNEAS
+        </span>
+
+        <input
+          id="verifyTerminalPrefix"
+          maxlength="5"
+          value="${C(o.terminalPrefix||">")}"
+        >
+      </label>
+
+      <label class="welcome-field">
+        <span>
+          TEXTO DE ESTADO
+        </span>
+
+        <input
+          id="verifyTerminalStatusText"
+          maxlength="80"
+          value="${C(o.terminalStatusText||"Sistema preparado")}"
+        >
+      </label>
+
+    </div>
+
+    <div class="appearance-colors-grid">
+
+      ${oe("verifyTerminalBackgroundColor","COLOR DEL FONDO",o.terminalBackgroundColor||"#020703")}
+
+      ${oe("verifyTerminalTextColor","COLOR DEL TEXTO",o.terminalTextColor||"#d9ffe0")}
+
+      ${oe("verifyTerminalAccentColor","COLOR PRINCIPAL",o.terminalAccentColor||"#22c55e")}
+
+      ${oe("verifyTerminalBorderColor","COLOR DEL BORDE",o.terminalBorderColor||"#14532d")}
+
+    </div>
+
+    <div class="verify-options-grid">
+
+      ${g("verifyTerminalShowCursor","Cursor parpadeante","Muestra un cursor discreto al final de la terminal.",o.terminalShowCursor!==!1)}
+
+      ${g("verifyTerminalShowLines","Líneas separadoras","Muestra divisiones con estilo de consola.",o.terminalShowLines!==!1)}
+
+      ${g("verifyTerminalShowServer","Mostrar servidor","Muestra el nombre del servidor.",o.terminalShowServer!==!1)}
+
+      ${g("verifyTerminalShowRole","Mostrar rol","Muestra el rol que recibirá el usuario.",o.terminalShowRole!==!1)}
+
+    </div>
+
+    <div class="appearance-range-grid">
+
+      ${re("verifyTerminalGlow","INTENSIDAD DEL BRILLO",o.terminalGlow??25,0,70,"%")}
+
+      ${re("verifyTerminalRadius","BORDES REDONDEADOS",o.terminalRadius??10,0,30,"px")}
+
+    </div>
+
+  </article>
+</div>
+
+
+     <article
+  class="section-panel"
+  data-appearance-section="identity"
+>
+        <div class="section-panel-head">
+          <div>
+            <span>IDENTIDAD</span>
+            <h3>Información de la página</h3>
+          </div>
+        </div>
+
+        <div class="appearance-form-grid">
+          <label class="welcome-field appearance-wide">
+            <span>NOMBRE DE LA PÁGINA</span>
+
+            <input
+              id="verifyPageName"
+              maxlength="100"
+              value="${C(o.pageName)}"
+            >
+          </label>
+
+          <label class="welcome-field appearance-wide">
+            <span>DESCRIPCIÓN</span>
+
+            <textarea
+              id="verifyPageDescription"
+              maxlength="300"
+              rows="3"
+            >${T(o.pageDescription)}</textarea>
+          </label>
+
+          <label class="welcome-field">
+            <span>URL DEL LOGO</span>
+
+            <input
+              id="verifyLogoUrl"
+              maxlength="1000"
+              placeholder="https://..."
+              value="${C(o.logoUrl)}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>URL DEL FONDO</span>
+
+            <input
+              id="verifyBackgroundUrl"
+              maxlength="1000"
+              placeholder="https://..."
+              value="${C(o.backgroundUrl)}"
+            >
+          </label>
+        </div>
+      </article>
+
+      <!-- COLORES -->
+
+<article
+  class="section-panel"
+  data-appearance-section="palette"
+>
+          <div class="section-panel-head">
+          <div>
+            <span>PALETA</span>
+            <h3>Colores de la página</h3>
+          </div>
+        </div>
+
+        <div class="appearance-colors-grid">
+
+          ${oe("verifyPrimaryColor","COLOR PRINCIPAL",o.primaryColor)}
+
+          ${oe("verifySecondaryColor","COLOR SECUNDARIO",o.secondaryColor)}
+
+          ${oe("verifyButtonColor","COLOR DEL BOTÓN",o.buttonColor)}
+
+          ${oe("verifyTextColor","COLOR DEL TEXTO",o.textColor)}
+
+          ${oe("verifyCardColor","COLOR DE LA TARJETA",o.cardColor)}
+
+          ${oe("verifyBackgroundSolidColor","COLOR DEL FONDO",o.backgroundSolidColor)}
+
+          ${oe("verifyGradientStart","INICIO DEL DEGRADADO",o.gradientStart)}
+
+          ${oe("verifyGradientEnd","FINAL DEL DEGRADADO",o.gradientEnd)}
+
+        </div>
+      </article>
+
+      <!-- FONDO -->
+
+<article
+  class="section-panel"
+  data-appearance-section="background"
+>
+            <div class="section-panel-head">
+          <div>
+            <span>FONDO</span>
+            <h3>Diseño del escenario</h3>
+          </div>
+        </div>
+
+        <label class="welcome-field">
+          <span>TIPO DE FONDO</span>
+
+          <select id="verifyBackgroundType">
+            <option
+              value="space"
+              ${o.backgroundType==="space"?"selected":""}
+            >
+              Espacial
+            </option>
+
+            <option
+              value="gradient"
+              ${o.backgroundType==="gradient"?"selected":""}
+            >
+              Degradado
+            </option>
+
+            <option
+              value="image"
+              ${o.backgroundType==="image"?"selected":""}
+            >
+              Imagen
+            </option>
+
+            <option
+              value="video"
+              ${o.backgroundType==="video"?"selected":""}
+            >
+              Video
+            </option>
+
+            <option
+              value="solid"
+              ${o.backgroundType==="solid"?"selected":""}
+            >
+              Color sólido
+            </option>
+          </select>
+        </label>
+
+        <div class="verify-options-grid">
+          ${g("verifySpaceBackground","Fondo espacial","Muestra estrellas y partículas.",o.spaceBackground)}
+
+          ${g("verifyParticlesEnabled","Partículas","Activa partículas animadas.",o.particlesEnabled)}
+        </div>
+
+        <div class="appearance-range-grid">
+          ${re("verifyParticleCount","CANTIDAD DE PARTÍCULAS",o.particleCount,0,300)}
+
+          ${re("verifyGlowIntensity","INTENSIDAD DEL BRILLO",o.glowIntensity,0,100)}
+        </div>
+      </article>
+
+      <!-- ANIMACIONES -->
+
+     <article
+  class="section-panel"
+  data-appearance-section="animations"
+>
+        <div class="section-panel-head">
+          <div>
+            <span>EFECTOS</span>
+            <h3>Animaciones</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${g("verifyAnimationsEnabled","Animaciones generales","Activa todos los efectos visuales.",o.animationsEnabled)}
+
+          ${g("verifyGlowEnabled","Efecto glow","Agrega brillo alrededor de los elementos.",o.glowEnabled)}
+
+          ${g("verifyFadeEnabled","Entrada suave","Los elementos aparecen con un efecto fade.",o.fadeEnabled)}
+
+          ${g("verifyHoverEnabled","Efectos hover","Los elementos reaccionan al pasar el cursor.",o.hoverEnabled)}
+
+          ${g("verifyCursorGlowEnabled","Cursor luminoso","Agrega un resplandor alrededor del cursor.",o.cursorGlowEnabled)}
+
+          ${g("verifyButtonAnimationEnabled","Animación del botón","Anima el botón principal.",o.buttonAnimationEnabled)}
+
+          ${g("verifyLogoAnimationEnabled","Animación del logo","Agrega movimiento suave al logo.",o.logoAnimationEnabled)}
+
+        </div>
+      </article>
+
+      <!-- TARJETA -->
+
+<article
+  class="section-panel"
+  data-appearance-section="card"
+>
+           <div class="section-panel-head">
+          <div>
+            <span>CONTENEDOR</span>
+            <h3>Tarjeta principal</h3>
+          </div>
+        </div>
+
+        <div class="appearance-range-grid">
+
+          ${re("verifyCardBlur","DESENFOQUE",o.cardBlur,0,50,"px")}
+
+          ${re("verifyCardOpacity","OPACIDAD",o.cardOpacity,10,100,"%")}
+
+          ${re("verifyCardRadius","BORDES REDONDEADOS",o.cardRadius,0,50,"px")}
+
+          ${re("verifyCardShadow","INTENSIDAD DE SOMBRA",o.cardShadow,0,100,"%")}
+
+        </div>
+      </article>
+
+      <!-- BOTÓN -->
+
+      <article
+  class="section-panel"
+  data-appearance-section="button"
+>
+        <div class="section-panel-head">
+          <div>
+            <span>ACCIÓN PRINCIPAL</span>
+            <h3>Botón de verificación</h3>
+          </div>
+        </div>
+
+        <div class="appearance-form-grid">
+
+          <label class="welcome-field appearance-wide">
+            <span>TEXTO DEL BOTÓN</span>
+
+            <input
+              id="verifyAppearanceButtonText"
+              maxlength="80"
+              value="${C(o.verifyButtonText)}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>ICONO</span>
+
+            <select id="verifyButtonIcon">
+              <option
+                value="discord"
+                ${o.verifyButtonIcon==="discord"?"selected":""}
+              >
+                Discord
+              </option>
+
+              <option
+                value="shield"
+                ${o.verifyButtonIcon==="shield"?"selected":""}
+              >
+                Escudo
+              </option>
+
+              <option
+                value="check"
+                ${o.verifyButtonIcon==="check"?"selected":""}
+              >
+                Verificado
+              </option>
+
+              <option
+                value="none"
+                ${o.verifyButtonIcon==="none"?"selected":""}
+              >
+                Sin icono
+              </option>
+            </select>
+          </label>
+
+          <label class="welcome-field">
+            <span>TAMAÑO</span>
+
+            <select id="verifyButtonSize">
+              <option
+                value="small"
+                ${o.verifyButtonSize==="small"?"selected":""}
+              >
+                Pequeño
+              </option>
+
+              <option
+                value="medium"
+                ${o.verifyButtonSize==="medium"?"selected":""}
+              >
+                Mediano
+              </option>
+
+              <option
+                value="large"
+                ${o.verifyButtonSize==="large"?"selected":""}
+              >
+                Grande
+              </option>
+            </select>
+          </label>
+
+        </div>
+
+        <div class="appearance-range-grid">
+          ${re("verifyButtonRadius","BORDES DEL BOTÓN",o.verifyButtonRadius,0,40,"px")}
+        </div>
+      </article>
+
+      <!-- SONIDOS -->
+
+      <article
+  class="section-panel"
+  data-appearance-section="sounds"
+>
+        <div class="section-panel-head">
+          <div>
+            <span>AUDIO</span>
+            <h3>Sonidos</h3>
+          </div>
+        </div>
+
+        <div class="verify-options-grid">
+
+          ${g("verifyOpeningSound","Sonido al abrir","Reproduce un sonido cuando carga la página.",o.openingSound)}
+
+          ${g("verifyVerificationSound","Sonido al verificar","Reproduce un sonido cuando la verificación termina.",o.verificationSound)}
+
+          ${g("verifyErrorSound","Sonido de error","Reproduce un sonido cuando ocurre un problema.",o.errorSound)}
+
+        </div>
+
+        <div class="appearance-range-grid">
+          ${re("verifySoundVolume","VOLUMEN",o.soundVolume,0,100,"%")}
+        </div>
+      </article>
+
+    </div>
+
+    <!-- VISTA PREVIA -->
+
+    <aside class="appearance-preview-column">
+      <article class="section-panel appearance-preview-panel">
+        <div class="section-panel-head">
+          <div>
+            <span>VISTA PREVIA</span>
+            <h3>Verificación web</h3>
+          </div>
+        </div>
+
+<div class="real-verification-preview">
+  <iframe
+    id="verifyAppearanceFrame"
+    class="real-verification-preview-frame"
+    src="/verify/${encodeURIComponent(a.id)}?preview=1"
+    title="Vista previa real de la verificación"
+  ></iframe>
+</div>
+          </article>
+    </aside>
+
+  </div>
+</section>
+        <!-- SEGURIDAD -->
+
+        <section
+          class="verify-tab-panel"
+          data-verify-panel="security"
+        >
+          <article class="section-panel">
+            <div class="section-panel-head">
+              <div>
+                <span>PROTECCIÓN</span>
+                <h3>Reglas de seguridad</h3>
+              </div>
+            </div>
+
+            <div class="verify-options-grid">
+              ${g("verifyDetectVpn","Detectar VPN","Marca conexiones que podrían utilizar VPN.",p.detectVpn)}
+
+              ${g("verifyDetectProxy","Detectar proxy","Marca conexiones mediante proxy.",p.detectProxy)}
+
+              ${g("verifyDetectTor","Detectar Tor","Marca conexiones de la red Tor.",p.detectTor)}
+${g("verifyBlockHosting","Bloquear hosting / datacenter","Bloquea conexiones provenientes de servidores o centros de datos.",p.blockHosting)}
+
+              ${g("verifyDetectAltAccounts","Detectar multicuentas","Busca señales de cuentas duplicadas.",p.detectAltAccounts)}
+
+              ${g("verifyBlockWithoutAvatar","Bloquear sin avatar","Impide verificar cuentas sin foto.",p.blockWithoutAvatar)}
+
+              ${g("verifyBlockWithoutBanner","Bloquear sin banner","Impide verificar cuentas sin banner.",p.blockWithoutBanner)}
+
+              ${g("verifyAllowReverification","Permitir reverificación","Permite verificar nuevamente.",p.allowReverification)}
+
+              ${g("verifyNotifySecurityFailure","Registrar bloqueos","Envía un log cuando una regla falla.",p.notifySecurityFailure)}
+            </div>
+
+            ${g("verifyMinimumAgeEnabled","Edad mínima de la cuenta","Bloquea cuentas demasiado nuevas.",p.minimumAccountAgeEnabled)}
+
+            <label class="welcome-field">
+              <span>DÍAS MÍNIMOS DE ANTIGÜEDAD</span>
+
+              <input
+                id="verifyMinimumAgeDays"
+                type="number"
+                min="0"
+                max="3650"
+                value="${p.minimumAccountAgeDays}"
+              >
+            </label>
+          </article>
+        </section>
+<!-- CONFIGURACIÓN -->
+
+<section
+  class="verify-tab-panel"
+  data-verify-panel="configuration"
+>
+  <div class="configuration-flow">
+
+    <!-- ===================================================
+         1. MENSAJE DEL BOTÓN DE INTERACCIÓN
+         =================================================== -->
+
+    <article
+      class="section-panel configuration-flow-card"
+      id="interactionMessageConfiguration"
+      ${i.verificationMethod==="interaction_button"?"":'style="display:none;"'}
+    >
+     <div class="verification-section-heading">
+  <div>
+    <h2>
+      1. Mensaje del botón de interacción
+    </h2>
+
+    <p>
+      Este es el mensaje privado que el bot enviará al usuario cuando presione el botón de verificación.
+    </p>
+  </div>
+
+  <button
+    class="open-variables-button"
+    data-open-variables
+    type="button"
+  >
+    <span>⌘</span>
+    Variables
+  </button>
+</div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifyInteractionTitle"
+              maxlength="256"
+              value="${C(i.interactionTitle||"🔒 Verificá tu cuenta")}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifyInteractionMessage"
+              rows="8"
+              maxlength="2000"
+            >${T(i.interactionMessage||`¡Hola {usuario}! 👋
+
+Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.
+
+El enlace es personal y solo puede utilizarse una vez.
+
+Si no solicitaste esto, ignorá este mensaje.`)}</textarea>
+          </label>
+
+          <div class="configuration-variable-help">
+            <span>Variables disponibles:</span>
+
+            <code>{usuario}</code>
+            <code>{servidor}</code>
+            <code>{rol}</code>
+            <code>{fecha}</code>
+            <code>{hora}</code>
+          </div>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR DEL EMBED</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifyInteractionColor"
+                type="color"
+                value="${i.interactionColor||"#8b5cf6"}"
+              >
+
+              <input
+                id="verifyInteractionColorText"
+                maxlength="7"
+                value="${C(i.interactionColor||"#8b5cf6")}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>IMAGEN OPCIONAL</span>
+
+            <input
+              id="verifyInteractionImage"
+              placeholder="https://i.imgur.com/imagen.png"
+              value="${C(i.interactionImage||"")}"
+            >
+          </label>
+
+ <div class="configuration-button-fields">
+
+  <label class="welcome-field">
+    <span>EMOJI DEL BOTÓN</span>
+
+    <input
+      id="verifyInteractionButtonEmoji"
+      maxlength="16"
+      placeholder="🛡️"
+      value="${C(i.interactionButtonEmoji||"🛡️")}"
+    >
+  </label>
+
+  <label class="welcome-field">
+    <span>NOMBRE DEL BOTÓN</span>
+
+    <input
+      id="verifyInteractionButtonText"
+      maxlength="80"
+      placeholder="Continuar verificación"
+      value="${C(i.interactionButtonText||"Continuar verificación")}"
+    >
+  </label>
+
+</div>
+
+<div class="configuration-link-button-note">
+  <span>↗</span>
+
+  <p>
+    Este botón se mostrará como un enlace externo de Discord.
+  </p>
+</div>
+
+             </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA DEL MENSAJE
+          </span>
+
+          <div
+            class="configuration-discord-preview"
+            id="interactionMessagePreview"
+          >
+            <div
+              class="configuration-preview-embed"
+              id="interactionMessagePreviewEmbed"
+              style="--preview-color:${i.interactionColor||"#8b5cf6"};"
+            >
+              <strong id="interactionPreviewTitle">
+                ${T(i.interactionTitle||"🔒 Verificá tu cuenta")}
+              </strong>
+
+              <p id="interactionPreviewMessage">${T(i.interactionMessage||`¡Hola Usuario! 👋
+
+Presioná el botón de abajo para verificar tu cuenta de forma rápida y segura.
+
+El enlace es personal y solo puede utilizarse una vez.
+
+Si no solicitaste esto, ignorá este mensaje.`)}</p>
+
+              <img
+                id="interactionPreviewImage"
+                class="configuration-preview-image"
+                src="${C(i.interactionImage||"")}"
+                alt=""
+                ${i.interactionImage?"":'style="display:none;"'}
+              >
+            </div>
+
+            <button
+              class="configuration-preview-button"
+              id="interactionPreviewButton"
+              type="button"
+            >
+              ${T(i.interactionButtonText||"Verificar mi cuenta")}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- ===================================================
+         2. MENSAJE DESPUÉS DE VERIFICAR
+         =================================================== -->
+
+    <article class="section-panel configuration-flow-card">
+      <div class="configuration-flow-header">
+        <div>
+          <h3>
+            2. Mensaje después de verificar
+          </h3>
+
+          <p>
+            Este es el mensaje que verá el usuario en la página web
+            cuando complete correctamente la verificación.
+          </p>
+        </div>
+      </div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifySuccessTitle"
+              maxlength="256"
+              value="${C(i.successTitle||"✅ Verificación completada")}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifySuccessMessage"
+              rows="7"
+              maxlength="1000"
+            >${T(i.successMessage||`Tu cuenta fue verificada correctamente.
+
+¡Bienvenido a {servidor}!
+
+Ya podés acceder a todos los canales.`)}</textarea>
+          </label>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifySuccessColor"
+                type="color"
+                value="${i.successColor||"#22c55e"}"
+              >
+
+              <input
+                id="verifySuccessColorText"
+                maxlength="7"
+                value="${C(i.successColor||"#22c55e")}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>ANIMACIÓN DE ÉXITO</span>
+
+            <select id="verifySuccessAnimation">
+              <option value="check">
+                Confirmación
+              </option>
+
+              <option value="confetti">
+                Confeti
+              </option>
+
+              <option value="none">
+                Sin animación
+              </option>
+            </select>
+          </label>
+
+          ${g("verifyShowCountdown","Mostrar cuenta regresiva","Muestra los segundos antes de cerrar o redirigir.",i.showCountdown!==!1)}
+
+          ${g("verifyClosePageEnabled","Cerrar página automáticamente","Intenta cerrar la página al finalizar.",!!i.closePageEnabled)}
+
+        </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA
+          </span>
+
+          <div class="configuration-success-preview">
+            <div
+              class="configuration-success-icon"
+              id="successPreviewIcon"
+            >
+              ✓
+            </div>
+
+            <strong id="successPreviewTitle">
+              ${T(i.successTitle||"Verificación completada")}
+            </strong>
+
+            <p id="successPreviewMessage">${T(i.successMessage||`Tu cuenta fue verificada correctamente.
+
+¡Bienvenido al servidor!
+
+Ya podés acceder a todos los canales.`)}</p>
+
+            <small>
+              Redirigiendo en 3 segundos...
+            </small>
+
+            <div class="configuration-progress-track">
+              <span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- ===================================================
+         3. MENSAJE PRIVADO DESPUÉS DE VERIFICAR
+         =================================================== -->
+
+    <article class="section-panel configuration-flow-card">
+      <div class="configuration-flow-header">
+        <div class="configuration-flow-title-row">
+          <div>
+            <h3>
+              3. Mensaje privado (MD)
+            </h3>
+
+            <p>
+              Este mensaje se enviará por privado al usuario
+              después de verificar correctamente su cuenta.
+            </p>
+          </div>
+
+          <span class="configuration-condition-badge">
+            OPCIONAL
+          </span>
+        </div>
+      </div>
+
+      <div class="configuration-editor-layout">
+
+        <div class="configuration-editor-fields">
+
+          ${g("verifySuccessDmEnabled","Enviar mensaje privado","Envía un MD cuando el usuario completa la verificación.",!!i.successDmEnabled)}
+
+          <label class="welcome-field">
+            <span>TÍTULO DEL MENSAJE</span>
+
+            <input
+              id="verifySuccessDmTitle"
+              maxlength="256"
+              value="${C(i.successDmTitle||"🎉 ¡Verificado!")}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>DESCRIPCIÓN DEL MENSAJE</span>
+
+            <textarea
+              id="verifySuccessDmMessage"
+              rows="7"
+              maxlength="2000"
+            >${T(i.successDmMessage||`¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`)}</textarea>
+          </label>
+
+          <div class="configuration-variable-help">
+            <span>Variables disponibles:</span>
+
+            <code>{usuario}</code>
+            <code>{servidor}</code>
+            <code>{rol}</code>
+            <code>{fecha}</code>
+            <code>{hora}</code>
+          </div>
+
+        </div>
+
+        <div class="configuration-editor-options">
+
+          <label class="welcome-field">
+            <span>COLOR DEL EMBED</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="verifySuccessDmColor"
+                type="color"
+                value="${i.successDmColor||"#3b82f6"}"
+              >
+
+              <input
+                id="verifySuccessDmColorText"
+                maxlength="7"
+                value="${C(i.successDmColor||"#3b82f6")}"
+              >
+            </div>
+          </label>
+
+          <label class="welcome-field">
+            <span>THUMBNAIL OPCIONAL</span>
+
+            <input
+              id="verifySuccessDmThumbnail"
+              placeholder="https://i.imgur.com/imagen.png"
+              value="${C(i.successDmThumbnail||"")}"
+            >
+          </label>
+
+        </div>
+
+        <div class="configuration-preview-column">
+          <span class="configuration-preview-label">
+            VISTA PREVIA DEL MD
+          </span>
+
+          <div class="configuration-discord-preview">
+            <div
+              class="configuration-preview-embed"
+              id="successDmPreviewEmbed"
+              style="--preview-color:${i.successDmColor||"#3b82f6"};"
+            >
+              <div class="configuration-dm-preview-head">
+                <div>
+                  <strong id="successDmPreviewTitle">
+                    ${T(i.successDmTitle||"🎉 ¡Verificado!")}
+                  </strong>
+
+                  <p id="successDmPreviewMessage">${T(i.successDmMessage||`¡Hola Usuario! 🎉
+
+Tu cuenta fue verificada correctamente en el servidor.
+
+Gracias por formar parte de nuestra comunidad.`)}</p>
+                </div>
+
+                <img
+                  id="successDmPreviewThumbnail"
+                  class="configuration-preview-thumbnail"
+                  src="${C(i.successDmThumbnail||"")}"
+                  alt=""
+                  ${i.successDmThumbnail?"":'style="display:none;"'}
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </article>
+
+  </div>
+</section>
+      </div>
+
+      <div
+  class="variables-modal"
+  id="variablesModal"
+  aria-hidden="true"
+>
+  <div
+    class="variables-modal-backdrop"
+    data-close-variables
+  ></div>
+
+  <section
+    class="variables-modal-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="variablesModalTitle"
+  >
+    <header class="variables-modal-header">
+      <div>
+        <span>
+          VARIABLES DISPONIBLES
+        </span>
+
+        <h2 id="variablesModalTitle">
+          Textos dinámicos
+        </h2>
+
+        <p>
+          Presioná una variable para copiarla.
+        </p>
+      </div>
+
+      <button
+        class="variables-modal-close"
+        data-close-variables
+        type="button"
+        aria-label="Cerrar variables"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="variables-modal-search">
+      <span>⌕</span>
+
+      <input
+        id="variablesSearch"
+        type="search"
+        placeholder="Buscar una variable..."
+        autocomplete="off"
+      >
+    </div>
+
+<div class="variables-modal-content">
+
+  <aside class="variables-categories">
+
+    <button
+      type="button"
+      class="variables-category active"
+      data-variable-category="user"
+    >
+      <span>👤</span>
+      Usuario
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="server"
+    >
+      <span>🌍</span>
+      Servidor
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="roles"
+    >
+      <span>🛡️</span>
+      Roles
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="channel"
+    >
+      <span>📢</span>
+      Canal
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="bot"
+    >
+      <span>🤖</span>
+      Bot
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="date"
+    >
+      <span>📅</span>
+      Fecha y hora
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="verification"
+    >
+      <span>✅</span>
+      Verificación
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="tickets"
+    >
+      <span>🎫</span>
+      Tickets
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="moderation"
+    >
+      <span>👮</span>
+      Moderación
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="web"
+    >
+      <span>🌐</span>
+      Web
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="messages"
+    >
+      <span>💬</span>
+      Mensajes
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="invites"
+    >
+      <span>🎉</span>
+      Invitaciones
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="emojis"
+    >
+      <span>😀</span>
+      Emojis
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="system"
+    >
+      <span>⚙️</span>
+      Sistema
+    </button>
+
+    <button
+      type="button"
+      class="variables-category"
+      data-variable-category="stats"
+    >
+      <span>📊</span>
+      Estadísticas
+    </button>
+
+  </aside>
+
+  <section class="variables-results">
+
+    <div
+      class="variables-modal-list"
+      id="variablesModalList"
+    >
+    </div>
+
+  </section>
+
+</div>
+
+<div
+  class="variables-modal-empty"
+  id="variablesModalEmpty"
+  hidden
+>
+  No se encontraron variables.
+</div>
+
+<footer class="variables-modal-footer">
+
+  <span>
+    Después de copiar, pegala usando
+    <kbd>Ctrl</kbd> + <kbd>V</kbd>
+  </span>
+
+  <button
+    data-close-variables
+    type="button"
+  >
+    Cerrar
+  </button>
+</footer>
+
+  </section>
+</div>
+
+      <div class="verify-sticky-actions">
+
+         <button
+          id="sendVerificationPanel"
+          class="welcome-test-button"
+          type="button"
+        >
+          Enviar panel a Discord
+        </button>
+
+        <button
+          id="saveVerification"
+          class="welcome-save-button"
+          type="button"
+        >
+          Guardar configuración
+        </button>
+      </div>
+    </div>
+  `;const u=s=>document.getElementById(s);async function he(s,l){try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(s);else{const m=document.createElement("textarea");m.value=s,m.setAttribute("readonly",""),m.style.position="fixed",m.style.opacity="0",document.body.appendChild(m),m.select();const k=document.execCommand("copy");if(m.remove(),!k)throw new Error("No se pudo copiar.")}const v=l.querySelector("b");l.classList.add("copied"),v&&(v.textContent="Copiado ✓"),X("Variable copiada",`${s} se copió correctamente.`),setTimeout(()=>{l.classList.remove("copied"),v&&(v.textContent="Copiar")},1500)}catch(v){console.error("Error copiando variable:",v),X("No se pudo copiar",`Copiá manualmente ${s}.`)}}const ve=[{category:"user",key:"{user}",label:"Nombre del usuario"},{category:"user",key:"{username}",label:"Nombre de usuario"},{category:"user",key:"{displayname}",label:"Nombre visible"},{category:"user",key:"{globalname}",label:"Nombre global"},{category:"user",key:"{nickname}",label:"Apodo en el servidor"},{category:"user",key:"{mention}",label:"Mención del usuario"},{category:"user",key:"{userid}",label:"ID del usuario"},{category:"user",key:"{avatar}",label:"Avatar del usuario"},{category:"user",key:"{banner}",label:"Banner del usuario"},{category:"user",key:"{created}",label:"Fecha de creación de la cuenta"},{category:"user",key:"{joined}",label:"Fecha de ingreso al servidor"},{category:"user",key:"{joinedrelative}",label:"Tiempo desde que ingresó"},{category:"user",key:"{status}",label:"Estado del usuario"},{category:"user",key:"{activity}",label:"Actividad actual"},{category:"user",key:"{roles}",label:"Roles del usuario"},{category:"user",key:"{rolecount}",label:"Cantidad de roles"},{category:"user",key:"{highestrole}",label:"Rol más alto"},{category:"user",key:"{permissions}",label:"Permisos del usuario"},{category:"user",key:"{boosting}",label:"Estado de boost"},{category:"server",key:"{server}",label:"Nombre del servidor"},{category:"server",key:"{serverid}",label:"ID del servidor"},{category:"server",key:"{servericon}",label:"Icono del servidor"},{category:"server",key:"{serverbanner}",label:"Banner del servidor"},{category:"server",key:"{serverdescription}",label:"Descripción del servidor"},{category:"server",key:"{owner}",label:"Propietario del servidor"},{category:"server",key:"{ownerid}",label:"ID del propietario"},{category:"server",key:"{membercount}",label:"Cantidad de miembros"},{category:"server",key:"{members}",label:"Cantidad de miembros"},{category:"server",key:"{bots}",label:"Cantidad de bots"},{category:"server",key:"{humans}",label:"Cantidad de usuarios reales"},{category:"server",key:"{online}",label:"Miembros conectados"},{category:"server",key:"{offline}",label:"Miembros desconectados"},{category:"server",key:"{boosts}",label:"Cantidad de boosts"},{category:"server",key:"{boostlevel}",label:"Nivel de boost"},{category:"server",key:"{verificationlevel}",label:"Nivel de verificación"},{category:"server",key:"{channels}",label:"Cantidad de canales"},{category:"server",key:"{textchannels}",label:"Canales de texto"},{category:"server",key:"{voicechannels}",label:"Canales de voz"},{category:"server",key:"{categories}",label:"Cantidad de categorías"},{category:"server",key:"{rolescount}",label:"Cantidad de roles"},{category:"server",key:"{emojis}",label:"Cantidad de emojis"},{category:"server",key:"{stickers}",label:"Cantidad de stickers"},{category:"server",key:"{createdserver}",label:"Fecha de creación del servidor"},{category:"roles",key:"{role}",label:"Nombre del rol entregado"},{category:"roles",key:"{roleid}",label:"ID del rol entregado"},{category:"roles",key:"{rolename}",label:"Nombre del rol"},{category:"roles",key:"{rolecolor}",label:"Color del rol"},{category:"roles",key:"{roleicon}",label:"Icono del rol"},{category:"roles",key:"{highestrole}",label:"Rol más alto"},{category:"roles",key:"{lowestrole}",label:"Rol más bajo"},{category:"roles",key:"{autorole}",label:"Rol automático"},{category:"channel",key:"{channel}",label:"Canal actual"},{category:"channel",key:"{channelid}",label:"ID del canal"},{category:"channel",key:"{channelmention}",label:"Mención del canal"},{category:"channel",key:"{channeltopic}",label:"Tema del canal"},{category:"channel",key:"{category}",label:"Categoría del canal"},{category:"channel",key:"{categoryid}",label:"ID de la categoría"},{category:"channel",key:"{thread}",label:"Nombre del hilo"},{category:"channel",key:"{threadid}",label:"ID del hilo"},{category:"channel",key:"{slowmode}",label:"Modo lento"},{category:"channel",key:"{channeltype}",label:"Tipo de canal"},{category:"bot",key:"{bot}",label:"Nombre del bot"},{category:"bot",key:"{botid}",label:"ID del bot"},{category:"bot",key:"{botavatar}",label:"Avatar del bot"},{category:"bot",key:"{botversion}",label:"Versión del bot"},{category:"bot",key:"{latency}",label:"Latencia del bot"},{category:"bot",key:"{ping}",label:"Ping del bot"},{category:"bot",key:"{uptime}",label:"Tiempo activo"},{category:"bot",key:"{commands}",label:"Cantidad de comandos"},{category:"bot",key:"{servers}",label:"Cantidad de servidores"},{category:"bot",key:"{users}",label:"Cantidad de usuarios"},{category:"bot",key:"{memory}",label:"Memoria usada"},{category:"bot",key:"{cpu}",label:"Uso del procesador"},{category:"bot",key:"{node}",label:"Versión de Node.js"},{category:"bot",key:"{library}",label:"Librería utilizada"},{category:"date",key:"{date}",label:"Fecha actual"},{category:"date",key:"{time}",label:"Hora actual"},{category:"date",key:"{datetime}",label:"Fecha y hora actual"},{category:"date",key:"{timestamp}",label:"Marca de tiempo"},{category:"date",key:"{year}",label:"Año actual"},{category:"date",key:"{month}",label:"Número del mes"},{category:"date",key:"{monthname}",label:"Nombre del mes"},{category:"date",key:"{day}",label:"Día actual"},{category:"date",key:"{weekday}",label:"Día de la semana"},{category:"date",key:"{hour}",label:"Hora"},{category:"date",key:"{minute}",label:"Minuto"},{category:"date",key:"{second}",label:"Segundo"},{category:"date",key:"{timezone}",label:"Zona horaria"},{category:"date",key:"{unix}",label:"Tiempo Unix"},{category:"date",key:"{shortdate}",label:"Fecha corta"},{category:"date",key:"{longdate}",label:"Fecha completa"},{category:"verification",key:"{verifylink}",label:"Enlace de verificación"},{category:"verification",key:"{verificationcode}",label:"Código de verificación"},{category:"verification",key:"{verificationid}",label:"ID de verificación"},{category:"verification",key:"{verificationmethod}",label:"Método de verificación"},{category:"verification",key:"{verificationrole}",label:"Rol de verificación"},{category:"verification",key:"{verificationchannel}",label:"Canal de verificación"},{category:"verification",key:"{verificationtime}",label:"Hora de verificación"},{category:"verification",key:"{verificationdate}",label:"Fecha de verificación"},{category:"verification",key:"{verifyexpires}",label:"Vencimiento del enlace"},{category:"verification",key:"{verified}",label:"Estado de verificación"},{category:"verification",key:"{verifybrowser}",label:"Navegador utilizado"},{category:"verification",key:"{verifyos}",label:"Sistema operativo"},{category:"verification",key:"{verifydevice}",label:"Dispositivo utilizado"},{category:"verification",key:"{verifycountry}",label:"País aproximado"},{category:"verification",key:"{verifycity}",label:"Ciudad aproximada"},{category:"verification",key:"{verifylanguage}",label:"Idioma del navegador"},{category:"verification",key:"{verifyisp}",label:"Proveedor de internet"},{category:"tickets",key:"{ticket}",label:"Nombre del ticket"},{category:"tickets",key:"{ticketid}",label:"ID del ticket"},{category:"tickets",key:"{ticketnumber}",label:"Número del ticket"},{category:"tickets",key:"{ticketowner}",label:"Creador del ticket"},{category:"tickets",key:"{ticketownerid}",label:"ID del creador"},{category:"tickets",key:"{ticketcategory}",label:"Categoría del ticket"},{category:"tickets",key:"{ticketreason}",label:"Motivo del ticket"},{category:"tickets",key:"{ticketcreated}",label:"Fecha de creación"},{category:"tickets",key:"{ticketclosed}",label:"Fecha de cierre"},{category:"tickets",key:"{ticketclosedby}",label:"Cerrado por"},{category:"tickets",key:"{ticketmessages}",label:"Cantidad de mensajes"},{category:"tickets",key:"{ticketclaim}",label:"Miembro del staff asignado"},{category:"tickets",key:"{ticketpriority}",label:"Prioridad"},{category:"tickets",key:"{ticketstatus}",label:"Estado del ticket"},{category:"moderation",key:"{moderator}",label:"Moderador responsable"},{category:"moderation",key:"{moderatorid}",label:"ID del moderador"},{category:"moderation",key:"{reason}",label:"Motivo"},{category:"moderation",key:"{duration}",label:"Duración"},{category:"moderation",key:"{case}",label:"Número de caso"},{category:"moderation",key:"{warns}",label:"Cantidad de advertencias"},{category:"moderation",key:"{bans}",label:"Cantidad de baneos"},{category:"moderation",key:"{kicks}",label:"Cantidad de expulsiones"},{category:"moderation",key:"{timeouts}",label:"Cantidad de aislamientos"},{category:"moderation",key:"{punishment}",label:"Tipo de sanción"},{category:"moderation",key:"{appeal}",label:"Apelación"},{category:"moderation",key:"{appealid}",label:"ID de apelación"},{category:"moderation",key:"{appealstatus}",label:"Estado de apelación"},{category:"web",key:"{ip}",label:"Dirección IP"},{category:"web",key:"{country}",label:"País aproximado"},{category:"web",key:"{city}",label:"Ciudad aproximada"},{category:"web",key:"{region}",label:"Región aproximada"},{category:"web",key:"{timezone}",label:"Zona horaria"},{category:"web",key:"{browser}",label:"Navegador"},{category:"web",key:"{browserversion}",label:"Versión del navegador"},{category:"web",key:"{os}",label:"Sistema operativo"},{category:"web",key:"{osversion}",label:"Versión del sistema"},{category:"web",key:"{device}",label:"Dispositivo"},{category:"web",key:"{platform}",label:"Plataforma"},{category:"web",key:"{language}",label:"Idioma"},{category:"web",key:"{resolution}",label:"Resolución de pantalla"},{category:"web",key:"{isp}",label:"Proveedor de internet"},{category:"messages",key:"{message}",label:"Contenido del mensaje"},{category:"messages",key:"{messageid}",label:"ID del mensaje"},{category:"messages",key:"{author}",label:"Autor del mensaje"},{category:"messages",key:"{authorid}",label:"ID del autor"},{category:"messages",key:"{reply}",label:"Mensaje respondido"},{category:"messages",key:"{attachments}",label:"Cantidad de archivos"},{category:"messages",key:"{embeds}",label:"Cantidad de embeds"},{category:"messages",key:"{mentions}",label:"Menciones"},{category:"messages",key:"{wordcount}",label:"Cantidad de palabras"},{category:"messages",key:"{characters}",label:"Cantidad de caracteres"},{category:"messages",key:"{lines}",label:"Cantidad de líneas"},{category:"messages",key:"{jumpurl}",label:"Enlace al mensaje"},{category:"invites",key:"{invite}",label:"Enlace de invitación"},{category:"invites",key:"{invitecode}",label:"Código de invitación"},{category:"invites",key:"{inviter}",label:"Creador de la invitación"},{category:"invites",key:"{inviterid}",label:"ID del creador"},{category:"invites",key:"{uses}",label:"Cantidad de usos"},{category:"invites",key:"{maxuses}",label:"Máximo de usos"},{category:"invites",key:"{expires}",label:"Fecha de vencimiento"},{category:"invites",key:"{temporary}",label:"Invitación temporal"},{category:"emojis",key:"{emoji}",label:"Emoji"},{category:"emojis",key:"{emojiid}",label:"ID del emoji"},{category:"emojis",key:"{emojiurl}",label:"URL del emoji"},{category:"emojis",key:"{success}",label:"Emoji de éxito"},{category:"emojis",key:"{error}",label:"Emoji de error"},{category:"emojis",key:"{warning}",label:"Emoji de advertencia"},{category:"emojis",key:"{info}",label:"Emoji de información"},{category:"system",key:"{newline}",label:"Salto de línea"},{category:"system",key:"{space}",label:"Espacio"},{category:"system",key:"{separator}",label:"Separador"},{category:"system",key:"{tab}",label:"Tabulación"},{category:"system",key:"{version}",label:"Versión"},{category:"system",key:"{dashboardversion}",label:"Versión del dashboard"},{category:"system",key:"{build}",label:"Versión de compilación"},{category:"system",key:"{environment}",label:"Entorno"},{category:"system",key:"{random}",label:"Texto aleatorio"},{category:"system",key:"{randomnumber}",label:"Número aleatorio"},{category:"system",key:"{randomcolor}",label:"Color aleatorio"},{category:"system",key:"{uuid}",label:"Identificador único"},{category:"system",key:"{domain}",label:"Dominio del dashboard"},{category:"system",key:"{url}",label:"URL actual"},{category:"stats",key:"{totalusers}",label:"Usuarios totales"},{category:"stats",key:"{totalservers}",label:"Servidores totales"},{category:"stats",key:"{totalchannels}",label:"Canales totales"},{category:"stats",key:"{totalroles}",label:"Roles totales"},{category:"stats",key:"{totalbots}",label:"Bots totales"},{category:"stats",key:"{verificationstoday}",label:"Verificaciones de hoy"},{category:"stats",key:"{verificationstotal}",label:"Verificaciones totales"},{category:"stats",key:"{ticketsopen}",label:"Tickets abiertos"},{category:"stats",key:"{ticketsclosed}",label:"Tickets cerrados"},{category:"stats",key:"{commandsused}",label:"Comandos utilizados"},{category:"stats",key:"{joins}",label:"Ingresos"},{category:"stats",key:"{leaves}",label:"Salidas"},{category:"stats",key:"{uptimepercent}",label:"Porcentaje de actividad"}],W=u("variablesModal"),J=u("variablesSearch"),Me=u("variablesModalEmpty"),L=u("variablesModalList"),Q=document.querySelectorAll("[data-variable-category]");let Ie="user";function be(){if(!L)return;const s=String(J?.value||"").trim().toLowerCase(),l=ve.filter(m=>{const k=m.category===Ie,H=`${m.key} ${m.label}`.toLowerCase(),z=!s||H.includes(s);return k&&z});L.innerHTML=l.map(m=>`
+        <button
+          class="verify-variable-button"
+          data-copy-variable="${C(m.key)}"
+          data-variable-search="${C(`${m.key} ${m.label}`)}"
+          type="button"
+        >
+          <code>
+            ${T(m.key)}
+          </code>
+
+          <span>
+            ${T(m.label)}
+          </span>
+
+          <b>
+            Copiar
+          </b>
+        </button>
+      `).join("");const v=l.length>0;Me&&(Me.hidden=v,Me.classList.toggle("visible",!v))}function Ue(s){J&&(J.value=String(s||"")),be()}Q.forEach(s=>{s.addEventListener("click",l=>{l.preventDefault(),l.stopPropagation(),Ie=s.dataset.variableCategory||"user",Q.forEach(v=>{v.classList.toggle("active",v===s)}),be()})}),L?.addEventListener("click",s=>{const l=s.target.closest("[data-copy-variable]");l&&(s.preventDefault(),s.stopPropagation(),he(l.dataset.copyVariable,l))}),be(),W?.addEventListener("wheel",s=>{const l=s.target.closest(".variables-categories, .variables-results");if(!l){s.preventDefault();return}const v=s.deltaY<0,m=s.deltaY>0,k=l.scrollTop<=0,H=Math.ceil(l.scrollTop+l.clientHeight)>=l.scrollHeight;(v&&k||m&&H)&&s.preventDefault()},{passive:!1});function qe(){W&&(W.classList.add("open"),W.setAttribute("aria-hidden","false"),document.body.classList.add("variables-modal-open"),J&&(J.value=""),Ie="user",Q.forEach(s=>{s.classList.toggle("active",s.dataset.variableCategory==="user")}),be(),J&&setTimeout(()=>{J.focus()},150))}function Te(){W&&(W.classList.remove("open"),W.setAttribute("aria-hidden","true"),document.body.classList.remove("variables-modal-open"))}document.querySelectorAll("[data-open-variables]").forEach(s=>{s.addEventListener("click",l=>{l.preventDefault(),l.stopPropagation(),qe()})}),document.querySelectorAll("[data-close-variables]").forEach(s=>{s.addEventListener("click",l=>{l.preventDefault(),l.stopPropagation(),Te()})}),document.querySelectorAll("[data-copy-variable]").forEach(s=>{s.addEventListener("click",l=>{l.preventDefault(),l.stopPropagation(),he(s.dataset.copyVariable,s)})}),J?.addEventListener("input",s=>{Ue(s.target.value)}),document.addEventListener("keydown",s=>{s.key==="Escape"&&W?.classList.contains("open")&&Te()});const X=(s,l)=>{Z.querySelector("strong").textContent=s,Z.querySelector("p").textContent=l,Ae()};document.querySelectorAll("[data-copy-variable]").forEach(s=>{s.addEventListener("click",l=>{l.preventDefault(),l.stopPropagation();const v=s.dataset.copyVariable;v&&he(v,s)})});const Pe=()=>document.querySelector('input[name="verificationMethod"]:checked')?.value||"oauth_link",je=()=>{const s={};return Object.keys(c).forEach(l=>{s[l]=!!u(`verifyLog_${l}`)?.checked}),s},le=s=>h(s),ee=()=>{const s=u("verifyEmbedTitle"),l=u("verifyEmbedDescription"),v=u("verifyEmbedColor"),m=u("verifyButtonText"),k=u("verifyButtonEmoji"),H=u("verifyEmbedFieldName"),z=u("verifyEmbedFieldValue"),ye=u("verifyEmbedFooterText"),ne=u("verifyEmbedThumbnailUrl"),O=u("verifyEmbedImageUrl"),de=u("verifyPreviewEmbed");if(!de)return;const _e=u("verifyPreviewTitle"),De=u("verifyPreviewDescription"),se=u("verifyPreviewFieldName"),Xe=u("verifyPreviewFieldValue"),He=u("verifyPreviewButtonText"),Ye=u("verifyPreviewButtonEmoji"),Ht=u("verifyPreviewFooterText"),Gt=u("verifyPreviewAuthor"),Ge=u("verifyPreviewThumbnail"),tt=u("verifyPreviewImage"),zt=u("verifyPreviewTimestamp");if(_e&&(_e.textContent=le(s?.value||"🔒 Verificación requerida")),De&&(De.textContent=le(l?.value||"Presioná el botón para verificarte.")),se&&(se.textContent=le(H?.value||"📌 Servidor")),Xe&&(Xe.textContent=le(z?.value||"{server}")),He&&(He.textContent=m?.value||"Verificar con Discord"),Ye&&(Ye.textContent=k?.value||""),Ht&&(Ht.textContent=le(ye?.value||"Nebula Security")),de.style.setProperty("--preview-embed-color",v?.value||"#8b5cf6"),Gt&&(Gt.style.display=u("verifyShowBotAvatar")?.checked?"flex":"none"),Ge){const Kt=!!u("verifyShowCustomThumbnail")?.checked,Ca=!!u("verifyShowServerIcon")?.checked;Kt&&ne?.value?(Ge.src=ne.value,Ge.style.display="block"):Ca&&Ge.src?Ge.style.display="block":Ge.style.display="none"}tt&&(!!u("verifyShowEmbedImage")?.checked&&O?.value?(tt.src=O.value,tt.style.display="block"):tt.style.display="none"),zt&&(zt.style.display=u("verifyShowTimestamp")?.checked?"inline":"none")},me=()=>{const s=document.getElementById("verifySuccessTitle"),l=document.getElementById("verifySuccessMessage"),v=document.getElementById("verifySuccessColor"),m=document.getElementById("verifySuccessAnimation"),k=document.getElementById("verifyShowCountdown"),H=document.getElementById("verifyClosePageEnabled"),z=document.querySelector(".configuration-success-preview"),ye=document.getElementById("successPreviewTitle"),ne=document.getElementById("successPreviewMessage"),O=document.getElementById("successPreviewIcon"),de=z?.querySelector("small"),_e=z?.querySelector(".configuration-progress-track");if(!s||!l||!v||!z||!ye||!ne||!O)return;const De=a?.name||"servidor";ye.textContent=s.value.trim()||"Verificación completada",ne.textContent=(l.value.trim()||"Tu cuenta fue verificada correctamente.").replaceAll("{servidor}",De).replaceAll("{server}",De);const se=/^#[0-9a-f]{6}$/i.test(v.value)?v.value:"#22c55e";z.style.setProperty("--success-color",se),O.style.setProperty("background-color",se,"important"),O.style.setProperty("border-color",se,"important"),O.style.setProperty("box-shadow",`0 0 28px ${se}88`,"important"),O.style.color="#ffffff";const Xe=z.querySelector(".configuration-progress-track span");Xe&&Xe.style.setProperty("background-color",se,"important");const He=m?.value||"check";z.dataset.animation=He,He==="none"?O.style.display="none":(O.style.display="grid",O.textContent=He==="confetti"?"🎉":"✓");const Ye=k?.checked!==!1;de&&(de.style.display=Ye?"":"none",de.textContent=H?.checked?"Cerrando en 3 segundos...":"Redirigiendo en 3 segundos..."),_e&&(_e.style.display=Ye?"":"none")};["verifySuccessTitle","verifySuccessMessage","verifySuccessColor"].forEach(s=>{document.getElementById(s)?.addEventListener("input",me)}),["verifySuccessAnimation","verifyShowCountdown","verifyClosePageEnabled"].forEach(s=>{document.getElementById(s)?.addEventListener("change",me)}),me();const q=s=>String(s||"").replaceAll("{usuario}","Usuario de ejemplo").replaceAll("{servidor}","Servidor de ejemplo").replaceAll("{rol}","✓ Verificado").replaceAll("{fecha}",new Date().toLocaleDateString("es-AR")).replaceAll("{hora}",new Date().toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})),G=()=>{const s=document.getElementById("verifySuccessDmEnabled"),l=document.getElementById("verifySuccessDmTitle"),v=document.getElementById("verifySuccessDmMessage"),m=document.getElementById("verifySuccessDmColor"),k=document.getElementById("verifySuccessDmColorText"),H=document.getElementById("verifySuccessDmThumbnail"),z=document.getElementById("successDmPreviewEmbed"),ye=document.getElementById("successDmPreviewTitle"),ne=document.getElementById("successDmPreviewMessage"),O=document.getElementById("successDmPreviewThumbnail");if(!z||!ye||!ne||!O)return;const de=l?.value||"🎉 ¡Verificado!",_e=v?.value||`¡Hola {usuario}! 🎉
+
+Tu cuenta fue verificada correctamente en {servidor}.
+
+Gracias por formar parte de nuestra comunidad.`,De=m?.value||"#3b82f6",se=String(H?.value||"").trim();ye.textContent=q(de),ne.textContent=q(_e),z.style.setProperty("--preview-color",De),k&&(k.value=De),se&&/^https?:\/\//i.test(se)?(O.src=se,O.style.display=""):(O.removeAttribute("src"),O.style.display="none"),z.style.opacity=s?.checked?"1":"0.45"};["verifySuccessDmTitle","verifySuccessDmMessage","verifySuccessDmThumbnail"].forEach(s=>{document.getElementById(s)?.addEventListener("input",G)}),document.getElementById("verifySuccessDmEnabled")?.addEventListener("change",G),document.getElementById("verifySuccessDmColor")?.addEventListener("input",s=>{const l=document.getElementById("verifySuccessDmColorText");l&&(l.value=s.target.value),G()}),document.getElementById("verifySuccessDmColorText")?.addEventListener("input",s=>{const l=s.target.value.trim();if(/^#[0-9a-f]{6}$/i.test(l)){const v=document.getElementById("verifySuccessDmColor");v&&(v.value=l),G()}}),G();const Ee=()=>({enabled:u("verifyEnabled").checked,verificationChannelId:u("verifyChannel").value,logsChannelId:u("verifyLogs").value,verifiedRoleId:u("verifyRole").value,verificationMethod:Pe(),embedTitle:u("verifyEmbedTitle").value,embedDescription:u("verifyEmbedDescription").value,embedColor:u("verifyEmbedColor").value,buttonText:u("verifyButtonText").value,buttonEmoji:u("verifyButtonEmoji").value,reactionEmoji:u("verifyReactionEmoji").value,interactionTitle:u("verifyInteractionTitle").value,interactionMessage:u("verifyInteractionMessage").value,interactionColor:u("verifyInteractionColor").value,interactionImage:u("verifyInteractionImage").value,interactionButtonEmoji:u("verifyInteractionButtonEmoji").value,interactionButtonText:u("verifyInteractionButtonText").value,successTitle:u("verifySuccessTitle").value,successMessage:u("verifySuccessMessage").value,successColor:u("verifySuccessColor").value,successAnimation:u("verifySuccessAnimation").value,showCountdown:u("verifyShowCountdown").checked,closePageEnabled:u("verifyClosePageEnabled").checked,successDmEnabled:u("verifySuccessDmEnabled").checked,successDmTitle:u("verifySuccessDmTitle").value,successDmMessage:u("verifySuccessDmMessage").value,successDmColor:u("verifySuccessDmColor").value,successDmThumbnail:u("verifySuccessDmThumbnail").value,embedFieldName:u("verifyEmbedFieldName").value,embedFieldValue:u("verifyEmbedFieldValue").value,embedFooterText:u("verifyEmbedFooterText").value,embedThumbnailUrl:u("verifyEmbedThumbnailUrl").value,embedImageUrl:u("verifyEmbedImageUrl").value,showBotAvatar:u("verifyShowBotAvatar").checked,showServerIcon:u("verifyShowServerIcon").checked,showCustomThumbnail:u("verifyShowCustomThumbnail").checked,showEmbedImage:u("verifyShowEmbedImage").checked,showTimestamp:u("verifyShowTimestamp").checked,logEmbedTitle:u("verifyLogTitle").value,logEmbedDescription:u("verifyLogDescription").value,logEmbedColor:u("verifyLogColor").value,logOptions:je(),webAppearance:j(),security:{detectVpn:u("verifyDetectVpn").checked,detectProxy:u("verifyDetectProxy").checked,detectTor:u("verifyDetectTor").checked,blockHosting:u("verifyBlockHosting").checked,detectAltAccounts:u("verifyDetectAltAccounts").checked,minimumAccountAgeEnabled:u("verifyMinimumAgeEnabled").checked,minimumAccountAgeDays:Number(u("verifyMinimumAgeDays").value),blockWithoutAvatar:u("verifyBlockWithoutAvatar").checked,blockWithoutBanner:u("verifyBlockWithoutBanner").checked,allowReverification:u("verifyAllowReverification").checked,notifySecurityFailure:u("verifyNotifySecurityFailure").checked}});["verifyEmbedTitle","verifyEmbedDescription","verifyEmbedColor","verifyEmbedColorText","verifyButtonText","verifyButtonEmoji","verifyEmbedFieldName","verifyEmbedFieldValue","verifyEmbedFooterText","verifyEmbedThumbnailUrl","verifyEmbedImageUrl","verifyShowBotAvatar","verifyShowServerIcon","verifyShowCustomThumbnail","verifyShowEmbedImage","verifyShowTimestamp","verifyRole","verifyChannel"].forEach(s=>{const l=u(s);if(!l)return;const v=l.type==="checkbox"?"change":"input";l.addEventListener(v,ee)}),u("verifyEmbedColor")?.addEventListener("input",s=>{u("verifyEmbedColorText").value=s.target.value,ee()}),u("verifyEmbedColorText")?.addEventListener("input",s=>{const l=s.target.value.trim();/^#[0-9a-f]{6}$/i.test(l)&&(u("verifyEmbedColor").value=l,ee())}),ee();const ke=u("interactionMessageConfiguration"),te=document.querySelectorAll('input[name="verificationMethod"]');function Le(){const s=document.querySelector('input[name="verificationMethod"]:checked')?.value||"oauth_link";ke&&(ke.style.display=s==="interaction_button"?"":"none")}te.forEach(s=>{s.addEventListener("change",Le)}),Le();const Be=u("verifyInteractionTitle"),we=u("verifyInteractionMessage"),Ce=u("verifyInteractionColor"),ae=u("verifyInteractionColorText"),Oe=u("verifyInteractionImage"),b=u("verifyInteractionButtonEmoji"),S=u("verifyInteractionButtonText"),x=u("interactionPreviewTitle"),M=u("interactionPreviewMessage"),r=u("interactionMessagePreviewEmbed"),d=u("interactionPreviewImage"),y=u("interactionPreviewButton");function h(s){const l=new Date,v=u("verifyRole")?.selectedOptions?.[0]?.textContent?.trim()||"Miembro verificado",m=u("verifyChannel")?.selectedOptions?.[0]?.textContent?.trim()||"#verificación",k=a?.name||"Servidor de ejemplo",H=String(a?.id||"123456789012345678"),z=String(a?.ownerId||"123456789012345678"),ye=Number(a?.memberCount||a?.members||1248).toLocaleString("es-AR"),ne={"{usuario}":"Usuario","{servidor}":k,"{rol}":v,"{fecha}":l.toLocaleDateString("es-AR"),"{hora}":l.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),"{user}":"Usuario","{username}":"usuario","{displayname}":"Usuario de ejemplo","{globalname}":"Usuario de ejemplo","{nickname}":"Usuario","{mention}":"@Usuario","{userid}":"123456789012345678","{avatar}":"https://cdn.discordapp.com/avatar.png","{banner}":"https://cdn.discordapp.com/banner.png","{created}":"15/03/2024","{joined}":"10/07/2026","{joinedrelative}":"hace 7 días","{status}":"En línea","{activity}":"Usando Nebula","{roles}":`${v}, Miembro`,"{rolecount}":"2","{highestrole}":v,"{lowestrole}":"Miembro","{permissions}":"Ver canales, enviar mensajes","{boosting}":"No","{server}":k,"{serverid}":H,"{servericon}":a?.icon||"Icono del servidor","{serverbanner}":a?.banner||"Banner del servidor","{serverdescription}":a?.description||"Comunidad protegida por Nebula","{owner}":"Propietario","{ownerid}":z,"{membercount}":ye,"{members}":ye,"{bots}":"24","{humans}":"1.224","{online}":"386","{offline}":"862","{boosts}":"18","{boostlevel}":"Nivel 2","{verificationlevel}":"Medio","{channels}":"48","{textchannels}":"32","{voicechannels}":"10","{categories}":"6","{rolescount}":"14","{emojis}":"42","{stickers}":"8","{createdserver}":"20/05/2024","{role}":v,"{roleid}":"123456789012345678","{rolename}":v,"{rolecolor}":"#ffffff","{roleicon}":"🛡️","{autorole}":v,"{channel}":m,"{channelid}":"123456789012345678","{channelmention}":m,"{channeltopic}":"Canal de verificación","{category}":"INFORMACIÓN","{categoryid}":"123456789012345678","{thread}":"Hilo de ejemplo","{threadid}":"123456789012345678","{slowmode}":"Desactivado","{channeltype}":"Canal de texto","{bot}":"Nebula Bot","{botid}":"123456789012345678","{botavatar}":"Avatar de Nebula","{botversion}":"2.0.0","{latency}":"38 ms","{ping}":"38 ms","{uptime}":"30 días","{commands}":"24","{servers}":"12","{users}":"8.745","{memory}":"86 MB","{cpu}":"2.3%","{node}":"Node.js 22","{library}":"Discord.js v14","{date}":l.toLocaleDateString("es-AR"),"{time}":l.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}),"{datetime}":l.toLocaleString("es-AR"),"{timestamp}":String(l.getTime()),"{year}":String(l.getFullYear()),"{month}":String(l.getMonth()+1),"{monthname}":l.toLocaleDateString("es-AR",{month:"long"}),"{day}":String(l.getDate()),"{weekday}":l.toLocaleDateString("es-AR",{weekday:"long"}),"{hour}":String(l.getHours()).padStart(2,"0"),"{minute}":String(l.getMinutes()).padStart(2,"0"),"{second}":String(l.getSeconds()).padStart(2,"0"),"{timezone}":Intl.DateTimeFormat().resolvedOptions().timeZone,"{unix}":String(Math.floor(l.getTime()/1e3)),"{shortdate}":l.toLocaleDateString("es-AR"),"{longdate}":l.toLocaleDateString("es-AR",{weekday:"long",year:"numeric",month:"long",day:"numeric"}),"{verifylink}":`${window.location.origin}/verify`,"{verificationcode}":"NEBULA-4821","{verificationid}":"VER-123456","{verificationmethod}":"Botón de enlace","{verificationrole}":v,"{verificationchannel}":m,"{verificationtime}":l.toLocaleTimeString("es-AR"),"{verificationdate}":l.toLocaleDateString("es-AR"),"{verifyexpires}":"20 minutos","{verified}":"Verificado","{verifybrowser}":"Chrome","{verifyos}":"Windows 11","{verifydevice}":"Computadora","{verifycountry}":"Argentina","{verifycity}":"El Colorado","{verifylanguage}":navigator.language||"es-AR","{verifyisp}":"Proveedor de internet","{newline}":`
+`,"{space}":" ","{separator}":"────────────","{tab}":"    ","{version}":"2.0.0","{dashboardversion}":"2.0.0","{build}":"Producción","{environment}":"Dashboard","{random}":"Nebula","{randomnumber}":String(Math.floor(Math.random()*1e3)),"{randomcolor}":"#ffffff","{uuid}":"550e8400-e29b-41d4-a716-446655440000","{domain}":window.location.hostname,"{url}":window.location.href};return ve.forEach(O=>{const de=O.key.toLowerCase();ne[de]===void 0&&(ne[de]=`${O.label} — ejemplo`)}),String(s||"").replace(/\{[a-z0-9]+\}/gi,O=>ne[O.toLowerCase()]??O)}function E(s){return/^#[0-9A-Fa-f]{6}$/.test(String(s||""))}function w(){if(!x||!M||!r||!y)return;const s=h(Be?.value||"🔒 Verificá tu cuenta"),l=h(we?.value||"Presioná el botón para verificarte.");x.textContent=s,M.textContent=l;const v=Ce?.value||"#ffffff";r.style.setProperty("--preview-color",v),ae&&ae.value!==v&&(ae.value=v);const m=Oe?.value.trim()||"";d&&(m?(d.src=m,d.style.display="block"):(d.removeAttribute("src"),d.style.display="none"));const k=b?.value.trim()||"",H=S?.value.trim()||"Continuar verificación";y.innerHTML=`
+  ${k?`<span class="configuration-link-button-emoji">${T(k)}</span>`:""}
+
+  <span class="configuration-link-button-text">
+    ${T(H)}
+  </span>
+
+  <span class="configuration-link-button-arrow">
+    ↗
+  </span>
+`}[Be,we,Oe,b,S].forEach(s=>{s?.addEventListener("input",w)}),Ce?.addEventListener("input",w),ae?.addEventListener("input",()=>{const s=ae.value.trim();E(s)&&Ce&&(Ce.value=s,w())}),w(),u("backToServerPanel")?.addEventListener("click",()=>{$e(a.id)}),document.querySelectorAll(".verify-tab").forEach(s=>{s.addEventListener("click",()=>{document.querySelectorAll(".verify-tab").forEach(l=>l.classList.remove("active")),document.querySelectorAll(".verify-tab-panel").forEach(l=>l.classList.remove("active")),s.classList.add("active"),document.querySelector(`[data-verify-panel="${s.dataset.verifyTab}"]`)?.classList.add("active")})}),u("verifyEnabled")?.addEventListener("change",s=>{const l=u("verifySystemStatus");l.textContent=s.target.checked?"ACTIVADO":"DESACTIVADO",l.classList.toggle("enabled",s.target.checked),l.classList.toggle("disabled",!s.target.checked)}),u("verifyLogs")?.addEventListener("change",s=>{u("verifyLogsSettings")?.classList.toggle("visible",!!s.target.value)});const P=(s,l)=>{const v=u(s),m=u(l);v?.addEventListener("input",()=>{m.value=v.value}),m?.addEventListener("input",()=>{/^#[0-9A-F]{6}$/i.test(m.value)&&(v.value=m.value)})};P("verifyEmbedColor","verifyEmbedColorText"),P("verifyLogColor","verifyLogColorText");function j(){return{splitImageUrl:document.getElementById("verifySplitImageUrl")?.value.trim()||"",splitImagePosition:document.getElementById("verifySplitImagePosition")?.value||"left",splitImageFit:document.getElementById("verifySplitImageFit")?.value||"cover",splitImageDarkness:Number(document.getElementById("verifySplitImageDarkness")?.value||45),splitImageWidth:Number(document.getElementById("verifySplitImageWidth")?.value||48),splitShowImage:document.getElementById("verifySplitShowImage")?.checked!==!1,splitShowDate:document.getElementById("verifySplitShowDate")?.checked!==!1,splitShowAccess:document.getElementById("verifySplitShowAccess")?.checked!==!1,cardDesign:document.querySelector('input[name="verificationCardDesign"]:checked')?.value||"classic",terminalTitle:document.getElementById("verifyTerminalTitle")?.value.trim()||"NEBULA SECURITY TERMINAL",terminalPrefix:document.getElementById("verifyTerminalPrefix")?.value.trim()||">",terminalStatusText:document.getElementById("verifyTerminalStatusText")?.value.trim()||"Sistema preparado",terminalBackgroundColor:document.getElementById("verifyTerminalBackgroundColorText")?.value||"#020703",terminalTextColor:document.getElementById("verifyTerminalTextColorText")?.value||"#d9ffe0",terminalAccentColor:document.getElementById("verifyTerminalAccentColorText")?.value||"#22c55e",terminalBorderColor:document.getElementById("verifyTerminalBorderColorText")?.value||"#14532d",terminalShowCursor:!!document.getElementById("verifyTerminalShowCursor")?.checked,terminalShowLines:!!document.getElementById("verifyTerminalShowLines")?.checked,terminalShowServer:!!document.getElementById("verifyTerminalShowServer")?.checked,terminalShowRole:!!document.getElementById("verifyTerminalShowRole")?.checked,terminalGlow:Number(document.getElementById("verifyTerminalGlow")?.value||25),terminalRadius:Number(document.getElementById("verifyTerminalRadius")?.value||10),pageName:document.getElementById("verifyPageName")?.value.trim()||"",pageDescription:document.getElementById("verifyPageDescription")?.value.trim()||"",logoUrl:document.getElementById("verifyLogoUrl")?.value.trim()||"",backgroundUrl:document.getElementById("verifyBackgroundUrl")?.value.trim()||"",primaryColor:document.getElementById("verifyPrimaryColorText")?.value||"#8b5cf6",secondaryColor:document.getElementById("verifySecondaryColorText")?.value||"#6d28d9",buttonColor:document.getElementById("verifyButtonColorText")?.value||"#7c3aed",textColor:document.getElementById("verifyTextColorText")?.value||"#ffffff",cardColor:document.getElementById("verifyCardColorText")?.value||"#0f0f1a",backgroundSolidColor:document.getElementById("verifyBackgroundSolidColorText")?.value||"#05050a",gradientStart:document.getElementById("verifyGradientStartText")?.value||"#05050a",gradientEnd:document.getElementById("verifyGradientEndText")?.value||"#160c2b",backgroundType:document.getElementById("verifyBackgroundType")?.value||"space",spaceBackground:!!document.getElementById("verifySpaceBackground")?.checked,animationsEnabled:!!document.getElementById("verifyAnimationsEnabled")?.checked,particlesEnabled:!!document.getElementById("verifyParticlesEnabled")?.checked,glowEnabled:!!document.getElementById("verifyGlowEnabled")?.checked,fadeEnabled:!!document.getElementById("verifyFadeEnabled")?.checked,hoverEnabled:!!document.getElementById("verifyHoverEnabled")?.checked,cursorGlowEnabled:!!document.getElementById("verifyCursorGlowEnabled")?.checked,buttonAnimationEnabled:!!document.getElementById("verifyButtonAnimationEnabled")?.checked,logoAnimationEnabled:!!document.getElementById("verifyLogoAnimationEnabled")?.checked,particleCount:Number(document.getElementById("verifyParticleCount")?.value||100),glowIntensity:Number(document.getElementById("verifyGlowIntensity")?.value||80),cardBlur:Number(document.getElementById("verifyCardBlur")?.value||18),cardOpacity:Number(document.getElementById("verifyCardOpacity")?.value||88),cardRadius:Number(document.getElementById("verifyCardRadius")?.value||24),cardShadow:Number(document.getElementById("verifyCardShadow")?.value||80),verifyButtonText:document.getElementById("verifyAppearanceButtonText")?.value.trim()||"Verificar con Discord",verifyButtonIcon:document.getElementById("verifyButtonIcon")?.value||"discord",verifyButtonSize:document.getElementById("verifyButtonSize")?.value||"large",verifyButtonRadius:Number(document.getElementById("verifyButtonRadius")?.value||14),verificationSound:!!document.getElementById("verifyVerificationSound")?.checked,errorSound:!!document.getElementById("verifyErrorSound")?.checked,openingSound:!!document.getElementById("verifyOpeningSound")?.checked,soundVolume:Number(document.getElementById("verifySoundVolume")?.value||50)}}function B(){const s=j(),l=document.getElementById("verifyAppearanceFrame");l?.contentWindow&&l.contentWindow.postMessage({type:"nebula-appearance-preview",appearance:s},window.location.origin)}document.getElementById("verifyAppearanceFrame")?.addEventListener("load",()=>{setTimeout(B,150)});function F(){const s=document.querySelector('input[name="verificationCardDesign"]:checked')?.value||"classic";document.querySelectorAll("[data-design-settings]").forEach(m=>{m.classList.toggle("active",m.dataset.designSettings===s)});const l={classic:["identity","palette","background","animations","card","button","sounds"],split:["identity","palette","background","button"],terminal:["identity","background","button"]},v=l[s]||l.classic;document.querySelectorAll("[data-appearance-section]").forEach(m=>{const k=m.dataset.appearanceSection;m.hidden=!v.includes(k)})}document.querySelectorAll('input[name="verificationCardDesign"]').forEach(s=>{s.addEventListener("change",()=>{F(),B()})}),F(),["verifyPageName","verifyPageDescription","verifyLogoUrl","verifyBackgroundUrl","verifyPrimaryColor","verifyPrimaryColorText","verifySecondaryColor","verifySecondaryColorText","verifyButtonColor","verifyButtonColorText","verifyTextColor","verifyTextColorText","verifyCardColor","verifyCardColorText","verifyBackgroundSolidColor","verifyBackgroundSolidColorText","verifyGradientStart","verifyGradientStartText","verifyGradientEnd","verifyGradientEndText","verifyBackgroundType","verifySpaceBackground","verifyParticlesEnabled","verifyAnimationsEnabled","verifyGlowEnabled","verifyFadeEnabled","verifyHoverEnabled","verifyCursorGlowEnabled","verifyButtonAnimationEnabled","verifyLogoAnimationEnabled","verifyParticleCount","verifyGlowIntensity","verifyCardBlur","verifyCardOpacity","verifyCardRadius","verifyCardShadow","verifyAppearanceButtonText","verifyButtonIcon","verifyButtonSize","verifyButtonRadius","verifyOpeningSound","verifyVerificationSound","verifyErrorSound","verifySoundVolume","verifySplitImageUrl","verifySplitImagePosition","verifySplitImageFit","verifySplitImageDarkness","verifySplitImageWidth","verifySplitShowImage","verifySplitShowDate","verifySplitShowAccess","verifyTerminalTitle","verifyTerminalPrefix","verifyTerminalStatusText","verifyTerminalBackgroundColor","verifyTerminalBackgroundColorText","verifyTerminalTextColor","verifyTerminalTextColorText","verifyTerminalAccentColor","verifyTerminalAccentColorText","verifyTerminalBorderColor","verifyTerminalBorderColorText","verifyTerminalShowCursor","verifyTerminalShowLines","verifyTerminalShowServer","verifyTerminalShowRole","verifyTerminalGlow","verifyTerminalRadius"].forEach(s=>{const l=document.getElementById(s);if(!l)return;const v=l.type==="checkbox"||l.tagName==="SELECT"?"change":"input";l.addEventListener(v,B)}),[["verifyPrimaryColor","verifyPrimaryColorText"],["verifySecondaryColor","verifySecondaryColorText"],["verifyButtonColor","verifyButtonColorText"],["verifyTextColor","verifyTextColorText"],["verifyCardColor","verifyCardColorText"],["verifyBackgroundSolidColor","verifyBackgroundSolidColorText"],["verifyGradientStart","verifyGradientStartText"],["verifyGradientEnd","verifyGradientEndText"],["verifyTerminalBackgroundColor","verifyTerminalBackgroundColorText"],["verifyTerminalTextColor","verifyTerminalTextColorText"],["verifyTerminalAccentColor","verifyTerminalAccentColorText"],["verifyTerminalBorderColor","verifyTerminalBorderColorText"]].forEach(([s,l])=>{const v=document.getElementById(s),m=document.getElementById(l);v?.addEventListener("input",()=>{m.value=v.value,B()}),m?.addEventListener("input",()=>{const k=m.value.trim();/^#[0-9a-f]{6}$/i.test(k)&&(v.value=k,B())})}),document.querySelectorAll(".appearance-range-control input[type='range']").forEach(s=>{const l=document.getElementById(`${s.id}Value`),v=()=>{l&&(l.textContent=`${s.value}${s.dataset.suffix||""}`),B()};s.addEventListener("input",v),v()}),B(),u("saveVerification")?.addEventListener("click",async()=>{const s=u("saveVerification"),l=Ee();if(!l.verificationChannelId){X("Falta el canal","Seleccioná el canal de verificación.");return}if(!l.verifiedRoleId){X("Falta el rol","Seleccioná el rol que recibirá el usuario.");return}s.disabled=!0,s.textContent="Guardando...";try{const v=await fetch(`${R}/api/servers/${a.id}/verification`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(l)}),m=await v.json();if(!v.ok||!m.success)throw new Error(m.message||"No se pudo guardar.");X("Configuración guardada","Todos los cambios quedaron guardados.")}catch(v){X("Error al guardar",v.message)}finally{s.disabled=!1,s.textContent="Guardar configuración"}}),u("sendVerificationPanel")?.addEventListener("click",async()=>{const s=u("sendVerificationPanel");u("saveVerification").click(),await new Promise(v=>setTimeout(v,700)),s.disabled=!0,s.textContent="Enviando...";try{const v=await fetch(`${R}/api/servers/${a.id}/verification/send`,{method:"POST"}),m=await v.json();if(!v.ok||!m.success)throw new Error(m.message||"No se pudo enviar el panel.");X("Panel enviado","Revisá el canal de verificación en Discord.")}catch(v){X("Error al enviar",v.message)}finally{s.disabled=!1,s.textContent="Enviar panel a Discord"}})}async function $i(a){$.innerHTML=`
+    <div class="dynamic-page">
+      <div class="servers-loading">
+        <div class="loading-spinner"></div>
+        <strong>Cargando configuración de bienvenida...</strong>
+      </div>
+    </div>
+  `;try{const[e,t]=await Promise.all([fetch(`${R}/api/servers/${a.id}/text-channels`),fetch(`${R}/api/servers/${a.id}/welcome`)]),i=await e.json(),n=await t.json();if(!i.success||!n.success)throw new Error("No se pudo cargar la configuración");Mi(a,i.data,n.data)}catch(e){$.innerHTML=`
+      <div class="dynamic-page">
+        <div class="servers-error">
+          <div class="servers-error-icon">!</div>
+          <h3>No se pudo abrir Bienvenida</h3>
+          <p>${e.message}</p>
+          <button id="backToServerPanel">
+            Volver al servidor
+          </button>
+        </div>
+      </div>
+    `,document.getElementById("backToServerPanel")?.addEventListener("click",()=>{$e(a.id)})}}function Mi(a,e,t){const i=e.map(b=>`
+    <option
+      value="${b.id}"
+      ${b.id===t.channelId?"selected":""}
+    >
+      # ${b.name}
+    </option>
+  `).join("");$.innerHTML=`
+    <div class="dynamic-page welcome-config-page">
+
+      <section class="section-header">
+        <div>
+          <span>MENSAJES AUTOMÁTICOS</span>
+          <h1>Bienvenida</h1>
+          <p>
+            Configurá el mensaje que recibirá cada usuario
+            cuando ingrese a ${a.name}.
+          </p>
+        </div>
+
+        <button id="backToServerPanel" class="section-action">
+          ‹ Volver al servidor
+        </button>
+      </section>
+
+      <div class="welcome-layout">
+
+        <article class="section-panel">
+         <div class="section-panel-head">
+  <div>
+    <span>CONFIGURACIÓN</span>
+
+    <h3>
+      Mensaje de ingreso
+    </h3>
+  </div>
+
+<button
+  id="openWelcomeVariables"
+  class="open-variables-button"
+  data-open-welcome-variables
+  type="button"
+>
+  <span>⌘</span>
+  Variables
+</button>
+ </div>
+
+          <div class="welcome-enabled-row">
+            <div>
+              <strong>Activar bienvenida</strong>
+              <p>
+                El bot enviará el mensaje cuando entre alguien.
+              </p>
+            </div>
+
+            <label class="switch-control">
+              <input
+                id="welcomeEnabled"
+                type="checkbox"
+                ${t.enabled?"checked":""}
+              >
+              <span></span>
+            </label>
+          </div>
+
+          <label class="welcome-field">
+            <span>CANAL DE BIENVENIDA</span>
+            <select id="welcomeChannel">
+              <option value="">Seleccionar canal...</option>
+              ${i}
+            </select>
+          </label>
+
+          <label class="welcome-field">
+            <span>TÍTULO</span>
+            <input
+              id="welcomeTitle"
+              maxlength="256"
+              value="${C(t.title)}"
+            >
+          </label>
+
+          <label class="welcome-field">
+            <span>MENSAJE</span>
+            <textarea
+              id="welcomeMessage"
+              maxlength="2000"
+              rows="7"
+            >${T(t.message)}</textarea>
+          </label>
+<div class="welcome-enabled-row">
+  <div>
+    <strong>Mostrar foto del usuario</strong>
+    <p>
+      Agrega el avatar del nuevo miembro al mensaje público.
+    </p>
+  </div>
+
+  <label class="switch-control">
+    <input
+      id="welcomeShowAvatar"
+      type="checkbox"
+      ${t.showAvatar!==!1?"checked":""}
+    >
+    <span></span>
+  </label>
+</div>
+          <label class="welcome-field">
+            <span>COLOR DEL MENSAJE</span>
+
+            <div class="welcome-color-row">
+              <input
+                id="welcomeColor"
+                type="color"
+                value="${t.color}"
+              >
+
+              <input
+                id="welcomeColorText"
+                value="${t.color}"
+                maxlength="7"
+              >
+            </div>
+          </label>
+
+          <div class="welcome-variables">
+            <strong>Variables disponibles</strong>
+
+            <div>
+<button data-variable="{user}">{user}</button>
+<button data-variable="{mention}">{mention}</button>
+<button data-variable="{username}">{username}</button>
+<button data-variable="{displayname}">{displayname}</button>
+<button data-variable="{userid}">{userid}</button>
+<button data-variable="{server}">{server}</button>
+<button data-variable="{serverid}">{serverid}</button>
+<button data-variable="{members}">{members}</button>
+<button data-variable="{membercount}">{membercount}</button>
+<button data-variable="{joindate}">{joindate}</button>
+           </div>
+          </div>
+<div class="welcome-section-divider">
+  <span>MENSAJE PRIVADO</span>
+</div>
+
+<div class="welcome-enabled-row">
+  <div>
+    <strong>Enviar mensaje por MD</strong>
+    <p>
+      Envía un mensaje privado al usuario cuando se una.
+    </p>
+  </div>
+
+  <label class="switch-control">
+    <input
+      id="welcomeDmEnabled"
+      type="checkbox"
+      ${t.dmEnabled?"checked":""}
+    >
+    <span></span>
+  </label>
+</div>
+
+<div
+  id="welcomeDmFields"
+  class="welcome-dm-fields ${t.dmEnabled?"visible":""}"
+>
+  <label class="welcome-field">
+    <span>TÍTULO DEL MD</span>
+
+    <input
+      id="welcomeDmTitle"
+      maxlength="256"
+      value="${C(t.dmTitle)}"
+    >
+  </label>
+
+  <label class="welcome-field">
+    <span>MENSAJE PRIVADO</span>
+
+    <textarea
+      id="welcomeDmMessage"
+      maxlength="2000"
+      rows="7"
+    >${T(t.dmMessage)}</textarea>
+  </label>
+
+  <label class="welcome-field">
+    <span>COLOR DEL MD</span>
+
+    <div class="welcome-color-row">
+      <input
+        id="welcomeDmColor"
+        type="color"
+        value="${t.dmColor}"
+      >
+
+      <input
+        id="welcomeDmColorText"
+        value="${t.dmColor}"
+        maxlength="7"
+      >
+    </div>
+  </label>
+
+  <div class="welcome-enabled-row">
+    <div>
+      <strong>Mostrar foto en el MD</strong>
+      <p>
+        Agrega el avatar del usuario al mensaje privado.
+      </p>
+    </div>
+
+    <label class="switch-control">
+      <input
+        id="welcomeDmShowAvatar"
+        type="checkbox"
+        ${t.dmShowAvatar!==!1?"checked":""}
+      >
+      <span></span>
+    </label>
+  </div>
+</div>
+
+<div class="welcome-actions-row">
+  <button
+    id="testWelcome"
+    class="welcome-test-button"
+    type="button"
+  >
+    Enviar mensaje de prueba
+  </button>
+
+  <button
+    id="saveWelcome"
+    class="welcome-save-button"
+    type="button"
+  >
+    Guardar configuración
+  </button>
+</div>
+        </article>
+
+        <article class="section-panel">
+          <div class="section-panel-head">
+            <div>
+              <span>VISTA PREVIA</span>
+              <h3>Discord</h3>
+            </div>
+          </div>
+
+        <div class="welcome-discord-preview">
+  <div
+    class="preview-bot-avatar"
+    id="welcomePreviewBotAvatar"
+  >
+    N
+  </div>
+
+  <div class="preview-message-content">
+    <div class="preview-author">
+      <span id="welcomePreviewBotName">
+        Nebula Bot
+      </span>
+
+      <small>BOT</small>
+      <time>Ahora</time>
+    </div>
+
+              <div
+                class="preview-embed"
+                id="welcomePreviewEmbed"
+              >
+                <strong id="welcomePreviewTitle"></strong>
+                <p id="welcomePreviewMessage"></p>
+
+               <div
+  id="welcomePreviewUserAvatar"
+  class="preview-user-thumbnail"
+></div>
+
+                <small>
+                  ${a.name} · Miembro número
+                  ${a.members}
+                </small>
+              </div>
+            </div>
+          </div>
+
+<div
+  id="welcomeDmPreviewSection"
+  class="welcome-dm-preview-section ${t.dmEnabled?"visible":""}"
+>
+  <div class="welcome-preview-label">
+    VISTA PREVIA DEL MENSAJE PRIVADO
+  </div>
+
+  <div class="welcome-discord-preview dm-preview">
+  <div
+    class="preview-bot-avatar"
+    id="welcomeDmPreviewBotAvatar"
+  >
+    N
+  </div>
+
+  <div class="preview-message-content">
+    <div class="preview-author">
+      <span id="welcomeDmPreviewBotName">
+        Nebula Bot
+      </span>
+
+      <small>BOT</small>
+      <time>Ahora</time>
+    </div>
+
+      <div
+        class="preview-embed"
+        id="welcomeDmPreviewEmbed"
+      >
+        <strong id="welcomeDmPreviewTitle"></strong>
+
+        <p id="welcomeDmPreviewMessage"></p>
+
+       <div
+  id="welcomeDmPreviewAvatar"
+  class="preview-user-thumbnail"
+></div>
+
+        <small>
+          Mensaje enviado por ${a.name}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="welcome-help">
+  <strong>Ejemplo de variables</strong>
+
+  <p>
+    <code>{user}</code> menciona al usuario y
+    <code>{server}</code> escribe el nombre del servidor.
+  </p>
+</div>
+
+<div
+  id="welcomeVariablesModal"
+  class="variables-modal"
+  aria-hidden="true"
+>
+  <div
+    class="variables-modal-backdrop"
+    data-close-welcome-variables
+  ></div>
+
+  <section
+    class="variables-modal-window"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="welcomeVariablesTitle"
+  >
+    <header class="variables-modal-header">
+      <div>
+        <span>TEXTOS DINÁMICOS</span>
+
+        <h2 id="welcomeVariablesTitle">
+          Variables de Bienvenida
+        </h2>
+
+        <p>
+          Elegí una categoría y copiá la variable que necesites.
+        </p>
+      </div>
+
+      <button
+        class="variables-modal-close"
+        data-close-welcome-variables
+        type="button"
+        aria-label="Cerrar"
+      >
+        ×
+      </button>
+    </header>
+
+    <div class="variables-modal-search">
+      <span>⌕</span>
+
+      <input
+        id="welcomeVariablesSearch"
+        type="search"
+        placeholder="Buscar una variable..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="variables-modal-content">
+      <aside class="variables-categories">
+
+        <button
+          type="button"
+          class="variables-category active"
+          data-welcome-variable-category="user"
+        >
+          <span>👤</span>
+          Usuario
+        </button>
+
+        <button
+          type="button"
+          class="variables-category"
+          data-welcome-variable-category="server"
+        >
+          <span>🌍</span>
+          Servidor
+        </button>
+
+        <button
+          type="button"
+          class="variables-category"
+          data-welcome-variable-category="date"
+        >
+          <span>📅</span>
+          Fecha y hora
+        </button>
+
+      </aside>
+
+      <section class="variables-results">
+        <div
+          id="welcomeVariablesModalList"
+          class="variables-modal-list"
+        ></div>
+      </section>
+    </div>
+
+    <div
+      id="welcomeVariablesModalEmpty"
+      class="variables-modal-empty"
+      hidden
+    >
+      No se encontraron variables.
+    </div>
+
+    <footer class="variables-modal-footer">
+      <span>
+        Presioná una variable para copiarla.
+      </span>
+
+      <button
+        data-close-welcome-variables
+        type="button"
+      >
+        Cerrar
+      </button>
+    </footer>
+  </section>
+</div>
+
+</article>
+
+  </div>
+  </div>
+  `;const n=document.getElementById("welcomeEnabled"),c=document.getElementById("welcomeChannel"),o=document.getElementById("welcomeTitle"),p=document.getElementById("welcomeMessage"),f=document.getElementById("welcomeColor"),D=document.getElementById("welcomeColorText"),N=document.getElementById("welcomeShowAvatar"),g=document.getElementById("welcomeDmEnabled"),I=document.getElementById("welcomeDmFields"),u=document.getElementById("welcomeDmTitle"),he=document.getElementById("welcomeDmMessage"),ve=document.getElementById("welcomeDmColor"),W=document.getElementById("welcomeDmColorText"),J=document.getElementById("welcomeDmShowAvatar"),Me=document.getElementById("welcomeDmPreviewSection"),L=Rt?.name||"Nebula Bot",Q=_||{},Ie=Q.displayName||Q.globalName||Q.username||"Usuario",be=Q.avatar||"",Ue=document.getElementById("welcomePreviewUserAvatar"),qe=document.getElementById("welcomeDmPreviewAvatar"),Te=be?`
+      <img
+        src="${be}"
+        alt="${Ie}"
+      >
+    `:`
+      <span>
+        ${Ke(Ie)}
+      </span>
+    `;Ue&&(Ue.innerHTML=Te),qe&&(qe.innerHTML=Te);const X=Rt?.avatar||"",Pe=document.getElementById("welcomePreviewBotName"),je=document.getElementById("welcomeDmPreviewBotName"),le=document.getElementById("welcomePreviewBotAvatar"),ee=document.getElementById("welcomeDmPreviewBotAvatar");Pe&&(Pe.textContent=L),je&&(je.textContent=L);const me=X?`
+      <img
+        src="${X}"
+        alt="${L}"
+      >
+    `:L.charAt(0).toUpperCase();le&&(le.innerHTML=me),ee&&(ee.innerHTML=me);function q(){const b=st(o.value,a),S=st(p.value,a);document.getElementById("welcomePreviewTitle").textContent=b,document.getElementById("welcomePreviewMessage").textContent=S,document.getElementById("welcomePreviewEmbed").style.borderLeftColor=f.value;const x=document.getElementById("welcomePreviewUserAvatar");x&&(x.style.display=N.checked?"block":"none");const M=st(u.value,a),r=st(he.value,a);document.getElementById("welcomeDmPreviewTitle").textContent=M,document.getElementById("welcomeDmPreviewMessage").textContent=r,document.getElementById("welcomeDmPreviewEmbed").style.borderLeftColor=ve.value;const d=document.getElementById("welcomeDmPreviewAvatar");d&&(d.style.display=J.checked?"block":"none")}f.addEventListener("input",()=>{D.value=f.value,q()}),D.addEventListener("input",()=>{/^#[0-9A-F]{6}$/i.test(D.value)&&(f.value=D.value,q())}),o.addEventListener("input",q),p.addEventListener("input",q),g.addEventListener("change",()=>{I.classList.toggle("visible",g.checked),Me.classList.toggle("visible",g.checked),q()}),N.addEventListener("change",q),J.addEventListener("change",q),u.addEventListener("input",q),he.addEventListener("input",q),ve.addEventListener("input",()=>{W.value=ve.value,q()}),W.addEventListener("input",()=>{/^#[0-9A-F]{6}$/i.test(W.value)&&(ve.value=W.value,q())}),document.querySelectorAll("[data-variable]").forEach(b=>{b.addEventListener("click",()=>{const S=b.dataset.variable,x=p.selectionStart,M=p.selectionEnd;p.value=p.value.slice(0,x)+S+p.value.slice(M),p.focus(),p.selectionStart=p.selectionEnd=x+S.length,q()})});const G=document.getElementById("welcomeVariablesModal"),Ee=document.getElementById("welcomeVariablesSearch"),Fe=document.getElementById("welcomeVariablesModalList"),ke=document.getElementById("welcomeVariablesModalEmpty"),te=document.querySelectorAll("[data-welcome-variable-category]");let Le="user";const Be=[{key:"{user}",label:"Nombre corto del usuario",category:"user"},{key:"{mention}",label:"Mención del usuario",category:"user"},{key:"{username}",label:"Nombre de usuario",category:"user"},{key:"{displayname}",label:"Nombre visible",category:"user"},{key:"{userid}",label:"ID del usuario",category:"user"},{key:"{joindate}",label:"Fecha de ingreso",category:"user"},{key:"{server}",label:"Nombre del servidor",category:"server"},{key:"{serverid}",label:"ID del servidor",category:"server"},{key:"{members}",label:"Cantidad de miembros",category:"server"},{key:"{membercount}",label:"Cantidad de miembros",category:"server"},{key:"{date}",label:"Fecha actual",category:"date"},{key:"{time}",label:"Hora actual",category:"date"}];function we(){if(!Fe)return;const b=String(Ee?.value||"").trim().toLowerCase(),S=Be.filter(M=>{const r=M.category===Le,d=`${M.key} ${M.label}`.toLowerCase(),y=!b||d.includes(b);return r&&y});Fe.innerHTML=S.map(M=>`
+          <button
+            class="verify-variable-button"
+            data-copy-welcome-variable="${M.key}"
+            type="button"
+          >
+            <code>
+              ${M.key}
+            </code>
+
+            <span>
+              ${M.label}
+            </span>
+
+            <b>
+              Copiar
+            </b>
+          </button>
+        `).join("");const x=S.length>0;ke&&(ke.hidden=x,ke.classList.toggle("visible",!x))}function Ce(b=null){G&&(G.classList.add("open"),G.setAttribute("aria-hidden","false"),document.body.classList.add("variables-modal-open"),Le="user",Ee&&(Ee.value=""),te.forEach(S=>{S.classList.toggle("active",S.dataset.welcomeVariableCategory==="user")}),we(),setTimeout(()=>{Ee?.focus()},100))}function ae(){G&&(G.classList.remove("open"),G.setAttribute("aria-hidden","true"),document.body.classList.remove("variables-modal-open"))}document.querySelector("[data-open-welcome-variables]")?.addEventListener("click",b=>{b.preventDefault(),b.stopPropagation(),Ce(p)}),document.querySelectorAll("[data-close-welcome-variables]").forEach(b=>{b.addEventListener("click",S=>{S.preventDefault(),S.stopPropagation(),ae()})}),te.forEach(b=>{b.addEventListener("click",S=>{S.preventDefault(),S.stopPropagation(),Le=b.dataset.welcomeVariableCategory||"user",te.forEach(x=>{x.classList.toggle("active",x===b)}),we()})}),Ee?.addEventListener("input",we),Fe?.addEventListener("click",async b=>{const S=b.target.closest("[data-copy-welcome-variable]");if(!S)return;b.preventDefault(),b.stopPropagation();const x=S.dataset.copyWelcomeVariable;if(x)try{await navigator.clipboard.writeText(x);const M=S.querySelector("b")?.textContent,r=S.querySelector("b");r&&(r.textContent="Copiado ✓",setTimeout(()=>{r.textContent=M||"Copiar"},1200))}catch(M){console.error("No se pudo copiar la variable:",M)}}),G?.addEventListener("wheel",b=>{b.target.closest(".variables-categories, .variables-results")||b.preventDefault()},{passive:!1}),document.addEventListener("keydown",b=>{b.key==="Escape"&&G?.classList.contains("open")&&ae()}),we(),document.getElementById("backToServerPanel").addEventListener("click",()=>{$e(a.id)});async function Oe(){const b=document.getElementById("saveWelcome");b.disabled=!0,b.textContent="Guardando...";try{const S=await fetch(`${R}/api/servers/${a.id}/welcome`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled:n.checked,channelId:c.value,title:o.value,message:p.value,color:f.value,showAvatar:N.checked,dmEnabled:g.checked,dmTitle:u.value,dmMessage:he.value,dmColor:ve.value,dmShowAvatar:J.checked})}),x=await S.json();if(!S.ok||!x.success)throw new Error(x.message||"No se pudo guardar");return Z.querySelector("strong").textContent="Bienvenida guardada",Z.querySelector("p").textContent="Todos los cambios quedaron guardados.",Ae(),!0}catch(S){return Z.querySelector("strong").textContent="Error al guardar",Z.querySelector("p").textContent=S.message,Ae(),!1}finally{b.disabled=!1,b.textContent="Guardar configuración"}}document.getElementById("saveWelcome").addEventListener("click",Oe),document.getElementById("testWelcome").addEventListener("click",async()=>{const b=document.getElementById("testWelcome");b.disabled=!0,b.textContent="Preparando prueba...";try{if(!await Oe())return;b.textContent="Enviando...";const x=await fetch(`${R}/api/servers/${a.id}/welcome/test`,{method:"POST"}),M=await x.json();if(!x.ok||!M.success)throw new Error(M.message||"No se pudo enviar la prueba");Z.querySelector("strong").textContent="Prueba enviada",Z.querySelector("p").textContent="Revisá el canal de bienvenida en Discord.",Ae()}catch(S){Z.querySelector("strong").textContent="Error en la prueba",Z.querySelector("p").textContent=S.message,Ae()}finally{b.disabled=!1,b.textContent="Enviar mensaje de prueba"}}),q()}function st(a,e){const t=new Date,i=_||{},n=i.username||"usuario",c=i.displayName||i.globalName||n,o=i.id||"000000000000000000";return String(a).replaceAll("{user}",n).replaceAll("{mention}",`@${n}`).replaceAll("{username}",n).replaceAll("{displayname}",c).replaceAll("{userid}",o).replaceAll("{server}",e.name).replaceAll("{serverid}",e.id).replaceAll("{members}",Number(e.members||0).toLocaleString("es-AR")).replaceAll("{membercount}",Number(e.members||0).toLocaleString("es-AR")).replaceAll("{joindate}",t.toLocaleDateString("es-AR")).replaceAll("{date}",t.toLocaleDateString("es-AR")).replaceAll("{time}",t.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}))}function T(a){return String(a).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}function C(a){return T(a).replaceAll('"',"&quot;").replaceAll("'","&#039;")}Mt();

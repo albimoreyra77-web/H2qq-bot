@@ -131,6 +131,23 @@ document.querySelector("#app").innerHTML = `
     </span>
   </button>
 
+
+<button
+  class="public-side-item owner-only"
+  id="publicLicenses"
+  type="button"
+>
+
+     <span class="public-side-icon">
+      🔑
+    </span>
+
+    <span>
+      Licencias
+    </span>
+  </button>
+
+
   <button
     class="public-side-item"
     id="publicSupport"
@@ -849,6 +866,10 @@ async function loadDashboardSession() {
       sessionData.user ||
       null;
 
+const hasDashboardAccess =
+  dashboardSessionUser?.hasAccess === true ||
+  dashboardSessionUser?.isOwner === true;
+
     dashboardServers =
       Array.isArray(
         sessionData.guilds
@@ -867,23 +888,33 @@ async function loadDashboardSession() {
         window.location.search
       );
 
-    if (
-      query.get("view") ===
-      "servers"
-    ) {
-      showSessionServersPage();
-    } else {
-      pageContent.innerHTML =
-        dashboardHTML;
 
-      updateDashboardUser(
-        dashboardSessionUser
-      );
+if (!hasDashboardAccess) {
+  showAccessPage();
 
-      renderServerDropdown();
+  window.history.replaceState(
+    {},
+    "",
+    "/?view=access"
+  );
+} else if (
+  query.get("view") ===
+  "servers"
+) {
+  showSessionServersPage();
+} else {
+  pageContent.innerHTML =
+    dashboardHTML;
 
-      cargarDatosDashboard();
-    }
+  updateDashboardUser(
+    dashboardSessionUser
+  );
+
+  renderServerDropdown();
+
+  cargarDatosDashboard();
+}
+
   } catch (error) {
     console.error(
       "Error cargando la sesión:",
@@ -975,6 +1006,17 @@ const currentWelcomeUsername =
   document.getElementById(
     "welcomeUsername"
   );
+const licensesButton =
+  document.getElementById(
+    "publicLicenses"
+  );
+
+if (licensesButton) {
+  licensesButton.style.display =
+    user?.isOwner
+      ? "flex"
+      : "none";
+}
 
 if (currentWelcomeUsername) {
   currentWelcomeUsername.textContent =
@@ -1006,6 +1048,194 @@ if (currentWelcomeUsername) {
     ownerAvatar.textContent =
       initials;
   }
+}
+
+function showAccessPage() {
+  document.body.classList.add(
+    "servers-selection-mode"
+  );
+
+  const displayName =
+    dashboardSessionUser?.displayName ||
+    dashboardSessionUser?.username ||
+    "Usuario";
+
+  const username =
+    dashboardSessionUser?.username ||
+    "discord";
+
+  pageContent.innerHTML = `
+    <div class="dynamic-page access-page">
+      <section class="access-card">
+        <div class="access-lock">
+          🔒
+        </div>
+
+        <span class="access-eyebrow">
+          NEBULA DASHBOARD
+        </span>
+
+        <h1>
+          Acceso restringido
+        </h1>
+
+        <p>
+          Hola <strong>${displayName}</strong>.
+          Tu cuenta de Discord todavía no tiene acceso al dashboard.
+        </p>
+
+        <small>
+          @${username}
+        </small>
+
+        <div class="access-key-inputs">
+          <input
+            id="accessKeyInput"
+            type="text"
+            placeholder="NEBULA-XXXX-XXXX-XXXX"
+            maxlength="24"
+            autocomplete="off"
+          >
+        </div>
+
+        <button
+          id="validateAccessKey"
+          type="button"
+        >
+          Validar Key
+        </button>
+
+        <div
+          class="access-message"
+          id="accessMessage"
+        ></div>
+
+        <p class="access-help">
+          ¿No tenés una key?
+          Solicitásela al administrador.
+        </p>
+      </section>
+    </div>
+  `;
+
+  const keyInput =
+    document.getElementById(
+      "accessKeyInput"
+    );
+
+  const validateButton =
+    document.getElementById(
+      "validateAccessKey"
+    );
+
+  const message =
+    document.getElementById(
+      "accessMessage"
+    );
+
+  keyInput?.addEventListener(
+    "input",
+    () => {
+      keyInput.value =
+        keyInput.value
+          .toUpperCase()
+          .replace(
+            /[^A-Z0-9-]/g,
+            ""
+          );
+    }
+  );
+
+validateButton?.addEventListener(
+  "click",
+  async () => {
+    const key =
+      keyInput.value
+        .trim()
+        .toUpperCase();
+
+    if (!key) {
+      message.textContent =
+        "Ingresá una Key de acceso.";
+
+      return;
+    }
+
+    validateButton.disabled = true;
+    validateButton.textContent =
+      "Validando...";
+
+    message.textContent =
+      "Comprobando la Key...";
+
+    try {
+      const response =
+        await fetch(
+          `${API_URL}/api/licenses/activate`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              Accept:
+                "application/json",
+            },
+
+            credentials:
+              "include",
+
+            body:
+              JSON.stringify({
+                key,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.message ||
+          "La Key no es válida."
+        );
+      }
+
+      message.textContent =
+        "Key activada correctamente. Entrando...";
+
+      if (dashboardSessionUser) {
+        dashboardSessionUser.hasAccess =
+          true;
+      }
+
+      setTimeout(
+        () => {
+          window.location.replace(
+            "/?view=servers"
+          );
+        },
+        700
+      );
+    } catch (error) {
+      message.textContent =
+        error.message ||
+        "No se pudo validar la Key.";
+
+      validateButton.disabled =
+        false;
+
+      validateButton.textContent =
+        "Validar Key";
+    }
+  }
+);
+
 }
 
 function showSessionServersPage() {
@@ -1475,6 +1705,7 @@ const ignoredButton =
   btn.id === "publicSupport" ||
   btn.id === "publicLogout" ||
   btn.id === "publicDiscordSupport" ||
+  btn.id === "publicLicenses" ||
   btn.classList.contains(
     "public-support-button"
   ) ||
@@ -1525,23 +1756,34 @@ function stopPublicBotStatusUpdates() {
 }
 
 document
-  .getElementById(
-    "publicMyServers"
-  )
-  ?.addEventListener(
-    "click",
-    () => {
-  stopPublicBotStatusUpdates();
+  .getElementById("publicMyServers")
+  ?.addEventListener("click", () => {
+    stopPublicBotStatusUpdates();
 
-      showSessionServersPage();
+    const hasDashboardAccess =
+      dashboardSessionUser?.hasAccess === true ||
+      dashboardSessionUser?.isOwner === true;
+
+    if (!hasDashboardAccess) {
+      showAccessPage();
 
       window.history.replaceState(
         {},
         "",
-        "/?view=servers"
+        "/?view=access"
       );
+
+      return;
     }
-  );
+
+    showSessionServersPage();
+
+    window.history.replaceState(
+      {},
+      "",
+      "/?view=servers"
+    );
+  });
 
 document
   .getElementById(
@@ -1778,9 +2020,3161 @@ publicBotStatusInterval =
   );
 
 document
+  .getElementById("publicLicenses")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      stopPublicBotStatusUpdates();
+
+if (!dashboardSessionUser?.isOwner) {
+  alert("No tenés permisos para acceder a esta sección.");
+  return;
+}
+
+      document.body.classList.add(
+        "servers-selection-mode"
+      );
+
+    pageContent.innerHTML = `
+<div class="dynamic-page">
+
+<section class="section-header">
+<div>
+<span>LICENCIAS</span>
+<h1>Administrador de Licencias</h1>
+<p>
+Gestioná todas las licencias del dashboard desde un solo lugar.
+</p>
+</div>
+</section>
+
+<div class="licenses-top-layout">
+
+  <section class="public-status-grid licenses-stats-grid">
+
+    <article class="public-info-card">
+      <span>TOTAL</span>
+      <strong id="licenseTotal">0</strong>
+      <p>Licencias creadas</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>ACTIVAS</span>
+      <strong id="licenseActive">0</strong>
+      <p>Licencias en uso</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>DISPONIBLES</span>
+      <strong id="licenseUnused">0</strong>
+      <p>Sin activar</p>
+    </article>
+
+    <article class="public-info-card">
+      <span>REVOCADAS</span>
+      <strong id="licenseRevoked">0</strong>
+      <p>Deshabilitadas</p>
+    </article>
+
+  </section>
+
+  <aside class="license-settings-card">
+
+    <div class="license-settings-title">
+      <span class="license-settings-icon">
+        ⚙
+      </span>
+
+      <div>
+        <h3>Configuración de Licencias</h3>
+        <p>
+          Configurá dónde se enviarán los registros.
+        </p>
+      </div>
+    </div>
+
+    <div class="license-setting-group">
+      <label for="licenseLogsChannel">
+        Canal de Logs
+      </label>
+
+      <select
+        id="licenseLogsChannel"
+        class="license-setting-select"
+      >
+        <option value="">
+          Seleccionar un canal
+        </option>
+
+        <option value="demo">
+          #logs-licencias
+        </option>
+      </select>
+    </div>
+
+    <div class="license-checkbox-list">
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogCreation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar creación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogActivation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar activación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogExpiration"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar expiración</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogDeletion"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar eliminación</span>
+      </label>
+
+      <label class="license-checkbox-item">
+        <input
+          id="licenseLogRevocation"
+          type="checkbox"
+          checked
+        >
+        <span>Registrar revocación</span>
+      </label>
+
+    </div>
+
+    <button
+      id="saveLicenseSettings"
+      class="license-save-button"
+      type="button"
+    >
+      💾 Guardar configuración
+    </button>
+
+  </aside>
+
+</div>
+
+<section class="panel licenses-list-panel">
+
+  <div class="panel-head licenses-list-header">
+
+    <div>
+      <h3>Listado de Licencias</h3>
+
+      <p class="licenses-list-description">
+        Administrá, generá y controlá todas las licencias del sistema.
+      </p>
+    </div>
+
+    <div class="licenses-header-actions">
+
+      <button
+        id="deleteAllLicensesButton"
+        class="delete-all-licenses-button"
+        type="button"
+      >
+        🗑 Borrar Keys
+      </button>
+
+      <button
+        id="generateLicenseButton"
+        class="generate-license-button"
+        type="button"
+      >
+        🔑 Generar Key
+      </button>
+
+    </div>
+
+  </div>
+
+  <div
+    id="licensesTable"
+    class="licenses-table"
+  >
+    <div class="server-dropdown-empty">
+      Todavía no hay licencias.
+    </div>
+  </div>
+
+</section>
+
+</div>
+      `;
+
+const generateLicenseButton =
+  document.getElementById(
+    "generateLicenseButton"
+  );
+
+const deleteAllLicensesButton =
+  document.getElementById(
+    "deleteAllLicensesButton"
+  );
+
+const licensesTable =
+  document.getElementById(
+    "licensesTable"
+  );
+
+const licenseTotal =
+  document.getElementById(
+    "licenseTotal"
+  );
+
+const licenseActive =
+  document.getElementById(
+    "licenseActive"
+  );
+
+const licenseUnused =
+  document.getElementById(
+    "licenseUnused"
+  );
+
+const licenseRevoked =
+  document.getElementById(
+    "licenseRevoked"
+  );
+const licenseLogsChannel =
+  document.getElementById(
+    "licenseLogsChannel"
+  );
+
+const saveLicenseSettings =
+  document.getElementById(
+    "saveLicenseSettings"
+  );
+
+const licenseLogCreation =
+  document.getElementById(
+    "licenseLogCreation"
+  );
+
+const licenseLogActivation =
+  document.getElementById(
+    "licenseLogActivation"
+  );
+
+const licenseLogExpiration =
+  document.getElementById(
+    "licenseLogExpiration"
+  );
+
+const licenseLogDeletion =
+  document.getElementById(
+    "licenseLogDeletion"
+  );
+
+const licenseLogRevocation =
+  document.getElementById(
+    "licenseLogRevocation"
+  );
+async function loadLicenseLogChannels() {
+  if (!licenseLogsChannel) {
+    return;
+  }
+
+  if (!selectedServerId) {
+    licenseLogsChannel.innerHTML = `
+      <option value="">
+        Primero seleccioná un servidor
+      </option>
+    `;
+
+    licenseLogsChannel.disabled = true;
+
+    return;
+  }
+
+  licenseLogsChannel.disabled = true;
+
+  licenseLogsChannel.innerHTML = `
+    <option value="">
+      Cargando canales...
+    </option>
+  `;
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/servers/${encodeURIComponent(
+          selectedServerId
+        )}/text-channels`,
+        {
+          method: "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudieron cargar los canales."
+      );
+    }
+
+    const channels =
+      Array.isArray(result.data)
+        ? result.data
+        : [];
+
+    licenseLogsChannel.innerHTML = `
+      <option value="">
+        Seleccionar un canal
+      </option>
+
+      ${channels
+        .map(channel => `
+          <option value="${channel.id}">
+            #${channel.name}
+          </option>
+        `)
+        .join("")}
+    `;
+
+    licenseLogsChannel.disabled = false;
+
+  } catch (error) {
+    console.error(
+      "Error cargando canales de logs:",
+      error
+    );
+
+    licenseLogsChannel.innerHTML = `
+      <option value="">
+        No se pudieron cargar los canales
+      </option>
+    `;
+
+    licenseLogsChannel.disabled = true;
+  }
+}
+
+async function loadLicenseSettings() {
+  if (
+    !selectedServerId ||
+    !licenseLogsChannel
+  ) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/servers/${encodeURIComponent(
+          selectedServerId
+        )}/license-settings`,
+        {
+          method: "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo cargar la configuración."
+      );
+    }
+
+    const config =
+      result.data || {};
+
+    licenseLogsChannel.value =
+      config.logsChannelId || "";
+
+    licenseLogCreation.checked =
+      config.creation !== false;
+
+    licenseLogActivation.checked =
+      config.activation !== false;
+
+    licenseLogExpiration.checked =
+      config.expiration !== false;
+
+    licenseLogDeletion.checked =
+      config.deletion !== false;
+
+    licenseLogRevocation.checked =
+      config.revocation !== false;
+
+  } catch (error) {
+    console.error(
+      "Error cargando configuración de licencias:",
+      error
+    );
+  }
+}
+
+async function saveCurrentLicenseSettings() {
+  if (!selectedServerId) {
+    alert(
+      "Primero seleccioná un servidor."
+    );
+
+    return;
+  }
+
+  if (!saveLicenseSettings) {
+    return;
+  }
+
+  const originalText =
+    saveLicenseSettings.textContent;
+
+  saveLicenseSettings.disabled =
+    true;
+
+  saveLicenseSettings.textContent =
+    "Guardando...";
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/servers/${encodeURIComponent(
+          selectedServerId
+        )}/license-settings`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          body:
+            JSON.stringify({
+              logsChannelId:
+                licenseLogsChannel
+                  ?.value || "",
+
+              creation:
+                licenseLogCreation
+                  ?.checked === true,
+
+              activation:
+                licenseLogActivation
+                  ?.checked === true,
+
+              expiration:
+                licenseLogExpiration
+                  ?.checked === true,
+
+              deletion:
+                licenseLogDeletion
+                  ?.checked === true,
+
+              revocation:
+                licenseLogRevocation
+                  ?.checked === true,
+            }),
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo guardar la configuración."
+      );
+    }
+
+    saveLicenseSettings.textContent =
+      "✓ Configuración guardada";
+
+    setTimeout(
+      () => {
+        saveLicenseSettings.textContent =
+          originalText;
+      },
+      1800
+    );
+
+  } catch (error) {
+    console.error(
+      "Error guardando configuración de licencias:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "No se pudo guardar la configuración."
+    );
+
+    saveLicenseSettings.textContent =
+      originalText;
+
+  } finally {
+    saveLicenseSettings.disabled =
+      false;
+  }
+}
+
+saveLicenseSettings
+  ?.addEventListener(
+    "click",
+    saveCurrentLicenseSettings
+  );
+
+/* =========================================================
+   FUNCIONES DEL ADMINISTRADOR DE LICENCIAS
+========================================================= */
+
+/* =========================================================
+   ABRIR MODAL NUEVA LICENCIA
+========================================================= */
+
+function showGenerateLicenseModal() {
+  document
+    .querySelector(
+      ".license-config-overlay"
+    )
+    ?.remove();
+
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `
+      <div class="license-config-overlay">
+
+        <div class="license-config-modal">
+
+          <div class="license-config-header">
+
+            <div class="license-config-title">
+              <span>🔑</span>
+
+              <div>
+                <h2>Nueva Licencia</h2>
+
+                <p>
+                  Configurá la licencia antes de generarla.
+                </p>
+              </div>
+            </div>
+
+            <button
+              class="license-config-close"
+              id="closeLicenseModal"
+              type="button"
+            >
+              ×
+            </button>
+
+          </div>
+
+          <div class="license-config-field">
+
+            <label>
+              Duración
+            </label>
+
+            <div class="license-time-grid">
+
+              <div class="license-time-field">
+                <span>DÍAS</span>
+
+                <input
+                  id="licenseDays"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="9999"
+                  value="30"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>HORAS</span>
+
+                <input
+                  id="licenseHours"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="23"
+                  value="0"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>MINUTOS</span>
+
+                <input
+                  id="licenseMinutes"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                >
+              </div>
+
+              <div class="license-time-field">
+                <span>SEGUNDOS</span>
+
+                <input
+                  id="licenseSeconds"
+                  class="license-config-input"
+                  type="number"
+                  min="0"
+                  max="59"
+                  value="0"
+                >
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="license-duration-preview">
+
+            <div>
+              <span>
+                VIGENCIA
+              </span>
+
+              <strong
+                id="licenseExpirePreview"
+              >
+                Calculando...
+              </strong>
+            </div>
+
+            <div
+              class="license-modal-countdown"
+              id="licenseModalCountdown"
+            >
+              ⏱ Calculando tiempo restante...
+            </div>
+
+            <b
+              id="licensePermanentTag"
+              class="license-permanent-badge"
+              style="display:none"
+            >
+              PERMANENTE
+            </b>
+
+          </div>
+
+          <div class="license-config-field">
+
+            <label>
+              Descripción
+            </label>
+
+            <textarea
+              id="licenseDescription"
+              class="license-config-textarea"
+              placeholder="Ej: Licencia de prueba, cliente premium, etc."
+            ></textarea>
+
+          </div>
+
+          <div class="license-config-actions">
+
+            <button
+              id="cancelGenerateLicense"
+              class="license-config-cancel"
+              type="button"
+            >
+              Cancelar
+            </button>
+
+            <button
+              id="continueGenerateLicense"
+              class="license-config-confirm"
+              type="button"
+            >
+              Continuar →
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `
+  );
+
+  initializeGenerateLicenseModal();
+}
+
+function initializeGenerateLicenseModal() {
+  const daysInput =
+    document.getElementById(
+      "licenseDays"
+    );
+
+  const hoursInput =
+    document.getElementById(
+      "licenseHours"
+    );
+
+  const minutesInput =
+    document.getElementById(
+      "licenseMinutes"
+    );
+
+  const secondsInput =
+    document.getElementById(
+      "licenseSeconds"
+    );
+
+  const preview =
+    document.getElementById(
+      "licenseExpirePreview"
+    );
+
+  const countdown =
+    document.getElementById(
+      "licenseModalCountdown"
+    );
+
+  const permanent =
+    document.getElementById(
+      "licensePermanentTag"
+    );
+
+  let previewInterval =
+    null;
+
+
+  function clampInput(
+    input,
+    minimum,
+    maximum
+  ) {
+    let value =
+      Number(input?.value || 0);
+
+    if (!Number.isFinite(value)) {
+      value = minimum;
+    }
+
+    value =
+      Math.floor(value);
+
+    value =
+      Math.min(
+        maximum,
+        Math.max(
+          minimum,
+          value
+        )
+      );
+
+    input.value =
+      String(value);
+
+    return value;
+  }
+
+  function getDurationData() {
+    const days =
+      clampInput(
+        daysInput,
+        0,
+        9999
+      );
+
+    const hours =
+      clampInput(
+        hoursInput,
+        0,
+        23
+      );
+
+    const minutes =
+      clampInput(
+        minutesInput,
+        0,
+        59
+      );
+
+    const seconds =
+      clampInput(
+        secondsInput,
+        0,
+        59
+      );
+
+    const isPermanent =
+      days >= 9999;
+
+    const milliseconds =
+      isPermanent
+        ? null
+        : (
+            days *
+            24 *
+            60 *
+            60 *
+            1000
+          ) +
+          (
+            hours *
+            60 *
+            60 *
+            1000
+          ) +
+          (
+            minutes *
+            60 *
+            1000
+          ) +
+          (
+            seconds *
+            1000
+          );
+
+    return {
+      days,
+      hours,
+      minutes,
+      seconds,
+      permanent:
+        isPermanent,
+      milliseconds,
+    };
+  }
+
+  function formatCountdown(
+    milliseconds
+  ) {
+    const totalSeconds =
+      Math.max(
+        0,
+        Math.floor(
+          milliseconds / 1000
+        )
+      );
+
+    const days =
+      Math.floor(
+        totalSeconds / 86400
+      );
+
+    const hours =
+      Math.floor(
+        (
+          totalSeconds % 86400
+        ) / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (
+          totalSeconds % 3600
+        ) / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return (
+      `${days}d ` +
+      `${String(hours).padStart(2, "0")}h ` +
+      `${String(minutes).padStart(2, "0")}m ` +
+      `${String(seconds).padStart(2, "0")}s restantes`
+    );
+  }
+
+  function updatePreview() {
+    const duration =
+      getDurationData();
+
+    if (duration.permanent) {
+      preview.textContent =
+        "Licencia permanente";
+
+      countdown.textContent =
+        "∞ Sin vencimiento";
+
+      countdown.classList.add(
+        "permanent"
+      );
+
+      permanent.style.display =
+        "inline-flex";
+
+      return;
+    }
+
+    permanent.style.display =
+      "none";
+
+    countdown.classList.remove(
+      "permanent"
+    );
+
+    if (
+      !duration.milliseconds ||
+      duration.milliseconds < 1000
+    ) {
+      preview.textContent =
+        "Duración no válida";
+
+      countdown.textContent =
+        "La duración mínima es de 1 segundo";
+
+      return;
+    }
+
+    const expiresAt =
+      Date.now() +
+      duration.milliseconds;
+
+    const expirationDate =
+      new Date(expiresAt);
+
+    preview.textContent =
+      "Vence el " +
+      expirationDate.toLocaleString(
+        "es-AR",
+        {
+          day:
+            "2-digit",
+
+          month:
+            "2-digit",
+
+          year:
+            "numeric",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit",
+
+          second:
+            "2-digit",
+        }
+      );
+
+    countdown.textContent =
+      "⏱ " +
+      formatCountdown(
+        duration.milliseconds
+      );
+  }
+
+  function closeModal() {
+    if (previewInterval) {
+      clearInterval(
+        previewInterval
+      );
+
+      previewInterval =
+        null;
+    }
+
+    document
+      .querySelector(
+        ".license-config-overlay"
+      )
+      ?.remove();
+  }
+
+  [
+    daysInput,
+    hoursInput,
+    minutesInput,
+    secondsInput,
+  ].forEach(input => {
+    input?.addEventListener(
+      "input",
+      updatePreview
+    );
+
+    input?.addEventListener(
+      "change",
+      updatePreview
+    );
+  });
+
+  document
+    .getElementById(
+      "closeLicenseModal"
+    )
+    ?.addEventListener(
+      "click",
+      closeModal
+    );
+
+  document
+    .getElementById(
+      "cancelGenerateLicense"
+    )
+    ?.addEventListener(
+      "click",
+      closeModal
+    );
+
+  document
+    .getElementById(
+      "continueGenerateLicense"
+    )
+    ?.addEventListener(
+      "click",
+      async () => {
+        const duration =
+          getDurationData();
+
+        const descriptionInput =
+          document.getElementById(
+            "licenseDescription"
+          );
+
+        const continueButton =
+          document.getElementById(
+            "continueGenerateLicense"
+          );
+
+        const description =
+          String(
+            descriptionInput?.value ||
+            ""
+          ).trim();
+
+        if (
+          !duration.permanent &&
+          (
+            !duration.milliseconds ||
+            duration.milliseconds < 1000
+          )
+        ) {
+          window.alert(
+            "La duración mínima es de 1 segundo."
+          );
+
+          return;
+        }
+
+        continueButton.disabled =
+          true;
+
+        continueButton.textContent =
+          "Generando...";
+
+        closeModal();
+
+        await generateConfiguredLicense({
+          days:
+            duration.days,
+
+          hours:
+            duration.hours,
+
+          minutes:
+            duration.minutes,
+
+          seconds:
+            duration.seconds,
+
+          permanent:
+            duration.permanent,
+
+          durationMilliseconds:
+            duration.milliseconds,
+
+          description,
+        });
+      }
+    );
+
+  updatePreview();
+
+  previewInterval =
+    setInterval(
+      updatePreview,
+      1000
+    );
+}
+
+
+function escapeLicenseHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatLicenseDate(value) {
+  if (!value) {
+    return "Sin fecha";
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return String(value);
+  }
+
+  return date.toLocaleString(
+    "es-AR",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
+}
+
+function getLicenseStatusData(
+  license
+) {
+  const rawStatus =
+    String(
+      license?.status ||
+      license?.state ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const revoked =
+    license?.revoked === true ||
+    license?.disabled === true ||
+    rawStatus === "revoked" ||
+    rawStatus === "revocada" ||
+    rawStatus === "disabled";
+
+ const used =
+  license?.used === true ||
+  license?.active === true ||
+  license?.activated === true ||
+  Boolean(
+    license?.userId ||
+    license?.discordId ||
+    license?.discordUserId ||
+    license?.activatedBy ||
+    license?.user?.id
+  ) ||
+  rawStatus === "used" ||
+  rawStatus === "active" ||
+  rawStatus === "activa";
+
+  if (revoked) {
+    return {
+      className: "revoked",
+      label: "Revocada",
+      description:
+        license?.revokedAt
+          ? `Revocada: ${formatLicenseDate(
+              license.revokedAt
+            )}`
+          : "Licencia deshabilitada",
+    };
+  }
+
+  if (used) {
+    return {
+      className: "active",
+      label: "Activa",
+      description:
+        license?.activatedAt
+          ? `Activada: ${formatLicenseDate(
+              license.activatedAt
+            )}`
+          : "Licencia en uso",
+    };
+  }
+
+  return {
+    className: "available",
+    label: "Disponible",
+    description:
+      "Nunca utilizada",
+  };
+}
+
+function getLicenseUserData(
+  license
+) {
+  const user =
+  license?.user ||
+  license?.discordUser ||
+  (
+    typeof license?.activatedBy ===
+    "object"
+      ? license.activatedBy
+      : {}
+  );
+
+ const userId =
+  user?.id ||
+  license?.userId ||
+  license?.discordId ||
+  license?.discordUserId ||
+  (
+    typeof license?.activatedBy ===
+    "string"
+      ? license.activatedBy
+      : ""
+  );
+
+ const displayName =
+  user?.displayName ||
+  user?.globalName ||
+  user?.username ||
+  license?.activatedDisplayName ||
+  license?.activatedUsername ||
+  license?.displayName ||
+  license?.username ||
+  "";
+
+  const username =
+    user?.username ||
+    license?.username ||
+    "";
+
+ const avatar =
+  user?.avatar ||
+  license?.activatedAvatar ||
+  license?.avatar ||
+  license?.userAvatar ||
+  "";
+
+  const assigned =
+    Boolean(
+      userId ||
+      displayName ||
+      username
+    );
+
+  return {
+    assigned,
+    id: String(userId || ""),
+    displayName:
+      displayName ||
+      username ||
+      "Sin asignar",
+    username:
+      username
+        ? `@${username}`
+        : assigned
+          ? "Usuario de Discord"
+          : "Nunca utilizada",
+    avatar,
+  };
+}
+
+function getUserInitials(name) {
+  return String(
+    name || "?"
+  )
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word =>
+      word.charAt(0)
+    )
+    .join("")
+    .toUpperCase();
+}
+
+function createLicenseUserHTML(
+  license
+) {
+  const user =
+    getLicenseUserData(
+      license
+    );
+
+  const avatarContent =
+    user.avatar
+      ? `
+          <img
+            src="${escapeLicenseHTML(
+              user.avatar
+            )}"
+            alt="${escapeLicenseHTML(
+              user.displayName
+            )}"
+          >
+        `
+      : escapeLicenseHTML(
+          user.assigned
+            ? getUserInitials(
+                user.displayName
+              )
+            : "?"
+        );
+
+  return `
+    <div class="license-user ${
+      user.assigned
+        ? ""
+        : "unassigned"
+    }">
+
+      <div class="license-user-avatar">
+        ${avatarContent}
+      </div>
+
+      <div class="license-user-copy">
+
+        <strong>
+          ${escapeLicenseHTML(
+            user.displayName
+          )}
+        </strong>
+
+        <span>
+          ${
+            user.id
+              ? `ID: ${escapeLicenseHTML(
+                  user.id
+                )}`
+              : escapeLicenseHTML(
+                  user.username
+                )
+          }
+        </span>
+
+      </div>
+
+    </div>
+  `;
+}
+
+function createLicenseCardHTML(
+  license,
+  isNew = false
+) {
+  const key =
+    license?.key ||
+    license?.licenseKey ||
+    license?.token ||
+    "KEY NO DISPONIBLE";
+
+  const createdAt =
+    license?.createdAt ||
+    license?.created ||
+    new Date().toISOString();
+
+  const duration =
+    Number(
+      license?.durationDays ??
+      license?.duration ??
+      0
+    );
+
+const durationHours =
+  Number(
+    license?.durationHours ??
+    0
+  );
+
+const durationMinutes =
+  Number(
+    license?.durationMinutes ??
+    0
+  );
+
+const durationSeconds =
+  Number(
+    license?.durationSeconds ??
+    0
+  );
+
+const durationMilliseconds =
+  Number(
+    license?.durationMilliseconds ??
+    (
+      duration * 86400000 +
+      durationHours * 3600000 +
+      durationMinutes * 60000 +
+      durationSeconds * 1000
+    )
+  );
+
+  const permanent =
+    license?.permanent === true ||
+    duration >= 9999 ||
+    String(
+      license?.type || ""
+    ).toLowerCase() ===
+      "permanente";
+
+  const description =
+    String(
+      license?.description ||
+      "Sin descripción"
+    ).trim();
+
+  const type =
+    permanent
+      ? "Permanente"
+      : duration > 0
+        ? `${duration} ${
+            duration === 1
+              ? "día"
+              : "días"
+          }`
+        : (
+            license?.type ||
+            license?.plan ||
+            "Dashboard"
+          );
+
+const expirationDate =
+  permanent
+    ? null
+    : (
+        license?.expiresAt ||
+        license?.expirationDate ||
+        license?.expires ||
+        (
+          durationMilliseconds > 0
+            ? new Date(
+                new Date(createdAt).getTime() +
+                durationMilliseconds
+              ).toISOString()
+            : null
+        )
+      );
+
+  const status =
+    getLicenseStatusData(
+      license
+    );
+
+  const durationText =
+    permanent
+      ? "Duración: Permanente"
+      : duration > 0
+        ? `Duración: ${duration} ${
+            duration === 1
+              ? "día"
+              : "días"
+          }`
+        : "Duración no disponible";
+
+  const expirationText =
+    permanent
+      ? "Sin vencimiento"
+      : expirationDate
+        ? `Vence: ${formatLicenseDate(
+            expirationDate
+          )}`
+        : "Vencimiento no disponible";
+
+  return `
+    <div
+      class="license-generated-card ${
+        isNew
+          ? "license-new-entry"
+          : ""
+      }"
+      data-license-key="${escapeLicenseHTML(
+        key
+      )}"
+      data-license-duration="${escapeLicenseHTML(
+        String(duration)
+      )}"
+      data-license-permanent="${
+        permanent
+          ? "true"
+          : "false"
+      }"
+      data-license-description="${escapeLicenseHTML(
+        description
+      )}"
+      data-license-created-at="${escapeLicenseHTML(
+        createdAt
+      )}"
+      data-license-expires-at="${escapeLicenseHTML(
+        expirationDate || ""
+      )}"
+    >
+
+      <div class="license-generated-info">
+
+        <span>
+          LICENCIA
+        </span>
+
+        <strong title="${escapeLicenseHTML(
+          key
+        )}">
+          ${escapeLicenseHTML(
+            key
+          )}
+        </strong>
+
+        <div class="license-meta">
+
+          <span class="license-created-date">
+            Creada:
+            ${escapeLicenseHTML(
+              formatLicenseDate(
+                createdAt
+              )
+            )}
+          </span>
+
+          <span class="license-meta-separator">
+            •
+          </span>
+
+          <span class="license-type">
+            ${escapeLicenseHTML(
+              type
+            )}
+          </span>
+
+        </div>
+
+      ${
+  permanent
+    ? `
+      <div class="license-permanent-timer">
+        <strong>∞</strong>
+        <span>LICENCIA PERMANENTE</span>
+      </div>
+    `
+    : `
+      <div
+        class="license-live-timer"
+        data-license-countdown
+        data-expires-at="${escapeLicenseHTML(
+          expirationDate || ""
+        )}"
+      >
+
+        <div class="license-time-box">
+          <strong data-countdown-days>
+            00
+          </strong>
+
+          <span>
+            DÍAS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-hours>
+            00
+          </strong>
+
+          <span>
+            HORAS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-minutes>
+            00
+          </strong>
+
+          <span>
+            MINUTOS
+          </span>
+        </div>
+
+        <div class="license-time-box">
+          <strong data-countdown-seconds>
+            00
+          </strong>
+
+          <span>
+            SEGUNDOS
+          </span>
+        </div>
+
+      </div>
+    `
+}
+
+</div>
+
+      ${createLicenseUserHTML(
+        license
+      )}
+
+      <div class="license-state-column">
+
+        <b class="license-status ${status.className}">
+          ${status.label}
+        </b>
+
+        <span class="license-state-date">
+          ${escapeLicenseHTML(
+            status.description
+          )}
+        </span>
+
+      </div>
+
+      <div class="license-actions">
+
+        <button
+          class="license-action-btn view"
+          title="Ver detalles"
+          type="button"
+          data-license-action="view"
+        >
+          👁
+        </button>
+
+        <button
+          class="license-action-btn edit"
+          title="Editar"
+          type="button"
+          data-license-action="edit"
+        >
+          ✏️
+        </button>
+
+        <button
+          class="license-action-btn copy"
+          title="Copiar Key"
+          type="button"
+          data-license-action="copy"
+          data-license-key="${escapeLicenseHTML(
+            key
+          )}"
+        >
+          📋
+        </button>
+
+        <button
+          class="license-action-btn delete"
+          title="Eliminar"
+          type="button"
+          data-license-action="delete"
+        >
+          🗑
+        </button>
+
+      </div>
+
+    </div>
+  `;
+}
+
+let licensesCountdownInterval =
+  null;
+
+function updateLicenseCountdowns() {
+  const countdowns =
+    document.querySelectorAll(
+      "[data-license-countdown]"
+    );
+
+  countdowns.forEach(countdown => {
+    const expiresAt =
+      countdown.dataset.expiresAt;
+
+    const daysElement =
+      countdown.querySelector(
+        "[data-countdown-days]"
+      );
+
+    const hoursElement =
+      countdown.querySelector(
+        "[data-countdown-hours]"
+      );
+
+    const minutesElement =
+      countdown.querySelector(
+        "[data-countdown-minutes]"
+      );
+
+    const secondsElement =
+      countdown.querySelector(
+        "[data-countdown-seconds]"
+      );
+
+  const expirationTime =
+  /^\d+$/.test(
+    String(expiresAt)
+  )
+    ? Number(expiresAt)
+    : new Date(
+        expiresAt
+      ).getTime();
+
+    if (
+      !expiresAt ||
+      Number.isNaN(expirationTime)
+    ) {
+      countdown.innerHTML = `
+        <span class="license-countdown-error">
+          Vencimiento no disponible
+        </span>
+      `;
+
+      return;
+    }
+
+    const remaining =
+      expirationTime - Date.now();
+
+    
+      if (remaining <= 0) {
+
+        countdown.innerHTML = `
+            <span class="license-countdown-expired">
+                LICENCIA EXPIRADA
+            </span>
+        `;
+
+        const card =
+          countdown.closest(
+            ".license-generated-card"
+          );
+
+        if (
+          card &&
+          !card.dataset.expired
+        ) {
+            card.dataset.expired = "true";
+
+            deleteExpiredLicense(
+              card.dataset.licenseKey
+            );
+        }
+
+        return;
+    }
+
+    const days =
+      Math.floor(
+        remaining / 86400000
+      );
+
+    const hours =
+      Math.floor(
+        remaining % 86400000 /
+        3600000
+      );
+
+    const minutes =
+      Math.floor(
+        remaining % 3600000 /
+        60000
+      );
+
+    const seconds =
+      Math.floor(
+        remaining % 60000 /
+        1000
+      );
+
+    if (daysElement) {
+      daysElement.textContent =
+        String(days).padStart(2, "0");
+    }
+
+    if (hoursElement) {
+      hoursElement.textContent =
+        String(hours).padStart(2, "0");
+    }
+
+    if (minutesElement) {
+      minutesElement.textContent =
+        String(minutes).padStart(2, "0");
+    }
+
+    if (secondsElement) {
+      secondsElement.textContent =
+        String(seconds).padStart(2, "0");
+    }
+  });
+}
+
+async function deleteExpiredLicense(key) {
+  try {
+    await fetch(
+      `/api/licenses/${encodeURIComponent(key)}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const card =
+      document.querySelector(
+        `[data-license-key="${CSS.escape(key)}"]`
+      );
+
+    if (card) {
+      card.remove();
+    }
+
+    updateLicenseCounters();
+
+  } catch (error) {
+    console.error(
+      "Error eliminando licencia:",
+      error
+    );
+  }
+}
+
+function startLicenseCountdowns() {
+  clearInterval(
+    licensesCountdownInterval
+  );
+
+  updateLicenseCountdowns();
+
+  licensesCountdownInterval =
+    setInterval(
+      updateLicenseCountdowns,
+      1000
+    );
+}
+
+function createLicensesHeaderHTML() {
+  return `
+    <div class="licenses-table-header">
+      <span>Licencia</span>
+      <span>Usuario</span>
+      <span>Estado</span>
+      <span style="text-align:right">
+        Acciones
+      </span>
+    </div>
+  `;
+}
+
+function createEmptyLicensesHTML() {
+  return `
+    ${createLicensesHeaderHTML()}
+
+    <div class="licenses-empty-state">
+      Todavía no hay licencias.
+    </div>
+  `;
+}
+
+/* =========================================================
+   MODAL PARA BORRAR TODAS LAS LICENCIAS
+========================================================= */
+
+function showDeleteAllLicensesModal() {
+  document
+    .querySelector(
+      ".delete-licenses-overlay"
+    )
+    ?.remove();
+
+  document.body.insertAdjacentHTML(
+    "beforeend",
+    `
+      <div class="delete-licenses-overlay">
+
+        <div class="delete-licenses-modal">
+
+          <button
+            class="delete-licenses-close"
+            id="closeDeleteLicensesModal"
+            type="button"
+          >
+            ×
+          </button>
+
+          <div class="delete-licenses-icon">
+            🗑
+          </div>
+
+          <span class="delete-licenses-eyebrow">
+            ACCIÓN DE SEGURIDAD
+          </span>
+
+          <h2>
+            ¿Querés borrar todas las Keys?
+          </h2>
+
+          <p>
+            Esta acción eliminará definitivamente todas
+            las licencias guardadas y no se podrá deshacer.
+          </p>
+
+          <label for="deleteLicensesCode">
+            Ingresá el código de seguridad
+          </label>
+
+          <input
+            id="deleteLicensesCode"
+            type="password"
+            inputmode="numeric"
+            maxlength="4"
+            placeholder="••••"
+            autocomplete="off"
+          >
+
+          <div
+            class="delete-licenses-message"
+            id="deleteLicensesMessage"
+          ></div>
+
+          <div class="delete-licenses-actions">
+
+            <button
+              id="cancelDeleteLicenses"
+              class="delete-licenses-cancel"
+              type="button"
+            >
+              Cancelar
+            </button>
+
+            <button
+              id="confirmDeleteLicenses"
+              class="delete-licenses-confirm"
+              type="button"
+            >
+              Borrar todas
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+    `
+  );
+
+  initializeDeleteAllLicensesModal();
+}
+
+function initializeDeleteAllLicensesModal() {
+  const overlay =
+    document.querySelector(
+      ".delete-licenses-overlay"
+    );
+
+  const codeInput =
+    document.getElementById(
+      "deleteLicensesCode"
+    );
+
+  const message =
+    document.getElementById(
+      "deleteLicensesMessage"
+    );
+
+  const confirmButton =
+    document.getElementById(
+      "confirmDeleteLicenses"
+    );
+
+  const closeModal = () => {
+    overlay?.remove();
+  };
+
+  document
+    .getElementById(
+      "closeDeleteLicensesModal"
+    )
+    ?.addEventListener(
+      "click",
+      closeModal
+    );
+
+  document
+    .getElementById(
+      "cancelDeleteLicenses"
+    )
+    ?.addEventListener(
+      "click",
+      closeModal
+    );
+
+  overlay?.addEventListener(
+    "click",
+    event => {
+      if (
+        event.target === overlay
+      ) {
+        closeModal();
+      }
+    }
+  );
+
+  codeInput?.addEventListener(
+    "input",
+    () => {
+      codeInput.value =
+        codeInput.value.replace(
+          /\D/g,
+          ""
+        );
+
+      message.textContent =
+        "";
+    }
+  );
+
+  codeInput?.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+      ) {
+        confirmButton?.click();
+      }
+    }
+  );
+
+  confirmButton?.addEventListener(
+    "click",
+    async () => {
+      const code =
+        String(
+          codeInput?.value || ""
+        ).trim();
+
+      if (!code) {
+        message.textContent =
+          "Ingresá el código de seguridad.";
+
+        return;
+      }
+
+      confirmButton.disabled =
+        true;
+
+      confirmButton.textContent =
+        "Eliminando...";
+
+      message.textContent =
+        "Comprobando código...";
+
+      try {
+        const response =
+          await fetch(
+            `${API_URL}/api/licenses`,
+            {
+              method:
+                "DELETE",
+
+              credentials:
+                "include",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+
+                Accept:
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify({
+                  code,
+                }),
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (
+          !response.ok ||
+          !result.success
+        ) {
+          throw new Error(
+            result.message ||
+            "No se pudieron borrar las Keys."
+          );
+        }
+
+        if (licensesTable) {
+          licensesTable.innerHTML =
+            createEmptyLicensesHTML();
+        }
+
+        updateLicenseCounters();
+
+        message.textContent =
+          "Todas las Keys fueron eliminadas.";
+
+        setTimeout(
+          () => {
+            closeModal();
+          },
+          700
+        );
+      } catch (error) {
+        message.textContent =
+          error.message ||
+          "No se pudieron borrar las Keys.";
+
+        confirmButton.disabled =
+          false;
+
+        confirmButton.textContent =
+          "Borrar todas";
+
+        codeInput?.focus();
+        codeInput?.select();
+      }
+    }
+  );
+
+  setTimeout(
+    () => {
+      codeInput?.focus();
+    },
+    100
+  );
+}
+
+function ensureLicensesHeader() {
+  if (!licensesTable) {
+    return;
+  }
+
+  const existingHeader =
+    licensesTable.querySelector(
+      ".licenses-table-header"
+    );
+
+  if (!existingHeader) {
+    licensesTable.insertAdjacentHTML(
+      "afterbegin",
+      createLicensesHeaderHTML()
+    );
+  }
+}
+/* =========================================================
+   CARGAR LICENCIAS GUARDADAS DEL SERVIDOR
+========================================================= */
+
+async function loadSavedLicenses() {
+  if (!licensesTable) {
+    return;
+  }
+
+  licensesTable.innerHTML = `
+    ${createLicensesHeaderHTML()}
+
+    <div class="licenses-empty-state">
+      Cargando licencias...
+    </div>
+  `;
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/licenses`,
+        {
+          method: "GET",
+
+          credentials:
+            "include",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          cache:
+            "no-store",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudieron cargar las licencias."
+      );
+    }
+
+    const licenses =
+      Array.isArray(
+        result.licenses
+      )
+        ? result.licenses
+        : [];
+
+    if (
+      licenses.length === 0
+    ) {
+      licensesTable.innerHTML =
+        createEmptyLicensesHTML();
+
+      updateLicenseCounters();
+
+      return;
+    }
+
+    licensesTable.innerHTML = `
+      ${createLicensesHeaderHTML()}
+
+      ${licenses
+        .map(
+          license =>
+            createLicenseCardHTML(
+              license,
+              false
+            )
+        )
+        .join("")}
+    `;
+
+    updateLicenseCounters();
+
+loadLicenseLogChannels();
+
+loadLicenseSettings();
+
+startLicenseCountdowns();
+
+  } catch (error) {
+    console.error(
+      "Error cargando licencias:",
+      error
+    );
+
+    licensesTable.innerHTML = `
+      ${createLicensesHeaderHTML()}
+
+      <div class="license-generation-error">
+        ❌ ${
+          error.message ||
+          "No se pudieron cargar las licencias."
+        }
+      </div>
+    `;
+
+    updateLicenseCounters();
+  }
+}
+
+function removeLicensesEmptyState() {
+  licensesTable
+    ?.querySelector(
+      ".server-dropdown-empty"
+    )
+    ?.remove();
+
+  licensesTable
+    ?.querySelector(
+      ".licenses-empty-state"
+    )
+    ?.remove();
+
+  licensesTable
+    ?.querySelector(
+      ".license-generation-error"
+    )
+    ?.remove();
+}
+
+function updateLicenseCounters() {
+  if (!licensesTable) {
+    return;
+  }
+
+  const cards = [
+    ...licensesTable.querySelectorAll(
+      ".license-generated-card"
+    ),
+  ];
+
+  const total =
+    cards.length;
+
+  const active =
+    cards.filter(card =>
+      card.querySelector(
+        ".license-status.active, .license-status.used"
+      )
+    ).length;
+
+  const available =
+    cards.filter(card =>
+      card.querySelector(
+        ".license-status.available"
+      )
+    ).length;
+
+  const revoked =
+    cards.filter(card =>
+      card.querySelector(
+        ".license-status.revoked"
+      )
+    ).length;
+
+  if (licenseTotal) {
+    licenseTotal.textContent =
+      String(total);
+  }
+
+  if (licenseActive) {
+    licenseActive.textContent =
+      String(active);
+  }
+
+  if (licenseUnused) {
+    licenseUnused.textContent =
+      String(available);
+  }
+
+  if (licenseRevoked) {
+    licenseRevoked.textContent =
+      String(revoked);
+  }
+}
+
+function showLicenseGenerator() {
+  if (!licensesTable) {
+    return;	
+  }
+
+  licensesTable
+    .querySelector(
+      ".license-generating-overlay"
+    )
+    ?.remove();
+
+document.body.insertAdjacentHTML(
+  "beforeend", 
+    `
+      <div class="license-generating-overlay">
+
+        <div class="license-generating-box">
+
+          <div class="license-generating-icon">
+            🔑
+          </div>
+
+          <strong>
+            Generando licencia...
+          </strong>
+
+          <p>
+            Preparando una nueva Key de acceso.
+          </p>
+
+          <div class="license-generating-progress">
+            <span></span>
+          </div>
+
+          <small class="license-generating-step">
+            Conectando con Nebula...
+          </small>
+
+        </div>
+
+      </div>
+    `
+  );
+}
+
+function updateLicenseGeneratorStep(
+  text
+) {
+  const step =
+    document.querySelector(
+      ".license-generating-step"
+    );
+
+  if (step) {
+    step.textContent =
+      text;
+  }
+}
+
+function showLicenseGeneratorSuccess() {
+  const box =
+    document.querySelector(
+      ".license-generating-box"
+    );
+
+  if (!box) {
+    return;
+  }
+
+  box.classList.add(
+    "is-success"
+  );
+
+  const icon =
+    box.querySelector(
+      ".license-generating-icon"
+    );
+
+  const title =
+    box.querySelector(
+      "strong"
+    );
+
+  const description =
+    box.querySelector(
+      "p"
+    );
+
+  const step =
+    box.querySelector(
+      ".license-generating-step"
+    );
+
+  if (icon) {
+    icon.textContent =
+      "✓";
+  }
+
+  if (title) {
+    title.textContent =
+      "Licencia creada";
+  }
+
+  if (description) {
+    description.textContent =
+      "La nueva Key fue agregada correctamente.";
+  }
+
+  if (step) {
+    step.textContent =
+      "Proceso completado";
+  }
+}
+
+function hideLicenseGenerator() {
+  const overlay =
+    document.querySelector(
+      ".license-generating-overlay"
+    );
+
+  if (!overlay) {
+    return;
+  }
+
+  overlay.style.opacity =
+    "0";
+
+  setTimeout(
+    () => {
+      overlay.remove();
+    },
+    220
+  );
+}
+
+function waitLicense(ms) {
+  return new Promise(resolve =>
+    setTimeout(
+      resolve,
+      ms
+    )
+  );
+}
+
+async function copyLicenseKey(
+  button
+) {
+  const key =
+    button.dataset.licenseKey ||
+    button
+      .closest(
+        ".license-generated-card"
+      )
+      ?.dataset.licenseKey ||
+    "";
+
+  if (!key) {
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(
+      key
+    );
+
+    const originalText =
+      button.textContent;
+
+    button.textContent =
+      "✓";
+
+    button.classList.add(
+      "is-copied"
+    );
+
+    setTimeout(
+      () => {
+        button.textContent =
+          originalText;
+
+        button.classList.remove(
+          "is-copied"
+        );
+      },
+      1300
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo copiar la licencia:",
+      error
+    );
+  }
+}
+
+function showLicenseDetails(
+  card
+) {
+  const key =
+    card?.dataset.licenseKey ||
+    "Sin Key";
+
+  const userName =
+    card
+      ?.querySelector(
+        ".license-user-copy strong"
+      )
+      ?.textContent
+      ?.trim() ||
+    "Sin asignar";
+
+  const userId =
+    card
+      ?.querySelector(
+        ".license-user-copy span"
+      )
+      ?.textContent
+      ?.trim() ||
+    "Sin datos";
+
+const status =
+  card
+    ?.querySelector(
+      ".license-status"
+    )
+    ?.textContent
+    ?.trim() ||
+  "Sin estado";
+
+const durationInfo =
+  card
+    ?.querySelector(
+      ".license-duration-text"
+    )
+    ?.textContent
+    ?.replace(/\s+/g, " ")
+    ?.trim() ||
+  "Duración no disponible";
+
+const expirationInfo =
+  card
+    ?.querySelector(
+      ".license-expiration-text"
+    )
+    ?.textContent
+    ?.replace(/\s+/g, " ")
+    ?.trim() ||
+  "Vencimiento no disponible";
+
+alert(
+  `DETALLES DE LA LICENCIA\n\n` +
+  `Key: ${key}\n` +
+  `Usuario: ${userName}\n` +
+  `${userId}\n` +
+  `${durationInfo}\n` +
+  `${expirationInfo}\n` +
+  `Estado: ${status}`
+);
+
+}
+
+function editLicenseCard(
+  card
+) {
+  const currentKey =
+    card?.dataset.licenseKey ||
+    "";
+
+  const newKey =
+    prompt(
+      "Editar el nombre visible de la Key:",
+      currentKey
+    );
+
+  if (
+    !newKey ||
+    newKey.trim() ===
+      currentKey
+  ) {
+    return;
+  }
+
+  const normalizedKey =
+    newKey
+      .trim()
+      .toUpperCase();
+
+  card.dataset.licenseKey =
+    normalizedKey;
+
+  const keyElement =
+    card.querySelector(
+      ".license-generated-info > strong"
+    );
+
+  const copyButton =
+    card.querySelector(
+      ".license-action-btn.copy"
+    );
+
+  if (keyElement) {
+    keyElement.textContent =
+      normalizedKey;
+
+    keyElement.title =
+      normalizedKey;
+  }
+
+  if (copyButton) {
+    copyButton.dataset.licenseKey =
+      normalizedKey;
+  }
+}
+
+async function deleteLicenseCard(
+  card
+) {
+  const key =
+    card?.dataset.licenseKey ||
+    "";
+
+  if (!key) {
+    window.alert(
+      "No se pudo obtener la Key."
+    );
+
+    return;
+  }
+
+  const confirmed =
+    window.confirm(
+      `¿Querés eliminar ${key} definitivamente?`
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/licenses/${encodeURIComponent(
+          key
+        )}`,
+        {
+          method: "DELETE",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo eliminar la licencia."
+      );
+    }
+
+    card.style.opacity =
+      "0";
+
+    card.style.transform =
+      "translateX(20px)";
+
+    setTimeout(
+      () => {
+        card.remove();
+
+        updateLicenseCounters();
+
+        const remainingCards =
+          licensesTable.querySelectorAll(
+            ".license-generated-card"
+          );
+
+        if (
+          remainingCards.length === 0
+        ) {
+          licensesTable.innerHTML =
+            createEmptyLicensesHTML();
+        }
+      },
+      220
+    );
+  } catch (error) {
+    console.error(
+      "Error eliminando licencia:",
+      error
+    );
+
+    window.alert(
+      error.message ||
+      "No se pudo eliminar la licencia."
+    );
+  }
+}
+
+/* =========================================================
+   EVENTOS DE LOS BOTONES DE LAS FILAS
+========================================================= */
+
+licensesTable?.addEventListener(
+  "click",
+  event => {
+    const button =
+      event.target.closest(
+        "[data-license-action]"
+      );
+
+    if (!button) {
+      return;
+    }
+
+    const card =
+      button.closest(
+        ".license-generated-card"
+      );
+
+    const action =
+      button.dataset.licenseAction;
+
+    if (
+      action === "copy"
+    ) {
+      copyLicenseKey(
+        button
+      );
+
+      return;
+    }
+
+    if (
+      action === "view"
+    ) {
+      showLicenseDetails(
+        card
+      );
+
+      return;
+    }
+
+    if (
+      action === "edit"
+    ) {
+      editLicenseCard(
+        card
+      );
+
+      return;
+    }
+
+    if (
+      action === "delete"
+    ) {
+      deleteLicenseCard(
+        card
+      );
+    }
+  }
+);
+
+/* Ponemos el encabezado desde que se abre la página */
+
+if (licensesTable) {
+  loadSavedLicenses();
+}
+
+async function generateConfiguredLicense(
+  settings
+) {
+const days =
+  Number(
+    settings.days || 0
+  );
+
+const hours =
+  Number(
+    settings.hours || 0
+  );
+
+const minutes =
+  Number(
+    settings.minutes || 0
+  );
+
+const seconds =
+  Number(
+    settings.seconds || 0
+  );
+
+const permanent =
+  settings.permanent === true ||
+  days >= 9999;
+
+const duration =
+  days;
+
+  const originalText =
+    generateLicenseButton.innerHTML;
+
+  generateLicenseButton.disabled =
+    true;
+
+  generateLicenseButton.innerHTML =
+    "Generando Key...";
+
+  showLicenseGenerator();
+
+  try {
+    updateLicenseGeneratorStep(
+      "Validando datos..."
+    );
+
+    await waitLicense(
+      350
+    );
+
+    updateLicenseGeneratorStep(
+      "Generando código único..."
+    );
+
+ const response =
+  await fetch(
+    `${API_URL}/api/licenses/generate`,
+    {
+      method:
+        "POST",
+
+      credentials:
+        "include",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Accept:
+          "application/json",
+      },
+
+      body:
+        JSON.stringify({
+
+guildId:
+  selectedServerId,
+
+          days,
+          hours,
+          minutes,
+          seconds,
+
+          durationDays:
+            days,
+
+          duration:
+            days,
+
+          permanent,
+
+          description:
+            settings.description,
+        }),
+    }
+  );
+
+    let result;
+
+    try {
+      result =
+        await response.json();
+    } catch {
+      throw new Error(
+        "El servidor devolvió una respuesta inválida."
+      );
+    }
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.message ||
+        "No se pudo generar la Key."
+      );
+    }
+
+    const generatedLicense =
+      Array.isArray(
+        result.licenses
+      )
+        ? result.licenses[0]
+        : result.license ||
+          result.data ||
+          null;
+
+    const generatedKey =
+      generatedLicense?.key ||
+      generatedLicense?.licenseKey ||
+      generatedLicense?.token;
+
+
+const createdAt =
+  generatedLicense?.createdAt ||
+  new Date().toISOString();
+
+const calculatedExpiresAt =
+  permanent
+    ? null
+    : (
+        generatedLicense?.expiresAt ||
+        generatedLicense?.expirationDate ||
+        generatedLicense?.expires ||
+        (
+          settings.durationMilliseconds
+            ? new Date(
+                new Date(createdAt).getTime() +
+                settings.durationMilliseconds
+              ).toISOString()
+            : null
+        )
+      );
+
+if (!generatedKey) {
+
+    throw new Error(
+     "El servidor no devolvió la Key."
+      );
+    }
+
+    updateLicenseGeneratorStep(
+      "Guardando en el sistema..."
+    );
+
+    await waitLicense(
+      450
+    );
+
+    showLicenseGeneratorSuccess();
+
+    await waitLicense(
+      650
+    );
+
+    hideLicenseGenerator();
+
+    removeLicensesEmptyState();
+    ensureLicensesHeader();
+
+    licensesTable.insertAdjacentHTML(
+      "beforeend",
+      createLicenseCardHTML(
+        {
+          ...generatedLicense,
+
+          key:
+            generatedKey,
+
+        duration:
+  days,
+
+durationDays:
+  days,
+
+durationHours:
+  hours,
+
+durationMinutes:
+  minutes,
+
+durationSeconds:
+  seconds,
+
+durationMilliseconds:
+  settings.durationMilliseconds,
+
+permanent:
+  permanent,
+
+          description:
+            settings.description,
+
+          type:
+            permanent
+              ? "Permanente"
+              : `${duration} ${
+                  duration === 1
+                    ? "día"
+                    : "días"
+                }`,
+
+          
+createdAt,
+
+expiresAt:
+  calculatedExpiresAt,
+
+        },
+        true
+      )
+    );
+
+startLicenseCountdowns();
+
+    updateLicenseCounters();
+
+    licensesTable.scrollTo({
+      top:
+        licensesTable.scrollHeight,
+
+      behavior:
+        "smooth",
+    });
+  } catch (error) {
+    console.error(
+      "Error generando licencia:",
+      error
+    );
+
+    hideLicenseGenerator();
+
+    alert(
+      error.message ||
+      "No se pudo generar la licencia."
+    );
+  } finally {
+    generateLicenseButton.disabled =
+      false;
+
+    generateLicenseButton.innerHTML =
+      originalText;
+  }
+}
+
+/* =========================================================
+   ABRIR MODAL GENERAR LICENCIA
+========================================================= */
+
+generateLicenseButton
+  ?.addEventListener(
+    "click",
+    () => {
+      showGenerateLicenseModal();
+    }
+  );
+
+
+deleteAllLicensesButton
+  ?.addEventListener(
+    "click",
+    () => {
+      showDeleteAllLicensesModal();
+
+    }
+  );
+
+    }
+  );
+
+document
   .getElementById(
     "publicSupport"
   )
+
   ?.addEventListener(
     "click",
     () => {
@@ -2084,6 +5478,20 @@ pageContent.innerHTML = `
 `;
 
 loadDashboardSession();
+
+window.addEventListener(
+  "nebula:server-changed",
+  async () => {
+    if (
+      document.getElementById(
+        "licenseLogsChannel"
+      )
+    ) {
+      await loadLicenseLogChannels();
+      await loadLicenseSettings();
+    }
+  }
+);
 
 const pageDefinitions = {
   "Servidores": {
