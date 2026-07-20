@@ -2459,6 +2459,41 @@ if (!dashboardSessionUser?.isOwner) {
   return;
 }
 
+const currentSelectedServer =
+  dashboardServers.find(
+    server =>
+      String(server.id) ===
+        String(selectedServerId) &&
+      server.botPresent === true
+  );
+
+const serverWithBot =
+  currentSelectedServer ||
+  dashboardServers.find(
+    server =>
+      server.botPresent === true
+  );
+
+if (!serverWithBot) {
+  alert(
+    "El bot no está agregado a ningún servidor. Primero agregalo desde Mis servidores."
+  );
+
+  return;
+}
+
+selectedServerId =
+  String(serverWithBot.id);
+
+localStorage.setItem(
+  "nebulaSelectedServerId",
+  selectedServerId
+);
+
+renderSelectedServer(
+  serverWithBot
+);
+
       document.body.classList.add(
         "servers-selection-mode"
       );
