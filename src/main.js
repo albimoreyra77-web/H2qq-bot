@@ -2459,31 +2459,26 @@ if (!dashboardSessionUser?.isOwner) {
   return;
 }
 
-const currentSelectedServer =
+const OFFICIAL_LICENSE_GUILD_ID =
+  "1521980102085312542";
+
+const officialServer =
   dashboardServers.find(
     server =>
       String(server.id) ===
-        String(selectedServerId) &&
-      server.botPresent === true
+      OFFICIAL_LICENSE_GUILD_ID
   );
 
-const serverWithBot =
-  currentSelectedServer ||
-  dashboardServers.find(
-    server =>
-      server.botPresent === true
-  );
-
-if (!serverWithBot) {
+if (!officialServer) {
   alert(
-    "El bot no está agregado a ningún servidor. Primero agregalo desde Mis servidores."
+    "El servidor oficial no está disponible en tu cuenta."
   );
 
   return;
 }
 
 selectedServerId =
-  String(serverWithBot.id);
+  OFFICIAL_LICENSE_GUILD_ID;
 
 localStorage.setItem(
   "nebulaSelectedServerId",
@@ -2491,7 +2486,7 @@ localStorage.setItem(
 );
 
 renderSelectedServer(
-  serverWithBot
+  officialServer
 );
 
       document.body.classList.add(
