@@ -7418,19 +7418,37 @@ const currentAppearance = {
 };
 
   const currentSecurity = {
-    detectVpn: false,
-    detectProxy: false,
-    detectTor: false,
-    blockHosting: false,
-    detectAltAccounts: false,
-    minimumAccountAgeEnabled: false,
-    minimumAccountAgeDays: 7,
-    blockWithoutAvatar: false,
-    blockWithoutBanner: false,
-    allowReverification: true,
-    notifySecurityFailure: true,
-    ...(config.security || {}),
-  };
+  detectVpn: false,
+  detectVpnLogChannelId: "",
+
+  detectProxy: false,
+  detectProxyLogChannelId: "",
+
+  detectTor: false,
+  detectTorLogChannelId: "",
+
+  blockHosting: false,
+  blockHostingLogChannelId: "",
+
+  detectAltAccounts: false,
+  detectAltAccountsLogChannelId: "",
+
+  minimumAccountAgeEnabled: false,
+  minimumAccountAgeDays: 7,
+  minimumAccountAgeLogChannelId: "",
+
+  blockWithoutAvatar: false,
+  blockWithoutAvatarLogChannelId: "",
+
+  blockWithoutBanner: false,
+  blockWithoutBannerLogChannelId: "",
+
+  allowReverification: true,
+
+  notifySecurityFailure: true,
+
+  ...(config.security || {}),
+};
 
   const channelOptions = channels
     .map(
@@ -7505,6 +7523,108 @@ const currentAppearance = {
       </label>
     </div>
   `;
+
+
+const createSecurityCard = ({
+  id,
+  title,
+  description,
+  enabled,
+  logChannelId = "",
+  channels = "",
+  showLogChannel = true,
+  icon = "◈",
+  extraContent = "",
+  cardClass = "",
+}) => {
+  const selectedChannels = String(channels).replace(
+    new RegExp(
+      `value="${String(logChannelId)}"`,
+      "g"
+    ),
+    `value="${String(logChannelId)}" selected`
+  );
+
+  return `
+    <article
+      class="verify-security-card ${cardClass}"
+      data-security-card="${id}"
+    >
+      <div class="verify-security-card-glow"></div>
+
+      <div class="verify-security-card-header">
+
+        <div class="verify-security-card-icon">
+          ${icon}
+        </div>
+
+        <div class="verify-security-card-copy">
+          <strong>
+            ${escapeHtml(title)}
+          </strong>
+
+          <p>
+            ${escapeHtml(description)}
+          </p>
+        </div>
+
+        <label class="switch-control verify-security-switch">
+          <input
+            id="${id}"
+            type="checkbox"
+            ${enabled ? "checked" : ""}
+          >
+
+          <span></span>
+        </label>
+
+      </div>
+
+      ${extraContent}
+
+      ${
+        showLogChannel
+          ? `
+            <label class="verify-security-field">
+
+              <span class="verify-security-field-label">
+                <i></i>
+                CANAL DE LOGS
+              </span>
+
+              <div class="verify-security-select-wrapper">
+                <select
+                  id="${id}LogChannel"
+                  class="verify-security-channel"
+                >
+                  <option value="">
+                    No enviar logs
+                  </option>
+
+                  ${selectedChannels}
+                </select>
+
+                <span class="verify-security-select-arrow">
+                 ⌄
+                </span>
+              </div>
+
+            </label>
+          `
+          : ""
+      }
+
+      <div class="verify-security-card-status">
+        <span class="verify-security-status-dot"></span>
+
+        <span class="verify-security-status-text">
+          ${enabled ? "Protección activada" : "Protección desactivada"}
+        </span>
+      </div>
+
+    </article>
+  `;
+};
 
   const createLogToggle = (
     key,
@@ -9474,94 +9594,117 @@ const currentAppearance = {
 
   </div>
 </section>
-        <!-- SEGURIDAD -->
+      <!-- SEGURIDAD -->
 
-        <section
-          class="verify-tab-panel"
-          data-verify-panel="security"
-        >
-          <article class="section-panel">
-            <div class="section-panel-head">
-              <div>
-                <span>PROTECCIÓN</span>
-                <h3>Reglas de seguridad</h3>
-              </div>
-            </div>
+<section
+  class="verify-tab-panel"
+  data-verify-panel="security"
+>
 
-            <div class="verify-options-grid">
-              ${createToggle(
-                "verifyDetectVpn",
-                "Detectar VPN",
-                "Marca conexiones que podrían utilizar VPN.",
-                currentSecurity.detectVpn
-              )}
+  <article class="section-panel verify-security-section">
 
-              ${createToggle(
-                "verifyDetectProxy",
-                "Detectar proxy",
-                "Marca conexiones mediante proxy.",
-                currentSecurity.detectProxy
-              )}
+    <div class="verify-security-heading">
 
-              ${createToggle(
-                "verifyDetectTor",
-                "Detectar Tor",
-                "Marca conexiones de la red Tor.",
-                currentSecurity.detectTor
-              )}
-${createToggle(
-  "verifyBlockHosting",
-  "Bloquear hosting / datacenter",
-  "Bloquea conexiones provenientes de servidores o centros de datos.",
-  currentSecurity.blockHosting
-)}
+      <div class="verify-security-heading-icon">
+        ◈
+      </div>
 
-              ${createToggle(
-                "verifyDetectAltAccounts",
-                "Detectar multicuentas",
-                "Busca señales de cuentas duplicadas.",
-                currentSecurity.detectAltAccounts
-              )}
+      <div class="verify-security-heading-copy">
+        <span>
+          PROTECCIÓN AVANZADA
+        </span>
 
-              ${createToggle(
-                "verifyBlockWithoutAvatar",
-                "Bloquear sin avatar",
-                "Impide verificar cuentas sin foto.",
-                currentSecurity.blockWithoutAvatar
-              )}
+        <h3>
+          Reglas de seguridad
+        </h3>
 
-              ${createToggle(
-                "verifyBlockWithoutBanner",
-                "Bloquear sin banner",
-                "Impide verificar cuentas sin banner.",
-                currentSecurity.blockWithoutBanner
-              )}
+        <p>
+          Configurá cómo se controlarán y registrarán las verificaciones sospechosas.
+        </p>
+      </div>
 
-              ${createToggle(
-                "verifyAllowReverification",
-                "Permitir reverificación",
-                "Permite verificar nuevamente.",
-                currentSecurity.allowReverification
-              )}
+      <div class="verify-security-counter">
+        <strong id="verifySecurityActiveCount">
+          0
+        </strong>
 
-              ${createToggle(
-                "verifyNotifySecurityFailure",
-                "Registrar bloqueos",
-                "Envía un log cuando una regla falla.",
-                currentSecurity.notifySecurityFailure
-              )}
-            </div>
+        <span>
+          reglas activas
+        </span>
+      </div>
 
-            ${createToggle(
-              "verifyMinimumAgeEnabled",
-              "Edad mínima de la cuenta",
-              "Bloquea cuentas demasiado nuevas.",
-              currentSecurity.minimumAccountAgeEnabled
-            )}
+    </div>
 
-            <label class="welcome-field">
-              <span>DÍAS MÍNIMOS DE ANTIGÜEDAD</span>
+    <div class="verify-security-list">
 
+      ${createSecurityCard({
+        id: "verifyDetectVpn",
+        title: "Detectar VPN",
+        description: "Marca conexiones que utilizan redes privadas virtuales.",
+        enabled: currentSecurity.detectVpn,
+        logChannelId: currentSecurity.detectVpnLogChannelId,
+        channels: channelOptions,
+        icon: "◉"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyDetectProxy",
+        title: "Detectar Proxy",
+        description: "Bloquea conexiones realizadas mediante servidores Proxy.",
+        enabled: currentSecurity.detectProxy,
+        logChannelId: currentSecurity.detectProxyLogChannelId,
+        channels: channelOptions,
+        icon: "⌁"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyDetectTor",
+        title: "Detectar Tor",
+        description: "Detecta conexiones realizadas desde la red anónima Tor.",
+        enabled: currentSecurity.detectTor,
+        logChannelId: currentSecurity.detectTorLogChannelId,
+        channels: channelOptions,
+        icon: "◎"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyBlockHosting",
+        title: "Bloquear Hosting",
+        description: "Impide verificaciones desde servidores, datacenters o VPS.",
+        enabled: currentSecurity.blockHosting,
+        logChannelId: currentSecurity.blockHostingLogChannelId,
+        channels: channelOptions,
+        icon: "▣"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyDetectAltAccounts",
+        title: "Detectar Multicuentas",
+        description: "Detecta usuarios que podrían utilizar cuentas alternativas.",
+        enabled: currentSecurity.detectAltAccounts,
+        logChannelId: currentSecurity.detectAltAccountsLogChannelId,
+        channels: channelOptions,
+        icon: "♧"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyMinimumAgeEnabled",
+        title: "Edad mínima de la cuenta",
+        description: "Bloquea cuentas de Discord creadas recientemente.",
+        enabled: currentSecurity.minimumAccountAgeEnabled,
+        logChannelId: currentSecurity.minimumAccountAgeLogChannelId,
+        channels: channelOptions,
+        icon: "◷",
+        cardClass: "verify-security-age-card",
+        extraContent: `
+          <label class="verify-security-field verify-security-age-field">
+
+            <span class="verify-security-field-label">
+              <i></i>
+              DÍAS MÍNIMOS DE ANTIGÜEDAD
+            </span>
+
+            <div class="verify-security-number-wrapper">
               <input
                 id="verifyMinimumAgeDays"
                 type="number"
@@ -9571,9 +9714,65 @@ ${createToggle(
                   currentSecurity.minimumAccountAgeDays
                 }"
               >
-            </label>
-          </article>
-        </section>
+
+              <span>
+                días
+              </span>
+            </div>
+
+          </label>
+        `
+      }).replace(
+        'id="verifyMinimumAgeEnabledLogChannel"',
+        'id="verifyMinimumAgeLogChannel"'
+      )}
+
+      ${createSecurityCard({
+        id: "verifyBlockWithoutAvatar",
+        title: "Bloquear sin Avatar",
+        description: "Impide verificar usuarios que no tengan foto de perfil.",
+        enabled: currentSecurity.blockWithoutAvatar,
+        logChannelId: currentSecurity.blockWithoutAvatarLogChannelId,
+        channels: channelOptions,
+        icon: "●"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyBlockWithoutBanner",
+        title: "Bloquear sin Banner",
+        description: "Impide verificar usuarios que no tengan banner configurado.",
+        enabled: currentSecurity.blockWithoutBanner,
+        logChannelId: currentSecurity.blockWithoutBannerLogChannelId,
+        channels: channelOptions,
+        icon: "▰"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyAllowReverification",
+        title: "Permitir Re-verificación",
+        description: "Permite que un usuario vuelva a realizar el proceso.",
+        enabled: currentSecurity.allowReverification,
+        showLogChannel: false,
+        icon: "↻",
+        cardClass: "verify-security-simple-card"
+      })}
+
+      ${createSecurityCard({
+        id: "verifyNotifySecurityFailure",
+        title: "Notificar fallo de seguridad",
+        description: "Envía un aviso cuando una verificación es rechazada.",
+        enabled: currentSecurity.notifySecurityFailure,
+        showLogChannel: false,
+        icon: "!",
+        cardClass: "verify-security-simple-card"
+      })}
+
+    </div>
+
+  </article>
+
+</section>
+
 <!-- CONFIGURACIÓN -->
 
 <section
@@ -10410,6 +10609,82 @@ Gracias por formar parte de nuestra comunidad.`
       </div>
     </div>
   `;
+
+
+/* =========================================================
+   TARJETAS DE SEGURIDAD — ESTADOS Y CONTADOR
+   ========================================================= */
+
+const updateVerificationSecurityCards = () => {
+  const securityCards =
+    document.querySelectorAll(
+      ".verify-security-card"
+    );
+
+  const securityCounter =
+    document.getElementById(
+      "verifySecurityActiveCount"
+    );
+
+  const updateSecurityCounter = () => {
+    const activeRules =
+      document.querySelectorAll(
+        '.verify-security-switch input[type="checkbox"]:checked'
+      ).length;
+
+    if (securityCounter) {
+      securityCounter.textContent =
+        String(activeRules);
+    }
+  };
+
+  securityCards.forEach(card => {
+    const checkbox =
+      card.querySelector(
+        '.verify-security-switch input[type="checkbox"]'
+      );
+
+    const statusText =
+      card.querySelector(
+        ".verify-security-status-text"
+      );
+
+    if (!checkbox) {
+      return;
+    }
+
+    const updateCardStatus = () => {
+      const isActive =
+        checkbox.checked;
+
+      card.classList.toggle(
+        "is-active",
+        isActive
+      );
+
+      if (statusText) {
+        statusText.textContent =
+          isActive
+            ? "Protección activada"
+            : "Protección desactivada";
+      }
+    };
+
+    checkbox.addEventListener(
+      "change",
+      () => {
+        updateCardStatus();
+        updateSecurityCounter();
+      }
+    );
+
+    updateCardStatus();
+  });
+
+  updateSecurityCounter();
+};
+
+updateVerificationSecurityCards();
 
   const getElement =
     id => document.getElementById(id);
@@ -12969,6 +13244,47 @@ webAppearance:
         getElement(
           "verifyNotifySecurityFailure"
         ).checked,
+
+detectVpnLogChannelId:
+  getElement(
+    "verifyDetectVpnLogChannel"
+  ).value,
+
+detectProxyLogChannelId:
+  getElement(
+    "verifyDetectProxyLogChannel"
+  ).value,
+
+detectTorLogChannelId:
+  getElement(
+    "verifyDetectTorLogChannel"
+  ).value,
+
+blockHostingLogChannelId:
+  getElement(
+    "verifyBlockHostingLogChannel"
+  ).value,
+
+detectAltAccountsLogChannelId:
+  getElement(
+    "verifyDetectAltAccountsLogChannel"
+  ).value,
+
+minimumAccountAgeLogChannelId:
+  getElement(
+    "verifyMinimumAgeLogChannel"
+  ).value,
+
+blockWithoutAvatarLogChannelId:
+  getElement(
+    "verifyBlockWithoutAvatarLogChannel"
+  ).value,
+
+blockWithoutBannerLogChannelId:
+  getElement(
+    "verifyBlockWithoutBannerLogChannel"
+  ).value,
+
     },
   });
 

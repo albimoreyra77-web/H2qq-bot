@@ -1922,14 +1922,93 @@ if (
 */
 
 if (securityFailures.length > 0) {
-  if (
-    security.notifySecurityFailure &&
-    config.logsChannelId
-  ) {
-    const securityLogsChannel =
-      guild.channels.cache.get(
-        config.logsChannelId
-      );
+
+let securityLogChannelId = null;
+
+if (
+  security.detectVpn &&
+  networkData.vpn === true
+) {
+  securityLogChannelId =
+    security.detectVpnLogChannelId;
+}
+
+else if (
+  security.detectProxy &&
+  networkData.proxy === true
+) {
+  securityLogChannelId =
+    security.detectProxyLogChannelId;
+}
+
+else if (
+  security.detectTor &&
+  networkData.tor === true
+) {
+  securityLogChannelId =
+    security.detectTorLogChannelId;
+}
+
+else if (
+  security.blockHosting &&
+  networkData.hosting === true
+) {
+  securityLogChannelId =
+    security.blockHostingLogChannelId;
+}
+
+else if (
+  security.detectAltAccounts &&
+  alternativeAccountMatch
+) {
+  securityLogChannelId =
+    security.detectAltAccountsLogChannelId;
+}
+
+else if (
+  security.minimumAccountAgeEnabled &&
+  securityFailures.some(reason =>
+    reason.includes("antigüedad")
+  )
+) {
+  securityLogChannelId =
+    security.minimumAccountAgeLogChannelId;
+}
+
+else if (
+  security.blockWithoutAvatar &&
+  securityFailures.some(reason =>
+    reason.includes("foto de perfil")
+  )
+) {
+  securityLogChannelId =
+    security.blockWithoutAvatarLogChannelId;
+}
+
+if (
+  security.notifySecurityFailure &&
+  securityLogChannelId
+) {
+
+      let securityLogsChannel = null;
+
+if (securityLogChannelId) {
+  securityLogsChannel =
+    guild.channels.cache.get(
+      securityLogChannelId
+    );
+
+  if (!securityLogsChannel) {
+    try {
+      securityLogsChannel =
+        await guild.channels.fetch(
+          securityLogChannelId
+        );
+    } catch {
+      securityLogsChannel = null;
+    }
+  }
+}
 
     if (
       securityLogsChannel &&
@@ -2061,9 +2140,11 @@ if (securityFailures.length > 0) {
         "No se pudo enviar el bloqueo: el canal de logs no existe o no admite mensajes.",
         {
           guildId,
-          logsChannelId:
-            config.logsChannelId,
-        }
+
+logsChannelId:
+    securityLogChannelId,
+
+         }
       );
     }
   }
@@ -3601,6 +3682,69 @@ showTimestamp:
                 body.security
                   ?.detectAltAccounts
               ),
+
+
+blockHosting:
+  cleanBoolean(
+    body.security
+      ?.blockHosting
+  ),
+
+detectVpnLogChannelId:
+  cleanString(
+    body.security
+      ?.detectVpnLogChannelId,
+    "",
+    30
+  ),
+
+detectProxyLogChannelId:
+  cleanString(
+    body.security
+      ?.detectProxyLogChannelId,
+    "",
+    30
+  ),
+
+detectTorLogChannelId:
+  cleanString(
+    body.security
+      ?.detectTorLogChannelId,
+    "",
+    30
+  ),
+
+detectHostingLogChannelId:
+  cleanString(
+    body.security
+      ?.detectHostingLogChannelId,
+    "",
+    30
+  ),
+
+detectAltAccountsLogChannelId:
+  cleanString(
+    body.security
+      ?.detectAltAccountsLogChannelId,
+    "",
+    30
+  ),
+
+blockWithoutAvatarLogChannelId:
+  cleanString(
+    body.security
+      ?.blockWithoutAvatarLogChannelId,
+    "",
+    30
+  ),
+
+blockWithoutBannerLogChannelId:
+  cleanString(
+    body.security
+      ?.blockWithoutBannerLogChannelId,
+    "",
+    30
+  ),
 
             minimumAccountAgeEnabled:
               cleanBoolean(

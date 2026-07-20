@@ -1495,6 +1495,14 @@ webAppearance: {
       detectTor: false,
       detectAltAccounts: false,
 
+     detectVpnLogChannelId: "",
+     detectProxyLogChannelId: "",
+     detectTorLogChannelId: "",
+     detectHostingLogChannelId: "",
+     detectAltAccountsLogChannelId: "",
+     blockWithoutAvatarLogChannelId: "",
+     blockWithoutBannerLogChannelId: "",
+
       minimumAccountAgeEnabled: false,
       minimumAccountAgeDays: 7,
 
