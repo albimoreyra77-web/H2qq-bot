@@ -4947,6 +4947,41 @@ if (licensesTable) {
   loadSavedLicenses();
 }
 
+
+/*
+  Actualización en tiempo real de las licencias.
+  Cuando una licencia cambia desde Discord
+  o desde otra sesión del dashboard,
+  volvemos a cargar la tabla.
+*/
+
+socket.off("licenses:update");
+
+socket.on(
+  "licenses:update",
+  async () => {
+    const currentLicensesTable =
+      document.getElementById(
+        "licensesTable"
+      );
+
+    /*
+      Solo actualizamos si la página
+      de licencias está abierta.
+    */
+
+    if (!currentLicensesTable) {
+      return;
+    }
+
+    console.log(
+      "Cambio de licencias recibido en tiempo real."
+    );
+
+    await loadSavedLicenses();
+  }
+);
+
 async function generateConfiguredLicense(
   settings
 ) {
