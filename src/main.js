@@ -2099,19 +2099,16 @@ Gestioná todas las licencias del dashboard desde un solo lugar.
         Canal de Logs
       </label>
 
-      <select
-        id="licenseLogsChannel"
-        class="license-setting-select"
-      >
-        <option value="">
-          Seleccionar un canal
-        </option>
 
-        <option value="demo">
-          #logs-licencias
-        </option>
-      </select>
-    </div>
+<select
+  id="licenseLogsChannel"
+  class="license-setting-select"
+>
+  <option value="">
+    Cargando canales...
+  </option>
+</select>
+       </div>
 
     <div class="license-checkbox-list">
 
@@ -2292,7 +2289,7 @@ const licenseLogRevocation =
   );
 async function loadLicenseLogChannels() {
   if (!licenseLogsChannel) {
-    return;
+    return false;
   }
 
   if (!selectedServerId) {
@@ -2304,7 +2301,7 @@ async function loadLicenseLogChannels() {
 
     licenseLogsChannel.disabled = true;
 
-    return;
+    return false;
   }
 
   licenseLogsChannel.disabled = true;
@@ -2316,29 +2313,23 @@ async function loadLicenseLogChannels() {
   `;
 
   try {
-    const response =
-      await fetch(
-        `${API_URL}/api/servers/${encodeURIComponent(
-          selectedServerId
-        )}/text-channels`,
-        {
-          method: "GET",
+    const response = await fetch(
+      `${API_URL}/api/servers/${encodeURIComponent(
+        selectedServerId
+      )}/text-channels`,
+      {
+        method: "GET",
 
-          headers: {
-            Accept:
-              "application/json",
-          },
+        headers: {
+          Accept: "application/json",
+        },
 
-          credentials:
-            "include",
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
 
-          cache:
-            "no-store",
-        }
-      );
-
-    const result =
-      await response.json();
+    const result = await response.json();
 
     if (
       !response.ok ||
@@ -2350,10 +2341,17 @@ async function loadLicenseLogChannels() {
       );
     }
 
+    /*
+      Aceptamos result.data y también
+      result.channels por seguridad.
+    */
+
     const channels =
       Array.isArray(result.data)
         ? result.data
-        : [];
+        : Array.isArray(result.channels)
+          ? result.channels
+          : [];
 
     licenseLogsChannel.innerHTML = `
       <option value="">
@@ -2361,15 +2359,19 @@ async function loadLicenseLogChannels() {
       </option>
 
       ${channels
-        .map(channel => `
-          <option value="${channel.id}">
-            #${channel.name}
-          </option>
-        `)
+        .map(
+          channel => `
+            <option value="${channel.id}">
+              #${channel.name}
+            </option>
+          `
+        )
         .join("")}
     `;
 
     licenseLogsChannel.disabled = false;
+
+    return true;
 
   } catch (error) {
     console.error(
@@ -2384,6 +2386,8 @@ async function loadLicenseLogChannels() {
     `;
 
     licenseLogsChannel.disabled = true;
+
+    return false;
   }
 }
 
@@ -2392,33 +2396,27 @@ async function loadLicenseSettings() {
     !selectedServerId ||
     !licenseLogsChannel
   ) {
-    return;
+    return false;
   }
 
   try {
-    const response =
-      await fetch(
-        `${API_URL}/api/servers/${encodeURIComponent(
-          selectedServerId
-        )}/license-settings`,
-        {
-          method: "GET",
+    const response = await fetch(
+      `${API_URL}/api/servers/${encodeURIComponent(
+        selectedServerId
+      )}/license-settings`,
+      {
+        method: "GET",
 
-          headers: {
-            Accept:
-              "application/json",
-          },
+        headers: {
+          Accept: "application/json",
+        },
 
-          credentials:
-            "include",
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
 
-          cache:
-            "no-store",
-        }
-      );
-
-    const result =
-      await response.json();
+    const result = await response.json();
 
     if (
       !response.ok ||
@@ -2433,31 +2431,102 @@ async function loadLicenseSettings() {
     const config =
       result.data || {};
 
+    const savedLogsChannelId =
+      String(
+        config.logsChannelId || ""
+      );
+
+    /*
+      Primero comprobamos que el canal
+      guardado exista entre las opciones.
+    */
+
+    const channelExists = [
+      ...licenseLogsChannel.options,
+    ].some(
+      option =>
+        String(option.value) ===
+        savedLogsChannelId
+    );
+
     licenseLogsChannel.value =
-      config.logsChannelId || "";
+      channelExists
+        ? savedLogsChannelId
+        : "";
 
-    licenseLogCreation.checked =
-      config.creation !== false;
+    if (licenseLogCreation) {
+      licenseLogCreation.checked =
+        config.creation !== false;
+    }
 
-    licenseLogActivation.checked =
-      config.activation !== false;
+    if (licenseLogActivation) {
+      licenseLogActivation.checked =
+        config.activation !== false;
+    }
 
-    licenseLogExpiration.checked =
-      config.expiration !== false;
+    if (licenseLogExpiration) {
+      licenseLogExpiration.checked =
+        config.expiration !== false;
+    }
 
-    licenseLogDeletion.checked =
-      config.deletion !== false;
+    if (licenseLogDeletion) {
+      licenseLogDeletion.checked =
+        config.deletion !== false;
+    }
 
-    licenseLogRevocation.checked =
-      config.revocation !== false;
+    if (licenseLogRevocation) {
+      licenseLogRevocation.checked =
+        config.revocation !== false;
+    }
+
+    return true;
 
   } catch (error) {
     console.error(
       "Error cargando configuración de licencias:",
       error
     );
+
+    return false;
   }
 }
+
+
+async function initializeLicenseSettings() {
+  try {
+    const channelsLoaded =
+      await loadLicenseLogChannels();
+
+    /*
+      Solo buscamos la configuración
+      si los canales pudieron cargarse.
+    */
+
+    if (channelsLoaded) {
+      await loadLicenseSettings();
+    }
+
+  } catch (error) {
+    console.error(
+      "No se pudo inicializar la configuración de licencias:",
+      error
+    );
+  }
+}
+
+window.addEventListener(
+  "nebula:server-changed",
+  async () => {
+    const currentLicenseSelector =
+      document.getElementById(
+        "licenseLogsChannel"
+      );
+
+    if (currentLicenseSelector) {
+      await initializeLicenseSettings();
+    }
+  }
+);
 
 async function saveCurrentLicenseSettings() {
   if (!selectedServerId) {
@@ -2579,6 +2648,8 @@ saveLicenseSettings
     "click",
     saveCurrentLicenseSettings
   );
+
+initializeLicenseSettings();
 
 /* =========================================================
    FUNCIONES DEL ADMINISTRADOR DE LICENCIAS
@@ -4299,10 +4370,6 @@ async function loadSavedLicenses() {
 
     updateLicenseCounters();
 
-loadLicenseLogChannels();
-
-loadLicenseSettings();
-
 startLicenseCountdowns();
 
   } catch (error) {
@@ -5487,8 +5554,7 @@ window.addEventListener(
         "licenseLogsChannel"
       )
     ) {
-      await loadLicenseLogChannels();
-      await loadLicenseSettings();
+      await initializeLicenseSettings();
     }
   }
 );
