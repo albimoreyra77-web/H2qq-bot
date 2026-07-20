@@ -4043,34 +4043,16 @@ app.post(
   license.activatedAt =
     activatedAt;
 
-        const duration =
-          String(
-            license.duration || "never"
-          ).toLowerCase();
+      const durationMilliseconds =
+  Number(
+    license.durationMilliseconds
+  );
 
-        const durationTimes = {
-          "1d":
-            24 * 60 * 60 * 1000,
-
-          "7d":
-            7 * 24 * 60 * 60 * 1000,
-
-          "30d":
-            30 * 24 * 60 * 60 * 1000,
-
-          "90d":
-            90 * 24 * 60 * 60 * 1000,
-        };
-
-        license.expiresAt =
-          duration === "never"
-            ? null
-            : activatedAt +
-              (
-                durationTimes[
-                  duration
-                ] || 0
-              );
+license.expiresAt =
+  license.permanent === true
+    ? null
+    : activatedAt +
+      durationMilliseconds;
 
         saveTokens(tokens);
       }
@@ -4096,6 +4078,135 @@ app.post(
                   "La Key era válida, pero no se pudo guardar la sesión.",
               });
           }
+
+
+/* =========================================================
+   LICENCIA ACTIVA DEL USUARIO CONECTADO
+   ========================================================= */
+
+app.get(
+  "/api/licenses/current",
+  (request, response) => {
+    try {
+      const dashboardUser =
+        request.session?.dashboardUser;
+
+      if (!dashboardUser?.id) {
+        return response
+          .status(401)
+          .json({
+            success: false,
+            message:
+              "No hay una sesión iniciada.",
+          });
+      }
+
+      /*
+        El dueño del dashboard no necesita Key.
+      */
+      if (dashboardUser.isOwner === true) {
+        return response.json({
+          success: true,
+          hasLicense: false,
+          isOwner: true,
+          license: null,
+        });
+      }
+
+      const tokens =
+        loadTokens();
+
+      const license =
+        tokens.find(
+          savedLicense =>
+            savedLicense?.activated === true &&
+            String(
+              savedLicense?.activatedBy || ""
+            ) ===
+              String(
+                dashboardUser.id
+              ) &&
+            savedLicense?.revoked !== true
+        );
+
+      if (!license) {
+        return response.json({
+          success: true,
+          hasLicense: false,
+          isOwner: false,
+          license: null,
+        });
+      }
+
+      const permanent =
+        license.permanent === true ||
+        !license.expiresAt;
+
+      const expiresAt =
+        permanent
+          ? null
+          : Number(
+              license.expiresAt
+            );
+
+      const expired =
+        !permanent &&
+        Number.isFinite(expiresAt) &&
+        expiresAt <= Date.now();
+
+      if (expired) {
+        license.status =
+          "expired";
+
+        saveTokens(
+          tokens
+        );
+      }
+
+      return response.json({
+        success: true,
+
+        hasLicense:
+          !expired,
+
+        isOwner:
+          false,
+
+        license: {
+          key:
+            license.key,
+
+          status:
+            expired
+              ? "expired"
+              : "active",
+
+          permanent,
+
+          activatedAt:
+            Number(
+              license.activatedAt || 0
+            ),
+
+          expiresAt,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Error consultando la licencia activa:",
+        error
+      );
+
+      return response
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "No se pudo consultar la licencia.",
+        });
+    }
+  }
+);
 
           return response.json({
             success: true,

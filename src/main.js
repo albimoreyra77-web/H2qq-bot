@@ -270,6 +270,42 @@ document.querySelector("#app").innerHTML = `
   </button>
 </div>
 
+<div
+  class="key-time-card"
+  id="keyTimeCard"
+  hidden
+>
+  <div class="key-time-head">
+    <span>
+      TIME KEY
+    </span>
+
+    <span
+      class="key-time-icon"
+      aria-hidden="true"
+    >
+      🔑
+    </span>
+  </div>
+
+  <strong
+    class="key-time-countdown"
+    id="keyTimeCountdown"
+  >
+    00d 00h 00m 00s
+  </strong>
+
+  <div class="key-time-divider"></div>
+
+  <div class="key-time-expiration">
+    <span>Vence:</span>
+
+    <strong id="keyTimeExpiration">
+      --/--/---- --:--:--
+    </strong>
+  </div>
+</div>
+
           </aside>
 
     <main class="main">
@@ -558,6 +594,25 @@ const ownerUsername =
     "ownerUsername"
   );
 
+
+const keyTimeCard =
+  document.getElementById(
+    "keyTimeCard"
+  );
+
+const keyTimeCountdown =
+  document.getElementById(
+    "keyTimeCountdown"
+  );
+
+const keyTimeExpiration =
+  document.getElementById(
+    "keyTimeExpiration"
+  );
+
+let keyCountdownInterval =
+  null;
+
 const welcomeUsername =
   document.getElementById(
     "welcomeUsername"
@@ -798,6 +853,233 @@ let dashboardBotData = {
   avatar: "",
 };
 
+function formatKeyCountdown(
+  milliseconds
+) {
+  const totalSeconds =
+    Math.max(
+      0,
+      Math.floor(
+        milliseconds / 1000
+      )
+    );
+
+  const days =
+    Math.floor(
+      totalSeconds / 86400
+    );
+
+  const hours =
+    Math.floor(
+      (
+        totalSeconds % 86400
+      ) / 3600
+    );
+
+  const minutes =
+    Math.floor(
+      (
+        totalSeconds % 3600
+      ) / 60
+    );
+
+  const seconds =
+    totalSeconds % 60;
+
+  return (
+    `${days}d ` +
+    `${String(hours).padStart(2, "0")}h ` +
+    `${String(minutes).padStart(2, "0")}m ` +
+    `${String(seconds).padStart(2, "0")}s`
+  );
+}
+
+function hideKeyCountdown() {
+  if (keyCountdownInterval) {
+    clearInterval(
+      keyCountdownInterval
+    );
+
+    keyCountdownInterval =
+      null;
+  }
+
+  if (keyTimeCard) {
+    keyTimeCard.hidden =
+      true;
+  }
+}
+
+function startKeyCountdown(
+  license
+) {
+  if (
+    !keyTimeCard ||
+    !keyTimeCountdown ||
+    !keyTimeExpiration
+  ) {
+    return;
+  }
+
+  if (keyCountdownInterval) {
+    clearInterval(
+      keyCountdownInterval
+    );
+  }
+
+  keyTimeCard.hidden =
+    false;
+
+  if (license.permanent === true) {
+    keyTimeCountdown.textContent =
+      "Permanente";
+
+    keyTimeExpiration.textContent =
+      "Sin vencimiento";
+
+    return;
+  }
+
+  const expiresAt =
+    Number(
+      license.expiresAt
+    );
+
+  if (
+    !Number.isFinite(
+      expiresAt
+    )
+  ) {
+    hideKeyCountdown();
+
+    return;
+  }
+
+  keyTimeExpiration.textContent =
+    new Date(
+      expiresAt
+    ).toLocaleString(
+      "es-AR",
+      {
+        day:
+          "2-digit",
+
+        month:
+          "2-digit",
+
+        year:
+          "numeric",
+
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
+        second:
+          "2-digit",
+      }
+    );
+
+  const updateCountdown =
+    () => {
+      const remaining =
+        expiresAt -
+        Date.now();
+
+      if (remaining <= 0) {
+        keyTimeCountdown.textContent =
+          "00d 00h 00m 00s";
+
+        keyTimeExpiration.textContent =
+          "Key vencida";
+
+        if (
+          keyCountdownInterval
+        ) {
+          clearInterval(
+            keyCountdownInterval
+          );
+
+          keyCountdownInterval =
+            null;
+        }
+
+        return;
+      }
+
+      keyTimeCountdown.textContent =
+        formatKeyCountdown(
+          remaining
+        );
+    };
+
+  updateCountdown();
+
+  keyCountdownInterval =
+    setInterval(
+      updateCountdown,
+      1000
+    );
+}
+
+async function loadCurrentLicense() {
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/api/licenses/current`,
+        {
+          method:
+            "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          credentials:
+            "include",
+
+          cache:
+            "no-store",
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      hideKeyCountdown();
+
+      return;
+    }
+
+    if (
+      result.isOwner === true ||
+      result.hasLicense !== true ||
+      !result.license
+    ) {
+      hideKeyCountdown();
+
+      return;
+    }
+
+    startKeyCountdown(
+      result.license
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo cargar el contador de la Key:",
+      error
+    );
+
+    hideKeyCountdown();
+  }
+}
+
 async function loadDashboardSession() {
   const sessionController =
     new AbortController();
@@ -882,6 +1164,9 @@ const hasDashboardAccess =
     );
 
     renderServerDropdown();
+
+    await loadCurrentLicense();
+ 
 
     const query =
       new URLSearchParams(
