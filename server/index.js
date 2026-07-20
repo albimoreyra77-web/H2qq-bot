@@ -2700,20 +2700,17 @@ client.on(
       }
 
       if (
-        member.roles.cache.has(
-          role.id
-        ) &&
-        config.security
-          ?.allowReverification ===
-          false
-      ) {
-        await interaction.editReply({
-          content:
-            `✅ Ya estás verificado y tenés el rol **${role.name}**.`,
-        });
+  member.roles.cache.has(
+    role.id
+  )
+) {
+  await interaction.editReply({
+    content:
+      `✅ Ya tenés el rol <@&${role.id}>. No necesitás verificarte nuevamente.`,
+  });
 
-        return;
-      }
+  return;
+}
 
       /*
         Generamos un token aleatorio para
