@@ -4221,19 +4221,25 @@ app.get(
       const { guildId } =
         request.params;
 
-      const guild =
-        client.guilds.cache.get(guildId);
+  let guild =
+  client.guilds.cache.get(guildId);
 
-      if (!guild) {
-        return response
-          .status(404)
-          .json({
-            success: false,
-
-            message:
-              "El servidor no existe o el bot no está dentro de él",
-          });
-      }
+if (!guild) {
+  try {
+    guild =
+      await client.guilds.fetch(
+        guildId
+      );
+  } catch {
+    return response
+      .status(404)
+      .json({
+        success: false,
+        message:
+          "El servidor no existe o el bot no está dentro de él",
+      });
+  }
+}
 
       const roles =
         guild.roles.cache
