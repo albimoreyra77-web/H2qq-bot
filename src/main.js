@@ -1196,6 +1196,7 @@ if (
   return;
 }
 
+
 if (
   result.hasLicense !== true ||
   !result.license
@@ -1205,9 +1206,21 @@ if (
   return;
 }
 
-    startKeyCountdown(
-      result.license
-    );
+const sessionValidated =
+  sessionStorage.getItem(
+    "nebulaKeyValidated"
+  ) === "true";
+
+if (!sessionValidated) {
+  hideKeyCountdown();
+
+  return;
+}
+
+startKeyCountdown(
+  result.license
+);
+
   } catch (error) {
     console.error(
       "No se pudo cargar el contador de la Key:",
@@ -1482,6 +1495,12 @@ function showAccessPage() {
     "servers-selection-mode"
   );
 
+hideKeyCountdown();
+
+sessionStorage.removeItem(
+  "nebulaKeyValidated"
+);
+
   const displayName =
     dashboardSessionUser?.displayName ||
     dashboardSessionUser?.username ||
@@ -1633,23 +1652,29 @@ validateButton?.addEventListener(
         );
       }
 
-      message.textContent =
-        "Key activada correctamente. Entrando...";
+message.textContent =
+  "Key activada correctamente. Entrando...";
 
-      if (dashboardSessionUser) {
-        dashboardSessionUser.hasAccess =
-          true;
-      }
+sessionStorage.setItem(
+  "nebulaKeyValidated",
+  "true"
+);
 
-      setTimeout(
-        () => {
-          window.location.replace(
-            "/?view=servers"
-          );
-        },
-        700
-      );
-    } catch (error) {
+if (dashboardSessionUser) {
+  dashboardSessionUser.hasAccess =
+    true;
+}
+
+setTimeout(
+  () => {
+    window.location.replace(
+      "/?view=servers"
+    );
+  },
+  700
+);
+
+         } catch (error) {
       message.textContent =
         error.message ||
         "No se pudo validar la Key.";
@@ -4025,18 +4050,28 @@ const expirationDate =
   permanent
     ? null
     : (
-        license?.expiresAt ||
-        license?.expirationDate ||
-        license?.expires ||
-        (
-          durationMilliseconds > 0
-            ? new Date(
-                new Date(createdAt).getTime() +
-                durationMilliseconds
-              ).toISOString()
-            : null
-        )
+        license?.activatedAt
+          ? (
+              license?.expiresAt ||
+              license?.expirationDate ||
+              license?.expires ||
+              (
+                durationMilliseconds > 0
+                  ? new Date(
+                      new Date(
+                        license.activatedAt
+                      ).getTime() +
+                      durationMilliseconds
+                    ).toISOString()
+                  : null
+              )
+            )
+          : null
       );
+
+const canStartCountdown =
+  permanent ||
+  Boolean(license?.activatedAt);
 
   const status =
     getLicenseStatusData(
@@ -4137,7 +4172,8 @@ const expirationDate =
         <span>LICENCIA PERMANENTE</span>
       </div>
     `
-    : `
+: canStartCountdown
+    ? `
       <div
         class="license-live-timer"
         data-license-countdown
@@ -4186,9 +4222,28 @@ const expirationDate =
           </span>
         </div>
 
-      </div>
-    `
-}
+</div>
+`
+    : `
+<div class="license-waiting-activation">
+    <div class="waiting-icon">
+        ⏳
+    </div>
+
+    <div class="waiting-info">
+        <span class="waiting-title">
+            Esperando activación
+        </span>
+
+        <span class="waiting-description">
+            El tiempo comenzará cuando esta licencia sea activada.
+        </span>
+    </div>
+</div>
+
+ `
+
+     }
 
 </div>
 
@@ -4748,11 +4803,16 @@ function ensureLicensesHeader() {
 ========================================================= */
 
 async function loadSavedLicenses() {
-  if (!licensesTable) {
+  const currentLicensesTable =
+    document.getElementById(
+      "licensesTable"
+    );
+
+  if (!currentLicensesTable) {
     return;
   }
 
-  licensesTable.innerHTML = `
+  currentLicensesTable.innerHTML = `
     ${createLicensesHeaderHTML()}
 
     <div class="licenses-empty-state">
@@ -4800,10 +4860,15 @@ async function loadSavedLicenses() {
         ? result.licenses
         : [];
 
+    console.log(
+      "Licencias cargadas:",
+      licenses
+    );
+
     if (
       licenses.length === 0
     ) {
-      licensesTable.innerHTML =
+      currentLicensesTable.innerHTML =
         createEmptyLicensesHTML();
 
       updateLicenseCounters();
@@ -4811,7 +4876,7 @@ async function loadSavedLicenses() {
       return;
     }
 
-    licensesTable.innerHTML = `
+    currentLicensesTable.innerHTML = `
       ${createLicensesHeaderHTML()}
 
       ${licenses
@@ -4827,7 +4892,7 @@ async function loadSavedLicenses() {
 
     updateLicenseCounters();
 
-startLicenseCountdowns();
+    startLicenseCountdowns();
 
   } catch (error) {
     console.error(
@@ -4835,7 +4900,7 @@ startLicenseCountdowns();
       error
     );
 
-    licensesTable.innerHTML = `
+    currentLicensesTable.innerHTML = `
       ${createLicensesHeaderHTML()}
 
       <div class="license-generation-error">
@@ -17079,5 +17144,5 @@ function escapeHtmlAttribute(text) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-initializeInteractiveButtons();
+initializeInteractiveButtons()
 

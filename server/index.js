@@ -3760,11 +3760,8 @@ if (
         const createdAt =
           Date.now();
 
-       const expiresAt =
-  permanent
-    ? null
-    : createdAt +
-      durationMilliseconds;
+      const expiresAt =
+  null;
 
         const dashboardUser =
           request.session
@@ -3799,12 +3796,16 @@ durationMilliseconds,
 
           permanent,
 
-          createdAt,
+createdAt,
 
-          expiresAt,
+activatedAt:
+  null,
 
-          createdBy: {
-            id:
+expiresAt,
+
+createdBy: {
+
+              id:
               dashboardUser?.id ||
               null,
 
@@ -4981,14 +4982,11 @@ if (deliveryUser?.bot) {
           generateLicenseKey();
       }
 
-      const createdAt =
-        Date.now();
+     const createdAt =
+  Date.now();
 
-      const expiresAt =
-        permanent
-          ? null
-          : createdAt +
-            durationMilliseconds;
+const expiresAt =
+  null;
 
       const license = {
         id:
