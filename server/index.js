@@ -4234,14 +4234,11 @@ app.get(
           message:
             "No se pudo consultar la licencia.",
         });
-    }
-  }
+     }
+   }
 );
 
-  }
-);
-
-app.get(
+        app.get(
   "/api/dashboard",
   (request, response) => {
     response.json({
