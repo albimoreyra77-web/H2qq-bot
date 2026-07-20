@@ -3760,3 +3760,241 @@ body.split-image-hidden
     max-width: 100%;
   }
 }
+/* =========================================================
+   CORRECCIÓN DEFINITIVA — ERROR SPLIT PREMIUM
+   Neutraliza la grilla original de la tarjeta
+   ========================================================= */
+
+.verification-card.verification-error-state[
+  data-active-design="split"
+],
+.verification-card.verification-error-state[
+  data-active-design="split_premium"
+] {
+  display: block !important;
+
+  width: min(
+    960px,
+    calc(100vw - 32px)
+  ) !important;
+
+  max-width: 960px !important;
+  min-height: 510px !important;
+
+  grid-template-columns:
+    none !important;
+
+  grid-template-rows:
+    none !important;
+
+  padding: 0 !important;
+  margin: 0 auto !important;
+
+  overflow: hidden !important;
+
+  text-align: initial !important;
+}
+
+/* El nuevo diseño debe ocupar toda la tarjeta */
+
+.verification-card.verification-error-state[
+  data-active-design="split"
+] > .split-error-layout,
+.verification-card.verification-error-state[
+  data-active-design="split_premium"
+] > .split-error-layout {
+  position: relative !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 510px !important;
+
+  display: grid !important;
+
+  grid-column:
+    1 / -1 !important;
+
+  grid-row:
+    1 / -1 !important;
+
+  grid-template-columns:
+    minmax(0, 1.08fr)
+    minmax(390px, 0.92fr) !important;
+
+  align-items: stretch !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  overflow: hidden !important;
+}
+
+/* Columna de imagen */
+
+.verification-card.verification-error-state
+.split-error-image {
+  position: relative !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 510px !important;
+
+  display: block !important;
+
+  overflow: hidden !important;
+}
+
+/* Imagen de fondo */
+
+.verification-card.verification-error-state
+.split-error-background-image,
+.verification-card.verification-error-state
+.split-error-fallback {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: block !important;
+}
+
+/* Texto inferior izquierdo */
+
+.verification-card.verification-error-state
+.split-error-image-copy {
+  position: absolute !important;
+  z-index: 5 !important;
+
+  top: auto !important;
+  right: 34px !important;
+  bottom: 38px !important;
+  left: 34px !important;
+
+  width: auto !important;
+  max-width: 420px !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  align-items: flex-start !important;
+
+  text-align: left !important;
+}
+
+/* Columna derecha */
+
+.verification-card.verification-error-state
+.split-error-content {
+  position: relative !important;
+
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 510px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 42px !important;
+
+  overflow: hidden !important;
+}
+
+/* Contenido del error */
+
+.verification-card.verification-error-state
+.verification-error-result {
+  width: min(
+    100%,
+    430px
+  ) !important;
+
+  max-width: 430px !important;
+  min-width: 0 !important;
+
+  margin: 0 auto !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+
+  text-align: center !important;
+}
+
+/* Evita títulos cortados */
+
+.verification-card.verification-error-state
+.verification-error-result h2 {
+  width: 100% !important;
+
+  white-space: normal !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+/* Evita que el motivo se salga */
+
+.verification-card.verification-error-state
+.verification-error-message {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* =========================================================
+   CELULAR
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .verification-card.verification-error-state[
+    data-active-design="split"
+  ],
+  .verification-card.verification-error-state[
+    data-active-design="split_premium"
+  ] {
+    width: min(
+      430px,
+      calc(100vw - 18px)
+    ) !important;
+
+    min-height: auto !important;
+  }
+
+  .verification-card.verification-error-state[
+    data-active-design="split"
+  ] > .split-error-layout,
+  .verification-card.verification-error-state[
+    data-active-design="split_premium"
+  ] > .split-error-layout {
+    min-height: auto !important;
+
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .verification-card.verification-error-state
+  .split-error-image {
+    min-height: 220px !important;
+  }
+
+  .verification-card.verification-error-state
+  .split-error-content {
+    min-height: auto !important;
+
+    padding:
+      30px 20px !important;
+  }
+
+  .verification-card.verification-error-state
+  .split-error-image-copy {
+    right: 20px !important;
+    bottom: 20px !important;
+    left: 20px !important;
+  }
+}
