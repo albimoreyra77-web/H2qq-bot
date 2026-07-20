@@ -1076,33 +1076,35 @@ function showExpiredLicenseScreen() {
     overlay
   );
 
-document
-  .getElementById(
-    "expiredLicenseReturnButton"
-  )
-  .addEventListener(
-    "click",
-    () => {
-      overlay.remove();
+  document
+    .getElementById(
+      "expiredLicenseReturnButton"
+    )
+    .addEventListener(
+      "click",
+      () => {
+        overlay.remove();
 
-      if (dashboardSessionUser) {
-        dashboardSessionUser.hasAccess =
-          false;
+        if (dashboardSessionUser) {
+          dashboardSessionUser.hasAccess =
+            false;
+        }
+
+        hideKeyCountdown();
+
+        showAccessPage();
+
+        window.history.replaceState(
+          {},
+          "",
+          "/?view=access"
+        );
       }
-
-      hideKeyCountdown();
-
-      showAccessPage();
-
-      window.history.replaceState(
-        {},
-        "",
-        "/?view=access"
-      );
-    }
-  );
+    );
+}
 
 async function loadCurrentLicense() {
+
   try {
     const response =
       await fetch(
